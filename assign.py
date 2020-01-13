@@ -2,6 +2,7 @@ from discord.ext import commands
 from discord.utils import get
 import discord
 import random
+import messages
 
 ASSOCIATE = 'Associate'
 DRONE = 'Drone'
@@ -44,5 +45,4 @@ class Assign(commands.Cog):
             await message.author.edit(nick=roled_nick)
             await registry_channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
-            await message.delete()
-            await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_REJECT}')
+            await messages.delete_request(message, ASSIGNMENT_REJECT)

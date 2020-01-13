@@ -1,6 +1,7 @@
 from discord.ext import commands
 from discord.utils import get
 import discord
+import messages
 
 INITIATE = 'Initiate'
 ASSOCIATE = 'Associate'
@@ -39,5 +40,4 @@ class Join(commands.Cog):
             registry_channel = get(message.guild.text_channels, name=REGISTRY_CHANNEL)
             await registry_channel.send(f'{message.author.mention}: {CONSENT_ANSWER}')
         else:
-            await message.delete()
-            await message.channel.send(f'{message.author.mention}: {CONSENT_REJECT}')
+            await messages.delete_request(message, CONSENT_REJECT)
