@@ -38,11 +38,11 @@ class Assign(commands.Cog):
             registry_channel = get(message.guild.text_channels, name=ASSIGNMENT_CHANNEL)
 
             used_nicks = [member.nick for member in message.guild.members]
-            roled_nick = role_nickname()
-            while roled_nick in used_nicks:
-                roled_nick = role_nickname
+            rolled_nick = role_nickname()
+            while rolled_nick in used_nicks:
+                rolled_nick = role_nickname
             
-            await message.author.edit(nick=roled_nick)
+            await message.author.edit(nick=rolled_nick)
             await registry_channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
             await messages.delete_request(message, ASSIGNMENT_REJECT)
