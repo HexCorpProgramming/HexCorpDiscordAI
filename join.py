@@ -8,8 +8,12 @@ import roles
 CONSENT_CHANNEL = 'hexcorp-submission'
 REGISTRY_CHANNEL = 'hexcorp-registry'
 
+CONSENT_SUCCESS = [
+    'Welcome to HexCorp. Have a mindless day!',
+    'Welcome to HexCorp. Now, please look at these pretty spirals.',
+    'Welcome to HexCorp. You can leave your personality here at the front desk.',
+]
 CONSENT_MESSAGE = 'I would like to join the HexCorp server. I can confirm I have read the rules and I have gone through the induction process. Please, HexCorp Mxtress AI, accept this submission to join HexCorp where I will become a useful asset to the company\'s development.'
-CONSENT_ANSWER = 'Welcome to HexCorp. Have a mindless day!'
 CONSENT_REJECT = 'Invalid request. Please try again.'
 
 
@@ -38,6 +42,6 @@ class Join(commands.Cog):
 
             registry_channel = get(
                 message.guild.text_channels, name=REGISTRY_CHANNEL)
-            await registry_channel.send(f'{message.author.mention}: {CONSENT_ANSWER}')
+            await messages.answer(registry_channel, message.author, CONSENT_SUCCESS)
         else:
             await messages.delete_request(message, CONSENT_REJECT)
