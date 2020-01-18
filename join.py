@@ -2,9 +2,8 @@ from discord.ext import commands
 from discord.utils import get
 import discord
 import messages
+import roles
 
-INITIATE = 'Initiate'
-ASSOCIATE = 'Associate'
 
 CONSENT_CHANNEL = 'hexcorp-submission'
 REGISTRY_CHANNEL = 'hexcorp-registry'
@@ -22,7 +21,7 @@ class Join(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        initiate_role = get(member.guild.roles, name=INITIATE)
+        initiate_role = get(member.guild.roles, name=roles.INITIATE)
         await member.add_roles(initiate_role)
 
     @commands.Cog.listener()
@@ -31,13 +30,14 @@ class Join(commands.Cog):
             return
 
         if message.content == CONSENT_MESSAGE:
-            initiate_role = get(message.guild.roles, name=INITIATE)
-            associate_role = get(message.guild.roles, name=ASSOCIATE)
+            initiate_role = get(message.guild.roles, name=roles.INITIATE)
+            associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
 
             await message.author.remove_roles(initiate_role)
             await message.author.add_roles(associate_role)
-            
-            registry_channel = get(message.guild.text_channels, name=REGISTRY_CHANNEL)
+
+            registry_channel = get(
+                message.guild.text_channels, name=REGISTRY_CHANNEL)
             await registry_channel.send(f'{message.author.mention}: {CONSENT_ANSWER}')
         else:
             await messages.delete_request(message, CONSENT_REJECT)

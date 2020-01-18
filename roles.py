@@ -1,0 +1,5 @@
+INITIATE = 'Initiate'
+ASSOCIATE = 'Associate'
+DRONE = 'Drone'
+ADMIN = 'admin'
+HIVE_MXTRESS = 'Hive Mxtress'
