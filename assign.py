@@ -14,11 +14,16 @@ ASSIGNMENT_ANSWER = 'Assigned'
 ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 
 
-def find_id(text):
-    return re.search(r'\d{4}', text).group(0)
+def find_id(text: str) -> str:
+    match = re.search(r'\d{4}', text)
+    if match is not None:
+        return match.group(0)
+    else:
+        return None
+        
 
 
-def role_nickname():
+def role_nickname() -> str:
     drone_id = random.randint(0, 9999)
     return f'⬡-Drone #{drone_id:03}'
 
