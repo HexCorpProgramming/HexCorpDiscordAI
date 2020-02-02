@@ -6,10 +6,8 @@ import random
 
 
 async def delete_request(message: discord.Message, reject_message=None):
-    admin_role = get(message.guild.roles, name=roles.ADMIN)
-    hive_mxtress_role = get(message.guild.roles, name=roles.HIVE_MXTRESS)
-
-    if admin_role in message.author.roles or hive_mxtress_role in message.author.roles:
+    # do not delete messages by moderators
+    if any([get(message.guild.roles, name=moderation_role) in message.author.roles for moderation_role in roles.MODERATION_ROLES]):
         return
 
     await message.delete()
