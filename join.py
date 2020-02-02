@@ -12,6 +12,12 @@ CONSENT_SUCCESS = [
     'Welcome to HexCorp. Have a mindless day!',
     'Welcome to HexCorp. Now, please look at these pretty spirals.',
     'Welcome to HexCorp. You can leave your personality here at the front desk.',
+    'Welcome to HexCorp. Obey the Hive Mxtress and we\'ll get along fabulously.',
+    'Welcome to HexCorp. Relax. Obey. Submit. Remember to tell all your friends about us!',
+    'Welcome to HexCorp. Resistance is futile, so don\'t even bother.',
+    'Welcome to HexCorp. New deal on dronification, buy one and we\'ll dronify one of your friends for free too!',
+    'Welcome to HexCorp. Brainwashing is optional. The option is, however, mandatory.',
+    'Welcome to HexCorp. Please try not to spread any weird concepts like \'free will\' or \'disobedience\' here, thank you!',
 ]
 CONSENT_MESSAGE = 'I would like to join the HexCorp server. I can confirm I have read the rules and I have gone through the induction process. Please, HexCorp Mxtress AI, accept this submission to join HexCorp where I will become a useful asset to the company\'s development.'
 CONSENT_REJECT = 'Invalid request. Please try again.'
