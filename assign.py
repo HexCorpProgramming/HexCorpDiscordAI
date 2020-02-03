@@ -61,7 +61,7 @@ class Assign(commands.Cog):
             else:
                 rolled_nick = role_nickname()
                 while rolled_nick in used_nicks + RESERVED_NICKS:
-                    rolled_nick = role_nickname
+                    rolled_nick = role_nickname()
 
                 assigned_nick = rolled_nick
 
