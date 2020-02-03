@@ -49,7 +49,7 @@ class Assign(commands.Cog):
             used_nicks = [member.nick for member in message.guild.members]
 
             assigned_nick = ''
-            existing_id = find_id(message.author.nick)
+            existing_id = find_id(message.author.display_name)
             if existing_id is not None:
                 assigned_nick = f'⬡-Drone #{existing_id}'
 
