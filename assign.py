@@ -5,9 +5,7 @@ import random
 import messages
 import roles
 import re
-
-
-ASSIGNMENT_CHANNEL = 'drone-hive-assignment'
+from channels import ASSIGNMENT_CHANNEL
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned'
@@ -20,12 +18,12 @@ def find_id(text: str) -> str:
         return match.group(0)
     else:
         return None
-        
 
 
 def role_nickname() -> str:
     drone_id = random.randint(0, 9999)
     return f'⬡-Drone #{drone_id:03}'
+
 
 RESERVED_NICKS = ['⬡-Drone #0006']
 

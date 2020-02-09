@@ -3,10 +3,7 @@ from discord.utils import get
 import discord
 import messages
 import roles
-
-
-CONSENT_CHANNEL = 'hexcorp-submission'
-REGISTRY_CHANNEL = 'hexcorp-registry'
+from channels import CONSENT_CHANNEL, REGISTRY_CHANNEL
 
 CONSENT_SUCCESS = [
     'Welcome to HexCorp. Have a mindless day!',
