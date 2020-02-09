@@ -61,10 +61,10 @@ def has_role(member: discord.Member, role: str) -> bool:
     return get(member.roles, name=role) is not None
 
 '''
-Strip the recipient at the beginning of a sent message.
+Strip the recipient at the beginning of a received message.
 '''
 def strip_recipient(message: str) -> str:
-    return re.sub(r'^<@!\d*>', '', message, 1)
+    return re.sub(r'^<@!?\d*>', '', message, 1)
 
 class Respond(commands.Cog):
 
@@ -72,13 +72,7 @@ class Respond(commands.Cog):
         self.bot = bot
 
     def is_question(self, message: discord.Message):
-        return message.content.startswith(self.posted_mention()) and message.content.endswith('?')
-
-    '''
-    Mentions in received messages contain an additional !.
-    '''
-    def posted_mention(self):
-        return self.bot.user.mention[:2] + '!' + self.bot.user.mention[2:]
+        return self.bot.user.mentioned_in(message) and message.content.endswith('?')
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
