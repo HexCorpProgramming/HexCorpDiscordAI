@@ -1,8 +1,8 @@
 INITIATE = 'Initiate'
 ASSOCIATE = 'Associate'
-DRONE = 'Drone'
+DRONE = '⬡-Drone'
 ADMIN = 'admin'
 MODERATION = 'Moderation Drone'
-HIVE_MXTRESS = 'Hive Mxtress'
+HIVE_MXTRESS = 'Drone Hive Mxtress'
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]

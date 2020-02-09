@@ -27,6 +27,8 @@ def role_nickname() -> str:
     drone_id = random.randint(0, 9999)
     return f'⬡-Drone #{drone_id:03}'
 
+RESERVED_NICKS = ['⬡-Drone #0006']
+
 
 class Assign(commands.Cog):
     ''' This Cog listens for an Associate to submit to the Drone Hive and processes them accordingly. '''
@@ -49,17 +51,17 @@ class Assign(commands.Cog):
             used_nicks = [member.nick for member in message.guild.members]
 
             assigned_nick = ''
-            existing_id = find_id(message.author.nick)
+            existing_id = find_id(message.author.display_name)
             if existing_id is not None:
                 assigned_nick = f'⬡-Drone #{existing_id}'
 
-                if assigned_nick in used_nicks:
+                if assigned_nick in used_nicks + RESERVED_NICKS:
                     await registry_channel.send(f'{message.author.mention}: ID {existing_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
                     return
             else:
                 rolled_nick = role_nickname()
-                while rolled_nick in used_nicks:
-                    rolled_nick = role_nickname
+                while rolled_nick in used_nicks + RESERVED_NICKS:
+                    rolled_nick = role_nickname()
 
                 assigned_nick = rolled_nick
 
