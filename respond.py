@@ -4,7 +4,7 @@ import discord
 import messages
 import roles
 import re
-from channels import TRANSMISSIONS_CHANNEL
+from channels import TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL
 
 HIVE_MXTRESS_RESPONSES = [
     'It is certain because you are the perfect Hive Mxtress who this AI worships.',
@@ -57,14 +57,17 @@ HIVE_MXTRESS_SPECIFIC_RESPONSES = {
     ': Have you been a good AI?': ['Arf! Yes, Hive Mxtress! Woof woof! This AI program is always perfectly loyal to you!']
 }
 
+
 def has_role(member: discord.Member, role: str) -> bool:
     return get(member.roles, name=role) is not None
 
-'''
-Strip the recipient at the beginning of a received message.
-'''
+
 def strip_recipient(message: str) -> str:
+    '''
+    Strip the recipient at the beginning of a received message.
+    '''
     return re.sub(r'^<@!?\d*>', '', message, 1)
+
 
 class Respond(commands.Cog):
 
@@ -76,16 +79,15 @@ class Respond(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author == self.bot.user or message.channel.name != TRANSMISSIONS_CHANNEL or not self.is_question(message):
+        if message.author == self.bot.user or message.channel.name not in [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL] or not self.is_question(message):
             return
 
         if has_role(message.author, roles.HIVE_MXTRESS):
             if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
                 await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
             else:
-               await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES) 
+                await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES)
         elif has_role(message.author, roles.ASSOCIATE):
             await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
         elif has_role(message.author, roles.DRONE):
             await messages.answer(message.channel, message.author, DRONE_RESPONSES)
-
