@@ -4,6 +4,8 @@ from discord.utils import get
 from typing import List
 import random
 
+# 1 hour is 60 seconds times 60 minutes
+DELETE_TIMEOUT = 60 * 60
 
 async def delete_request(message: discord.Message, reject_message=None):
     # do not delete messages by moderators
@@ -13,7 +15,7 @@ async def delete_request(message: discord.Message, reject_message=None):
     await message.delete()
 
     if reject_message is not None:
-        await message.channel.send(f'{message.author.mention}: {reject_message}')
+        await message.channel.send(f'{message.author.mention}: {reject_message}', delete_after=DELETE_TIMEOUT)
 
 async def answer(channel: discord.TextChannel, recipient: discord.Member, category: List[str]):
     response = random.choice(category)
