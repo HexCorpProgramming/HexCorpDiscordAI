@@ -1,5 +1,6 @@
 from discord.ext import commands
 from discord.utils import get
+from typing import List
 import discord
 import random
 import messages
@@ -11,6 +12,8 @@ ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned'
 ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 
+RESERVED_IDS = ['0006']
+
 
 def find_id(text: str) -> str:
     match = re.search(r'\d{4}', text)
@@ -20,12 +23,20 @@ def find_id(text: str) -> str:
         return None
 
 
-def role_nickname() -> str:
-    drone_id = random.randint(0, 9999)
-    return f'⬡-Drone #{drone_id:03}'
+def roll_id() -> str:
+    id = random.randint(0, 9999)
+    return f'{id:03}'
 
 
-RESERVED_NICKS = ['⬡-Drone #0006']
+def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role]) -> List[str]:
+    relevant_ids = []
+    for member in members:
+        is_relevant_role = [(role in relevant_roles) for role in member.roles]
+        member_id = find_id(member.display_name)
+        if any(is_relevant_role) and member_id is not None:
+            relevant_ids.append(member_id)
+
+    return relevant_ids + RESERVED_IDS
 
 
 class Assign(commands.Cog):
@@ -43,30 +54,26 @@ class Assign(commands.Cog):
             associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
             drone_role = get(message.guild.roles, name=roles.DRONE)
 
-            registry_channel = get(
-                message.guild.text_channels, name=ASSIGNMENT_CHANNEL)
-
-            used_nicks = [member.nick for member in message.guild.members]
-
             assigned_nick = ''
+            used_ids = invalid_ids(message.guild.members, [drone_role])
             existing_id = find_id(message.author.display_name)
             if existing_id is not None:
-                assigned_nick = f'⬡-Drone #{existing_id}'
-
-                if assigned_nick in used_nicks + RESERVED_NICKS:
-                    await registry_channel.send(f'{message.author.mention}: ID {existing_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
+                if existing_id in used_ids:
+                    await message.channel.send(f'{message.author.mention}: ID {existing_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
                     return
-            else:
-                rolled_nick = role_nickname()
-                while rolled_nick in used_nicks + RESERVED_NICKS:
-                    rolled_nick = role_nickname()
 
-                assigned_nick = rolled_nick
+                assigned_nick = f'⬡-Drone #{existing_id}'
+            else:
+                rolled_id = roll_id()
+                while rolled_id in used_ids:
+                    rolled_id = roll_id()
+
+                assigned_nick = f'⬡-Drone #{rolled_id}'
 
             await message.author.remove_roles(associate_role)
             await message.author.add_roles(drone_role)
             await message.author.edit(nick=assigned_nick)
 
-            await registry_channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
+            await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
             await messages.delete_request(message, ASSIGNMENT_REJECT)
