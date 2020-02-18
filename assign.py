@@ -47,29 +47,32 @@ class Assign(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author == self.bot.user or message.channel.name != ASSIGNMENT_CHANNEL:
+        if message.author == self.bot.user or message.channel.name != ASSIGNMENT_CHANNEL: # message from bot or not in correct channel return
             return
 
+        #if the message is correct for being added, yay! if not, delete the message and let them know its bad
         if message.content == ASSIGNMENT_MESSAGE:
             associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
             drone_role = get(message.guild.roles, name=roles.DRONE)
 
             assigned_nick = ''
             used_ids = invalid_ids(message.guild.members, [drone_role])
-            existing_id = find_id(message.author.display_name)
-            if existing_id is not None:
-                if existing_id in used_ids:
+            existing_id = find_id(message.author.display_name) # does user have a drone id in their display name?
+            if existing_id is not None: 
+                if existing_id in used_ids: # make sure display name number doesnt conflict
                     await message.channel.send(f'{message.author.mention}: ID {existing_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
                     return
-
+                # if no conflict, assign nickname
                 assigned_nick = f'⬡-Drone #{existing_id}'
             else:
                 rolled_id = roll_id()
-                while rolled_id in used_ids:
+                while rolled_id in used_ids: # loop until no conflict
                     rolled_id = roll_id()
-
+                # when no conflict, assign nickname
                 assigned_nick = f'⬡-Drone #{rolled_id}'
+            
 
+            # give them the drone role
             await message.author.remove_roles(associate_role)
             await message.author.add_roles(drone_role)
             await message.author.edit(nick=assigned_nick)

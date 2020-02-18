@@ -28,11 +28,13 @@ class Join(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
+        '''On join, Give initiate role'''
         initiate_role = get(member.guild.roles, name=roles.INITIATE)
         await member.add_roles(initiate_role)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        '''On consent message, remove initiate role and give associate'''
         if message.author == self.bot.user or message.channel.name != CONSENT_CHANNEL:
             return
 
