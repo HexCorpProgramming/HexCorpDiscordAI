@@ -5,4 +5,6 @@ ADMIN = 'admin'
 MODERATION = 'Moderation Drone'
 HIVE_MXTRESS = 'Drone Hive Mxtress'
 
+GAGGED = '⬡-Gagged'
+
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
