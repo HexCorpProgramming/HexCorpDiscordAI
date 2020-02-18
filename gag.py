@@ -6,16 +6,28 @@ import roles
 import re
 from channels import GAGGING_CONTROL_CHANNEL
 
+drone_role = get(member.guild.roles, name=roles.DRONE)
+associate_role = get(member.guild.roles, name=roles.ASSOCIATE)
+gagged_role = get(member.guild.roles, name=roles.GAGGED)
+
+
 
 def has_role(member: discord.Member, role: str) -> bool:
     return get(member.roles, name=role) is not None
 
 
 def mute_drone(member: discord.Member):
-	pass
+  await member.add_roles(gagged_role)
+
+	if has_role(member, associate_role):
+		await member.remove_roles(associate_role)
+	if has_role(member, drone_role):
+		await member.remove_roles(drone_role)
 
 def unmute_drone(member: discord.Member):
-	pass
+	await member.remove_roles(gagged_role)
+	#if name starts with filled hex give drone etc.
+
 
 def strip_recipient(message: str) -> str:
     '''
