@@ -9,4 +9,4 @@ GAMER_DRONE_LOBBY_CHANNEL = 'gamer-drone-lobby'
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
 LEWD_CREATIVE_LABOR_CHANNEL = 'lewd-creative-labor'
 
-GAGGING_CONTROL_CHANNEL = 'ai-gagging-control'
+# GAGGING_CONTROL_CHANNEL = 'ai-gagging-control'
