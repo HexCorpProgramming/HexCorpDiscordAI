@@ -82,6 +82,7 @@ class Respond(commands.Cog):
         if message.author == self.bot.user or message.channel.name not in [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL] or not self.is_question(message):
             return
 
+        # different roles have different reponses
         if has_role(message.author, roles.HIVE_MXTRESS):
             if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
                 await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
