@@ -12,7 +12,7 @@ ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned'
 ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 
-RESERVED_IDS = ['0006', '6969', '0420']
+RESERVED_IDS = ['0006', '0000', '0001', '0002', '0003', '0004', '0005', '6969', '0420', '3141']
 
 
 def find_id(text: str) -> str:
