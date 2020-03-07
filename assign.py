@@ -25,7 +25,7 @@ def find_id(text: str) -> str:
 
 def roll_id() -> str:
     id = random.randint(0, 9999)
-    return f'{id:03}'
+    return f'{id:04}'
 
 
 def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role]) -> List[str]:
