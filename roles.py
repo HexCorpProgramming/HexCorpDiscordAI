@@ -1,6 +1,8 @@
 INITIATE = 'Initiate'
 ASSOCIATE = 'Associate'
 DRONE = '⬡-Drone'
+DEEP_DRONE = '⬢-Drone'
+STORED = '⬢-Stored'
 ADMIN = 'admin'
 MODERATION = 'Moderation Drone'
 HIVE_MXTRESS = 'Drone Hive Mxtress'
