@@ -11,3 +11,5 @@ GAGGED = '⬡-Gagged'
 ENFORCER = '⬡-Enforcer'
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
+
+EVERYONE = '@everyone'
