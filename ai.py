@@ -11,6 +11,6 @@ bot = discord.ext.commands.Bot('')
 bot.add_cog(join.Join(bot))
 bot.add_cog(assign.Assign(bot))
 bot.add_cog(respond.Respond(bot))
-bot.add_cog(storage.Storage(bot))
+# bot.add_cog(storage.Storage(bot))
 
 bot.run(sys.argv[1])
