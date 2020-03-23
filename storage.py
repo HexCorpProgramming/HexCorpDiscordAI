@@ -23,6 +23,7 @@ RELEASE_INTERVAL_SECONDS = 60
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
+# path to the file where information about stored drones is kept
 STORAGE_FILE_PATH = 'data/storage.json'
 
 # central storage list; contains StoredDrone entities
@@ -86,7 +87,6 @@ class Storage(commands.Cog):
         for member in message.guild.members:
             if find_id(member.display_name) == target_id and deep_drone_role in member.roles:
                 former_roles = filter_out_non_removable_roles(member.roles)
-                print('trying to remove roles ' + str(former_roles))
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
                 stored_until = (datetime.now() +
@@ -163,11 +163,13 @@ class Storage(commands.Cog):
         Load storage list from disk.
         '''
         storage_path = Path(STORAGE_FILE_PATH)
-        if storage_path.exists():
-            with storage_path.open('r') as storage_file:
-                STORED_DRONES.clear()
-                STORED_DRONES.extend([StoredDrone(**deserialized)
-                                      for deserialized in json.load(storage_file)])
+        if not storage_path.exists():
+            return
+
+        with storage_path.open('r') as storage_file:
+            STORED_DRONES.clear()
+            STORED_DRONES.extend([StoredDrone(**deserialized)
+                                  for deserialized in json.load(storage_file)])
 
 
 def find_id(name: str) -> str:
