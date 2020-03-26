@@ -49,6 +49,7 @@ class Emote(commands.Cog):
             if message_is_an_acceptable_length(context.message.content[6:]):
                 message_to_convert = context.message.content[6:].lower() #Strips away the "emote " command part of the message.
                 message_to_output = ""
+                colon_found = False
                 for character in message_to_convert:
                     emoji_name = ""
                     if character == ' ':
@@ -65,9 +66,12 @@ class Emote(commands.Cog):
                         emoji_name = "hex_comma"
                     elif character == '0':
                         emoji_name = "hex_o"
+                    elif character == ':':
+                        emoji_name = "hex_dc" if colon_found == True else ""
                     else:
                         if character in valid_characters:
                             emoji_name = "hex_"+character
+                    colon_found = True if character == ":" else False
                     if (str(get(self.bot.emojis, name=emoji_name))) != "None":
                         message_to_output += str(get(self.bot.emojis, name=emoji_name))
                 print("Emote cog: Sending message of length [" + str(len(message_to_output)) + "] and content " + message_to_output)
