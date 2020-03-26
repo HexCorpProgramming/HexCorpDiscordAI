@@ -6,7 +6,7 @@ import storage
 import emote
 import sys
 
-bot = discord.ext.commands.Bot("")
+bot = discord.ext.commands.Bot('')
 
 # register Cogs
 bot.add_cog(join.Join(bot))
