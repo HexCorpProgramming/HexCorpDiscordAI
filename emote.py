@@ -20,7 +20,7 @@ CHARACTER_LIMIT = 2000
 message_to_convert = "Beep!"
 message_to_output = ""
 
-valid_characters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','/',',',' ','.','?','!','1','2','3','4','5','6','7','8','9','0']
+valid_characters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9']
 
 def message_is_an_acceptable_length(message):
     print("Message is: " + message)
@@ -43,11 +43,8 @@ class Emote(commands.Cog):
     @commands.command()
     async def emote(self, context):
         if context.message.channel.name in acceptable_channels:
-            if context.message.content.lower() == "emote help":
-                await context.send("`Enter a message to be converted into big emoji letters. The limit is roughly 70 characters.`")
-                return
             if message_is_an_acceptable_length(context.message.content[6:]):
-                message_to_convert = context.message.content[6:].lower() #Strips away the "emote " command part of the message.
+                message_to_convert = context.message.content[6:].lower() #Strips away the "emote " part of the message.
                 message_to_output = ""
                 colon_found = False
                 for character in message_to_convert:
