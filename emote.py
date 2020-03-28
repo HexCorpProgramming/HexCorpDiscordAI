@@ -64,7 +64,7 @@ class Emote(commands.Cog):
                     elif character == '0':
                         emoji_name = "hex_o"
                     elif character == ':':
-                        emoji_name = "hex_dc" if colon_found == True else ""
+                        emoji_name = "hex_dc" if colon_found else ""
                     else:
                         if character in valid_characters:
                             emoji_name = "hex_"+character
