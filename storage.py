@@ -248,7 +248,7 @@ def filter_out_non_removable_roles(unfiltered_roles: List[discord.Role]) -> List
     '''
     removable_roles = []
     for role in unfiltered_roles:
-        if role.name not in roles.MODERATION_ROLES + [roles.EVERYONE]:
+        if role.name not in roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.PATREON_SUPPORTER]:
             removable_roles.append(role)
 
     return removable_roles
