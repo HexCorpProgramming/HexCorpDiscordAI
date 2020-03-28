@@ -17,6 +17,9 @@ DRONE_MODE = '⬡-DroneMode'
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
+NITRO_BOOSTER = 'Nitro Booster'
+PATREON_SUPPORTER = '⬡-Patreon'
+
 EVERYONE = '@everyone'
 
 def has_role(member: discord.Member, role: str) -> bool:
