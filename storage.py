@@ -12,7 +12,7 @@ from discord.utils import get
 
 import messages
 import roles
-from channels import DEEP_HIVE_FIVE, DEEP_HIVE_STORAGE
+from channels import HIVE_STORAGE_FACILITY, HIVE_STORAGE_CHAMBERS
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -61,7 +61,7 @@ class Storage(commands.Cog):
         stored_role = get(message.guild.roles, name=roles.STORED)
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
-        if message.author == self.bot.user or message.channel.name != DEEP_HIVE_FIVE:
+        if message.author == self.bot.user or message.channel.name != HIVE_STORAGE_FACILITY:
             return
 
         # parse message
@@ -111,7 +111,7 @@ class Storage(commands.Cog):
 
         self.reporter_started = True
         storage_channel = get(
-            self.bot.guilds[0].channels, name=DEEP_HIVE_STORAGE)
+            self.bot.guilds[0].channels, name=HIVE_STORAGE_CHAMBERS)
         while True:
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(REPORT_INTERVAL_SECONDS)
