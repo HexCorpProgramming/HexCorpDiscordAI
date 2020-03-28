@@ -59,7 +59,7 @@ class Storage(commands.Cog):
         Process posted messages.
         '''
         stored_role = get(message.guild.roles, name=roles.STORED)
-        deep_drone_role = get(message.guild.roles, name=roles.DEEP_DRONE)
+        drone_role = get(message.guild.roles, name=roles.DRONE)
 
         if message.author == self.bot.user or message.channel.name != DEEP_HIVE_FIVE:
             return
@@ -85,7 +85,7 @@ class Storage(commands.Cog):
 
         # find target drone and store it
         for member in message.guild.members:
-            if find_id(member.display_name) == target_id and deep_drone_role in member.roles:
+            if find_id(member.display_name) == target_id and drone_role in member.roles:
                 former_roles = filter_out_non_removable_roles(member.roles)
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
