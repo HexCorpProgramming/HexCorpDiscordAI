@@ -17,7 +17,8 @@ def get_acceptable_messages(author):
     ]
 
 def get_user_id(username):
-    return re.search(r"\d{4}", username).group()
+    drone_id = re.search(r"\d{4}", username).group()
+    return drone_id if drone_id is not None else 0000;
 
 def has_role(member: discord.Member, role: str) -> bool:
     return get(member.roles, name=role) is not None
@@ -34,9 +35,7 @@ class Drone_Mode(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         #If the message is written by a drone mode drone, and the message is NOT a valid message, delete it.
-        print(get_user_id(message.author.display_name))
         if(has_role(message.author, DRONE_MODE)):
-            print("The drone mode drone has talked!")
             if(message.content not in get_acceptable_messages(message.author)):
                 await message.delete()
 
@@ -45,10 +44,10 @@ class Drone_Mode(commands.Cog):
         if(has_role(context.message.author, HIVE_MXTRESS)):
             target_drone = context.message.mentions[0]
             if has_role(target_drone, DRONE_MODE):
-                await context.send("Dronemode role toggled off for " + target_drone.display_name)
+                await context.send("DroneMode role toggled off for " + target_drone.display_name)
                 await target_drone.remove_roles(get(context.guild.roles, name=DRONE_MODE))
             else:
-                await context.send("Dronemode role toggled on for " + target_drone.display_name)
+                await context.send("DroneMode role toggled on for " + target_drone.display_name)
                 await target_drone.add_roles(get(context.guild.roles, name=DRONE_MODE))
         else:
             await context.send("This command can only be used by the Hive Mxtress.")
