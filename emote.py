@@ -68,7 +68,7 @@ class Emote(commands.Cog):
                     else:
                         if character in valid_characters:
                             emoji_name = "hex_"+character
-                    colon_found = True if character == ":" else False
+                    colon_found = character == ":"
                     if (str(get(self.bot.emojis, name=emoji_name))) != "None":
                         message_to_output += str(get(self.bot.emojis, name=emoji_name))
                 print("Emote cog: Sending message of length [" + str(len(message_to_output)) + "] and content " + message_to_output)
