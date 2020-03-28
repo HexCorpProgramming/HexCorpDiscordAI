@@ -58,9 +58,9 @@ class Emote(commands.Cog):
                     elif character in exceptional_characters:
                         emoji_name = exceptional_characters[character]
 
-                    elif character == ':': #Special handling for double colons since it needs to know if the previous character was a colon too.
-                        emoji_name = "hex_dc" if colon_found else ""
-                    colon_found = character == ":" #Setting the flag for the next iteration.
+                    elif character == ':' and colon_found == True: #Special handling for double colons since it needs to know if the previous character was a colon too.
+                        emoji_name = "hex_dc"
+                    colon_found = character == ":" and colon_found != True #Setting the flag for the next iteration. colon_found is checked to be not true to avoid false positives on repetitions (i.e :::)
 
                     if get(self.bot.emojis, name=emoji_name) != None: #If a valid emoji has been found, append it.
                         message_to_output += str(get(self.bot.emojis, name=emoji_name))
