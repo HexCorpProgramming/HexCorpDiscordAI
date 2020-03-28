@@ -13,6 +13,6 @@ bot.add_cog(join.Join(bot))
 bot.add_cog(assign.Assign(bot))
 bot.add_cog(respond.Respond(bot))
 bot.add_cog(emote.Emote(bot))
-# bot.add_cog(storage.Storage(bot))
+bot.add_cog(storage.Storage(bot))
 
 bot.run(sys.argv[1])

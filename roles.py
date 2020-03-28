@@ -1,3 +1,6 @@
+import discord
+from discord.utils import get
+
 INITIATE = 'Initiate'
 ASSOCIATE = 'Associate'
 DRONE = '⬡-Drone'
@@ -13,3 +16,6 @@ ENFORCER = '⬡-Enforcer'
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
 EVERYONE = '@everyone'
+
+def has_role(member: discord.Member, role: str) -> bool:
+    return get(member.roles, name=role) is not None
