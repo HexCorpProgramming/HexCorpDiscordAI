@@ -12,7 +12,7 @@ from discord.utils import get
 
 import messages
 import roles
-from channels import DEEP_HIVE_FIVE, DEEP_HIVE_STORAGE
+from channels import HIVE_STORAGE_FACILITY, HIVE_STORAGE_CHAMBERS
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -61,7 +61,7 @@ class Storage(commands.Cog):
         stored_role = get(message.guild.roles, name=roles.STORED)
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
-        if message.author == self.bot.user or message.channel.name != DEEP_HIVE_FIVE:
+        if message.author == self.bot.user or message.channel.name != HIVE_STORAGE_FACILITY:
             return
 
         # parse message
@@ -111,7 +111,7 @@ class Storage(commands.Cog):
 
         self.reporter_started = True
         storage_channel = get(
-            self.bot.guilds[0].channels, name=DEEP_HIVE_STORAGE)
+            self.bot.guilds[0].channels, name=HIVE_STORAGE_CHAMBERS)
         while True:
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(REPORT_INTERVAL_SECONDS)
@@ -126,7 +126,7 @@ class Storage(commands.Cog):
                     await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`, stored for {round(remaining_hours, 2)} hours')
 
     @commands.Cog.listener(name='on_ready')
-    async def release(self):
+    async def release_timed(self):
         '''
         Relase stored drones when the timer is up.
         '''
@@ -170,6 +170,26 @@ class Storage(commands.Cog):
             STORED_DRONES.clear()
             STORED_DRONES.extend([StoredDrone(**deserialized)
                                   for deserialized in json.load(storage_file)])
+
+    @commands.command()
+    async def release(self, context, *, member: discord.Member):
+        '''
+        Relase a drone from storage on command.
+        '''
+        if not roles.has_role(context.message.author, roles.HIVE_MXTRESS):
+            return
+
+        stored_role = get(context.guild.roles, name=roles.STORED)
+        # find stored drone
+        to_release_id = find_id(member.display_name)
+        for drone in STORED_DRONES:
+            if drone.target_id == to_release_id:
+                await member.remove_roles(stored_role)
+                await member.add_roles(*get_roles_for_names(context.guild, drone.roles))
+                STORED_DRONES.remove(drone)
+                persist_storage()
+                return
+
 
 
 def find_id(name: str) -> str:
