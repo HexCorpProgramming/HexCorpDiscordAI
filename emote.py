@@ -3,6 +3,7 @@ from discord.utils import get
 import discord
 import messages
 from channels import TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, MINECRAFT_DIRECTION_CHANNEL
+from roles import DRONE_MODE, has_role
 
 acceptable_channels = [
     TRANSMISSIONS_CHANNEL,
@@ -42,7 +43,7 @@ class Emote(commands.Cog):
 
     @commands.command()
     async def emote(self, context):
-        if context.message.channel.name in acceptable_channels:
+        if context.message.channel.name in acceptable_channels and not has_role(context.message.author, DRONE_MODE):
             if message_is_an_acceptable_length(context.message.content[6:]):
 
                 message_to_convert = context.message.content[6:].lower() #Strips away the "emote " part of the message.
