@@ -191,7 +191,6 @@ class Storage(commands.Cog):
                 return
 
 
-
 def find_id(name: str) -> str:
     '''
     Find the four digit ID in a nickname.
@@ -207,7 +206,10 @@ def persist_storage():
     '''
     Write the list of stored drones to hard drive.
     '''
-    with open(STORAGE_FILE_PATH, 'w') as storage_file:
+    storage_path = Path(STORAGE_FILE_PATH)
+    storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with storage_path.open('w') as storage_file:
         json.dump([vars(stored_drone)
                    for stored_drone in STORED_DRONES], storage_file)
 
