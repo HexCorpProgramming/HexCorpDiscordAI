@@ -35,10 +35,10 @@ class StoredDrone():
     A simple object that stores information about stored drones.
     '''
 
-    def __init__(self, drone_id: str, target_id: str, time: str, purpose: str, roles: List[str]):
+    def __init__(self, drone_id: str, target_id: str, release_time: str, purpose: str, roles: List[str]):
         self.drone_id = drone_id
         self.target_id = target_id
-        self.time = time
+        self.release_time = release_time
         self.purpose = purpose
         self.roles = roles
 
@@ -122,7 +122,7 @@ class Storage(commands.Cog):
                 for stored in STORED_DRONES:
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
-                        datetime.fromisoformat(stored.time))
+                        datetime.fromisoformat(stored.release_time))
                     await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`, stored for {round(remaining_hours, 2)} hours')
 
     @commands.Cog.listener(name='on_ready')
@@ -142,7 +142,7 @@ class Storage(commands.Cog):
             still_stored = []
             now = datetime.now()
             for stored in STORED_DRONES:
-                if now > datetime.fromisoformat(stored.time):
+                if now > datetime.fromisoformat(stored.release_time):
                     # find drone member
                     for member in self.bot.guilds[0].members:
                         if find_id(member.display_name) == stored.target_id:
