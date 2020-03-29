@@ -123,7 +123,7 @@ class Storage(commands.Cog):
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
                         datetime.fromtimestamp(stored.release_time))
-                    await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`, stored for {round(remaining_hours, 2)} hours')
+                    await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
     @commands.Cog.listener(name='on_ready')
     async def release_timed(self):
