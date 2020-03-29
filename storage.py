@@ -90,7 +90,7 @@ class Storage(commands.Cog):
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
                 stored_until = (datetime.now() +
-                                timedelta(hours=int(time))).isoformat()
+                                timedelta(hours=int(time))).timestamp()
                 stored_drone = StoredDrone(
                     drone_id, target_id, stored_until, purpose, get_names_for_roles(former_roles))
                 STORED_DRONES.append(stored_drone)
@@ -122,7 +122,7 @@ class Storage(commands.Cog):
                 for stored in STORED_DRONES:
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
-                        datetime.fromisoformat(stored.release_time))
+                        datetime.fromtimestamp(stored.release_time))
                     await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`, stored for {round(remaining_hours, 2)} hours')
 
     @commands.Cog.listener(name='on_ready')
@@ -142,7 +142,7 @@ class Storage(commands.Cog):
             still_stored = []
             now = datetime.now()
             for stored in STORED_DRONES:
-                if now > datetime.fromisoformat(stored.release_time):
+                if now > datetime.fromtimestamp(stored.release_time):
                     # find drone member
                     for member in self.bot.guilds[0].members:
                         if find_id(member.display_name) == stored.target_id:
