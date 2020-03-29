@@ -74,7 +74,7 @@ class Storage(commands.Cog):
 
         # check if drone is already in storage
         for stored in STORED_DRONES:
-            if stored.drone_id == target_id:
+            if stored.target_id == target_id:
                 await messages.delete_request(message, f'{target_id} is already in storage.')
                 return
 
