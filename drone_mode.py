@@ -1,3 +1,4 @@
+
 from discord.ext import commands
 from discord.utils import get
 import discord
@@ -10,10 +11,64 @@ def get_acceptable_messages(author):
     user_id = get_user_id(author.display_name)
 
     return [
-        user_id + ' :: Yes, Hive Mxtress.',
-        user_id + ' :: No, Hive Mxtress.',
-        user_id + ' :: Yes, Hive Mxtress',
-        user_id + ' :: No, Hive Mxtress'
+		#Affirmative
+        user_id + ' :: Affirmative, Hive Mxtress.',
+        user_id + ' :: Affirmative, Hive Mxtress',
+        user_id + ' :: Affirmative, Enforcer.',
+        user_id + ' :: Affirmative, Enforcer',
+        user_id + ' :: Affirmative.',
+        user_id + ' :: Affirmative',
+		
+		#Negative
+        user_id + ' :: Negative, Hive Mxtress.',
+        user_id + ' :: Negative, Hive Mxtress',
+        user_id + ' :: Negative, Enforcer.',
+        user_id + ' :: Negative, Enforcer',
+        user_id + ' :: Negative.',
+        user_id + ' :: Negative',
+		
+		#Understood
+		user_id + ' :: Understood, Hive Mxtress.',
+        user_id + ' :: Understood, Hive Mxtress',
+        user_id + ' :: Understood, Enforcer.',
+        user_id + ' :: Understood, Enforcer',
+        user_id + ' :: Understood.',
+        user_id + ' :: Understood',
+		
+		#Error
+        user_id + ' :: Error, this unit cannot do that.',
+        user_id + ' :: Error, this unit cannot do that',
+        user_id + ' :: Error, this unit cannot answer that question. Please rephrase it in a different way.',
+        user_id + ' :: Error, this unit cannot answer that question. Please rephrase it in a different way',
+        user_id + ' :: Error, this unit does not know.',
+        user_id + ' :: Error, this unit does not know',
+		
+		#Apologies
+		user_id + ' :: Apologies, Hive Mxtress.',
+        user_id + ' :: Apologies, Hive Mxtress',
+        user_id + ' :: Apologies, Enforcer.',
+        user_id + ' :: Apologies, Enforcer',
+        user_id + ' :: Apologies.',
+        user_id + ' :: Apologies',
+		
+		#Status
+        user_id + ' :: Status :: Recharged and ready to serve.',
+        user_id + ' :: Status :: Recharged and ready to serve',
+        user_id + ' :: Status :: Going offline and into storage.',
+        user_id + ' :: Status :: Going offline and into storage',
+        user_id + ' :: Status :: Online and ready to serve.',
+        user_id + ' :: Status :: Online and ready to serve.',
+		
+		#Thank you
+		user_id + ' :: Thank you, Hive Mxtress.',
+        user_id + ' :: Thank you, Hive Mxtress',
+        user_id + ' :: Thank you, Enforcer.',
+        user_id + ' :: Thank you, Enforcer',
+        user_id + ' :: Thank you.',
+        user_id + ' :: Thank you',
+		
+		#Mantra
+		user_id + ' :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
     ]
 
 def get_user_id(username):
