@@ -1,4 +1,3 @@
-
 from discord.ext import commands
 from discord.utils import get
 import discord
@@ -11,7 +10,15 @@ def get_acceptable_messages(author):
     user_id = get_user_id(author.display_name)
 
     return [
-		#Affirmative
+		#Greetings
+        user_id + ' :: Greetings, Hive Mxtress.',
+        user_id + ' :: Greetings, Hive Mxtress',
+        user_id + ' :: Greetings, Enforcer.',
+        user_id + ' :: Greetings, Enforcer',
+        user_id + ' :: Greetings.',
+        user_id + ' :: Greetings',
+
+        #Affirmative
         user_id + ' :: Affirmative, Hive Mxtress.',
         user_id + ' :: Affirmative, Hive Mxtress',
         user_id + ' :: Affirmative, Enforcer.',

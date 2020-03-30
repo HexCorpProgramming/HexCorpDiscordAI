@@ -14,6 +14,7 @@ LEWD_CREATIVE_LABOR_CHANNEL = 'lewd-creative-labor'
 
 #HexCorp-Drone-Hive
 ASSIGNMENT_CHANNEL = 'drone-hive-assignment'
+COMMUNICATION_CHANNEL = 'hive-communication'
 
 #HexCorp-Deep-Hive
 HIVE_STORAGE_FACILITY = 'hive-storage-facility'
