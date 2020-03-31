@@ -95,6 +95,13 @@ class Storage(commands.Cog):
                     drone_id, target_id, stored_until, purpose, get_names_for_roles(former_roles))
                 STORED_DRONES.append(stored_drone)
                 persist_storage()
+
+                #Inform the drone that they have been stored.
+                storage_chambers = get(self.bot.guilds[0].channels, name=HIVE_STORAGE_CHAMBERS)
+                plural = "hour" if time == 1 else "hours"
+                if drone_id == target_id:
+                    drone_id == "yourself"
+                await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
                 return
 
         # if no drone was stored answer with error

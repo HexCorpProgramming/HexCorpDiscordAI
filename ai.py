@@ -7,7 +7,7 @@ import emote
 import sys
 import drone_mode
 
-bot = discord.ext.commands.Bot('')
+bot = discord.ext.commands.Bot(command_prefix = '', case_insensitive = True)
 
 # register Cogs
 bot.add_cog(join.Join(bot))
