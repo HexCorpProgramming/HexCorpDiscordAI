@@ -4,6 +4,7 @@ from discord.utils import get
 import discord
 import messages
 from roles import HIVE_MXTRESS, DRONE_MODE
+from channels import HIVE_STORAGE_FACILITY
 import re
 
 def get_acceptable_messages(author):
@@ -90,7 +91,7 @@ class Drone_Mode(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         #If the message is written by a drone mode drone, and the message is NOT a valid message, delete it.
-        if(has_role(message.author, DRONE_MODE)):
+        if(has_role(message.author, DRONE_MODE) and message.channel.name is not HIVE_STORAGE_FACILITY):
             if(message.content not in get_acceptable_messages(message.author)):
                 await message.delete()
 
