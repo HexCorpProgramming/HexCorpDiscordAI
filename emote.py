@@ -66,6 +66,7 @@ class Emote(commands.Cog):
                     if get(self.bot.emojis, name=emoji_name) != None: #If a valid emoji has been found, append it.
                         message_to_output += str(get(self.bot.emojis, name=emoji_name))
                 print("Emote cog: Sending message of length [" + str(len(message_to_output)) + "] and content " + message_to_output)
-                await context.send("> " + message_to_output)
+                if len(message_to_output) != 0:
+                    await context.send("> " + message_to_output)
             else:
                 await context.send("That message is too long.")
