@@ -91,7 +91,7 @@ class Drone_Mode(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         #If the message is written by a drone mode drone, and the message is NOT a valid message, delete it.
-        if(has_role(message.author, DRONE_MODE) and message.channel.name is not HIVE_STORAGE_FACILITY):
+        if(has_role(message.author, DRONE_MODE) and message.channel.name != HIVE_STORAGE_FACILITY):
             if(message.content not in get_acceptable_messages(message.author)):
                 await message.delete()
 
