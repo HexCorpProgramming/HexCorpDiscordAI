@@ -2,6 +2,7 @@ from discord.ext import commands
 from discord.utils import get
 import discord
 import messages
+import re
 from channels import TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, MINECRAFT_DIRECTION_CHANNEL
 from roles import DRONE_MODE, has_role
 
@@ -32,6 +33,9 @@ def message_is_an_acceptable_length(message):
         (message.count(",") * ADDTL_COMMA_LENGTH)
         )
 
+def clean_message(message):
+    return re.sub(r'<:\w*:\d*>', '', message) #Removes custom emojis (<:name:id>)
+
 class Emote(commands.Cog):
 
     def __init__(self,bot):
@@ -44,13 +48,13 @@ class Emote(commands.Cog):
     @commands.command()
     async def emote(self, context):
         if context.message.channel.name in acceptable_channels and not has_role(context.message.author, DRONE_MODE):
-            if message_is_an_acceptable_length(context.message.content[6:]):
-
-                message_to_convert = context.message.content[6:].lower() #Strips away the "emote " part of the message.
+            cleaned_message = clean_message(context.message.content[6:].lower())
+            if message_is_an_acceptable_length(cleaned_message):
+                
                 message_to_output = ""
                 colon_found = False
 
-                for character in message_to_convert:
+                for character in cleaned_message:
                     emoji_name = "" #Reset emoji name.
 
                     if character in valid_characters:
