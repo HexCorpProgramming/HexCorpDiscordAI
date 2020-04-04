@@ -58,10 +58,6 @@ HIVE_MXTRESS_SPECIFIC_RESPONSES = {
 }
 
 
-def has_role(member: discord.Member, role: str) -> bool:
-    return get(member.roles, name=role) is not None
-
-
 def strip_recipient(message: str) -> str:
     '''
     Strip the recipient at the beginning of a received message.
@@ -83,12 +79,14 @@ class Respond(commands.Cog):
             return
 
         # different roles have different reponses
-        if has_role(message.author, roles.HIVE_MXTRESS):
+        if roles.has_role(message.author, roles.HIVE_MXTRESS):
             if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
                 await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
             else:
                 await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES)
-        elif has_role(message.author, roles.ASSOCIATE):
+        elif roles.has_role(message.author, roles.ASSOCIATE):
             await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
-        elif has_role(message.author, roles.DRONE):
+        elif roles.has_role(message.author, roles.DRONE_MODE):
+            return
+        elif roles.has_role(message.author, roles.DRONE):
             await messages.answer(message.channel, message.author, DRONE_RESPONSES)

@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed 
 - DroneMode does not delete messages in the storage facilities anymore
 - Emote command removes custom emojis from the message
+- drones in DroneMode do not get a response when asking the AI a question anympore
 
 ## [0.4.1.0] - 2020-03-31
 ### Changed
