@@ -6,6 +6,8 @@ import storage
 import emote
 import sys
 import drone_mode
+import toggle_drone_mode
+import channels
 from roles import has_any_role
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
@@ -15,11 +17,12 @@ MODULES = [
     join.Join(bot),
     assign.Assign(bot),
     respond.Respond(bot),
-    emote.Emote(bot)
+    emote.Emote(bot),
+    drone_mode.Drone_Mode(bot),
+    toggle_drone_mode.Toggle_Drone_Mode(bot)
 ]
 
 # register Cogs
-# bot.add_cog(drone_mode.Drone_Mode(bot))
 # bot.add_cog(storage.Storage(bot))
 
 
@@ -30,7 +33,7 @@ async def on_message(message: discord.Message):
         return
 
     for module in MODULES:
-        if message.channel.name in module.channels and has_any_role(message.author, module.roles_whitelist) and not has_any_role(message.author, module.roles_blacklist):
+        if (channels.EVERYWHERE in module.channels or message.channel.name in module.channels) and has_any_role(message.author, module.roles_whitelist) and not has_any_role(message.author, module.roles_blacklist):
             for listener in module.on_message:
                 # when a listener returns True, event has been handled
                 if await listener(message):
@@ -44,6 +47,7 @@ async def on_member_join(member: discord.Member):
     for module in MODULES:
         if module.on_member_join is not None:
             await module.on_member_join(member)
+
 
 @bot.event
 async def on_ready():
