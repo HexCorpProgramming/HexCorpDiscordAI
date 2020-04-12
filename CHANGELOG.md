@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0.1]
+### Fixed
+- fixed a compatibility issue with asyncio and python 3.6
+
 ## [1.0.0.0]
 ### Changed
 - changed the basic architecture and how messages are handled; as a consequence the AI will not react twice to messages and it is a lot easier to control which roles have access to which functions of the AI
@@ -81,7 +85,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - new members get roles necessary to interact with the server when they acknowledge the server rules by posting a specific message
 
 
-[Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/0.4.1.0...HEAD
+[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.0.0.1...HEAD
+[1.0.0.1]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.0.0.0...1.0.0.1
+[1.0.0.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/0.4.1.0...1.0.0.0
 [0.4.1.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/0.4.0.4...0.4.1.0
 [0.4.0.4]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/0.4.0.3...0.4.0.4
 [0.4.0.3]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/0.4.0.2...0.4.0.3

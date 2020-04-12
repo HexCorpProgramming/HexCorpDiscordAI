@@ -53,6 +53,6 @@ async def on_ready():
     for module in MODULES:
         for listener in module.on_ready:
             # start these concurrently, so they do not block each other
-            asyncio.create_task(listener())
+            asyncio.ensure_future(listener())
 
 bot.run(sys.argv[1])
