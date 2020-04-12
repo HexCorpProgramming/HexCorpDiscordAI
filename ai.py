@@ -13,7 +13,8 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 # register modules
 MODULES = [
     join.Join(bot),
-    assign.Assign(bot)
+    assign.Assign(bot),
+    respond.Respond(bot)
 ]
 
 # register Cogs
