@@ -20,24 +20,24 @@ CONSENT_MESSAGE = 'I would like to join the HexCorp server. I can confirm I have
 CONSENT_REJECT = 'Invalid request. Please try again.'
 
 
-class Join(commands.Cog):
+class Join():
     ''' This Cog listens for a new member joining the channel and assigns them the role Initiate. '''
 
     def __init__(self, bot):
         self.bot = bot
+        self.channels = [CONSENT_CHANNEL]
+        self.roles_whitelist = [roles.INITIATE]
+        self.roles_blacklist = []
+        self.on_message = [self.consent]
+        self.on_ready = []
 
-    @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         '''On join, Give initiate role'''
         initiate_role = get(member.guild.roles, name=roles.INITIATE)
         await member.add_roles(initiate_role)
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def consent(self, message: discord.Message) -> bool:
         '''On consent message, remove initiate role and give associate'''
-        if message.author == self.bot.user or message.channel.name != CONSENT_CHANNEL:
-            return
-
         if message.content == CONSENT_MESSAGE:
             initiate_role = get(message.guild.roles, name=roles.INITIATE)
             associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
@@ -50,3 +50,5 @@ class Join(commands.Cog):
             await messages.answer(registry_channel, message.author, CONSENT_SUCCESS)
         else:
             await messages.delete_request(message, CONSENT_REJECT)
+
+        return True

@@ -43,7 +43,7 @@ class StoredDrone():
         self.roles = roles
 
 
-class Storage(commands.Cog):
+class Storage():
     '''
     This Cog manages the deep hive storage, where drones can be stored for recharging or after misbehaving.
     '''
@@ -52,22 +52,23 @@ class Storage(commands.Cog):
         self.bot = bot
         self.reporter_started = False
         self.release_started = False
+        self.channels = [HIVE_STORAGE_FACILITY]
+        self.roles_whitelist = [roles.HIVE_MXTRESS, roles.DRONE]
+        self.roles_blacklist = []
+        self.on_message = [self.release, self.store]
+        self.on_ready = [self.load_storage, self.report_storage, self.release_timed]
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def store(self, message: discord.Message):
         '''
         Process posted messages.
         '''
         stored_role = get(message.guild.roles, name=roles.STORED)
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
-        if message.author == self.bot.user or message.channel.name != HIVE_STORAGE_FACILITY:
-            return
-
         # parse message
         if not re.match(MESSAGE_FORMAT, message.content):
             await messages.delete_request(message, REJECT_MESSAGE)
-            return
+            return True
 
         [(drone_id, target_id, time, purpose)] = re.findall(
             MESSAGE_FORMAT, message.content)
@@ -76,12 +77,12 @@ class Storage(commands.Cog):
         for stored in STORED_DRONES:
             if stored.target_id == target_id:
                 await messages.delete_request(message, f'{target_id} is already in storage.')
-                return
+                return True
 
         # validate time
         if not 0 < int(time) < 24:
             await messages.delete_request(message, f'{time} is not between 0 and 24.')
-            return
+            return True
 
         # find target drone and store it
         for member in message.guild.members:
@@ -102,12 +103,12 @@ class Storage(commands.Cog):
                 if drone_id == target_id:
                     drone_id == "yourself"
                 await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
-                return
+                return True
 
         # if no drone was stored answer with error
         await messages.delete_request(message, f'Drone with ID {target_id} could not be found.')
+        return True
 
-    @commands.Cog.listener(name='on_ready')
     async def report_storage(self):
         '''
         Report on currently stored drones.
@@ -132,7 +133,6 @@ class Storage(commands.Cog):
                         datetime.fromtimestamp(stored.release_time))
                     await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
-    @commands.Cog.listener(name='on_ready')
     async def release_timed(self):
         '''
         Relase stored drones when the timer is up.
@@ -164,7 +164,6 @@ class Storage(commands.Cog):
             STORED_DRONES.extend(still_stored)
             persist_storage()
 
-    @commands.Cog.listener(name='on_ready')
     async def load_storage(self):
         '''
         Load storage list from disk.
@@ -178,24 +177,28 @@ class Storage(commands.Cog):
             STORED_DRONES.extend([StoredDrone(**deserialized)
                                   for deserialized in json.load(storage_file)])
 
-    @commands.command()
-    async def release(self, context, *, member: discord.Member):
+    async def release(self, message: discord.Message):
         '''
         Relase a drone from storage on command.
         '''
-        if not roles.has_role(context.message.author, roles.HIVE_MXTRESS):
-            return
+        if not message.content.lower().startswith('release'):
+            return False
 
-        stored_role = get(context.guild.roles, name=roles.STORED)
+        if not roles.has_role(message.author, roles.HIVE_MXTRESS):
+            # TODO: maybe answer with a message
+            return False
+
+        stored_role = get(message.guild.roles, name=roles.STORED)
         # find stored drone
+        member = message.mentions[0]
         to_release_id = find_id(member.display_name)
         for drone in STORED_DRONES:
             if drone.target_id == to_release_id:
                 await member.remove_roles(stored_role)
-                await member.add_roles(*get_roles_for_names(context.guild, drone.roles))
+                await member.add_roles(*get_roles_for_names(message.guild, drone.roles))
                 STORED_DRONES.remove(drone)
                 persist_storage()
-                return
+                return True
 
 
 def find_id(name: str) -> str:

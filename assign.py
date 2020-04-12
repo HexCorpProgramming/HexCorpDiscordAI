@@ -39,18 +39,19 @@ def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role
     return relevant_ids + RESERVED_IDS
 
 
-class Assign(commands.Cog):
+class Assign():
     ''' This Cog listens for an Associate to submit to the Drone Hive and processes them accordingly. '''
 
     def __init__(self, bot):
         self.bot = bot
+        self.channels = [ASSIGNMENT_CHANNEL]
+        self.roles_whitelist = [roles.ASSOCIATE]
+        self.roles_blacklist = []
+        self.on_message = [self.assign]
+        self.on_ready = []
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author == self.bot.user or message.channel.name != ASSIGNMENT_CHANNEL: # message from bot or not in correct channel return
-            return
-
-        #if the message is correct for being added, yay! if not, delete the message and let them know its bad
+    async def assign(self, message: discord.Message):
+        # if the message is correct for being added, yay! if not, delete the message and let them know its bad
         if message.content == ASSIGNMENT_MESSAGE:
             associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
             drone_role = get(message.guild.roles, name=roles.DRONE)
@@ -80,3 +81,5 @@ class Assign(commands.Cog):
             await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
             await messages.delete_request(message, ASSIGNMENT_REJECT)
+
+        return True

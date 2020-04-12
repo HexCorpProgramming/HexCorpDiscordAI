@@ -18,3 +18,6 @@ ASSIGNMENT_CHANNEL = 'drone-hive-assignment'
 #HexCorp-Deep-Hive
 HIVE_STORAGE_FACILITY = 'hive-storage-facility'
 HIVE_STORAGE_CHAMBERS = 'hive-storage-chambers'
+
+# meta channel everywhere
+EVERYWHERE = 'everywhere'
