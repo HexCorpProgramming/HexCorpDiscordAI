@@ -8,6 +8,7 @@ import sys
 import drone_mode
 import toggle_drone_mode
 import channels
+import asyncio
 from roles import has_any_role
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
@@ -19,11 +20,9 @@ MODULES = [
     respond.Respond(bot),
     emote.Emote(bot),
     drone_mode.Drone_Mode(bot),
-    toggle_drone_mode.Toggle_Drone_Mode(bot)
+    toggle_drone_mode.Toggle_Drone_Mode(bot),
+    storage.Storage(bot)
 ]
-
-# register Cogs
-# bot.add_cog(storage.Storage(bot))
 
 
 @bot.event
@@ -53,6 +52,7 @@ async def on_member_join(member: discord.Member):
 async def on_ready():
     for module in MODULES:
         for listener in module.on_ready:
-            await listener()
+            # start these concurrently, so they do not block each other
+            asyncio.create_task(listener())
 
 bot.run(sys.argv[1])
