@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.0.0.0]
 ### Changed
 - changed the basic architecture and how messages are handled; as a consequence the AI will not react twice to messages and it is a lot easier to control which roles have access to which functions of the AI
 
