@@ -45,7 +45,8 @@ class Assign():
     def __init__(self, bot):
         self.bot = bot
         self.channels = [ASSIGNMENT_CHANNEL]
-        self.roles = [roles.ASSOCIATE]
+        self.roles_whitelist = [roles.ASSOCIATE]
+        self.roles_blacklist = []
         self.on_message = [self.assign]
 
     async def assign(self, message: discord.Message):

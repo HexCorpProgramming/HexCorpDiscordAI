@@ -26,7 +26,8 @@ class Join():
     def __init__(self, bot):
         self.bot = bot
         self.channels = [CONSENT_CHANNEL]
-        self.roles = [roles.INITIATE]
+        self.roles_whitelist = [roles.INITIATE]
+        self.roles_blacklist = []
         self.on_message = [self.consent]
 
     async def on_member_join(self, member: discord.Member):
