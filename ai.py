@@ -19,7 +19,6 @@ MODULES = [
 ]
 
 # register Cogs
-# bot.add_cog(emote.Emote(bot))
 # bot.add_cog(drone_mode.Drone_Mode(bot))
 # bot.add_cog(storage.Storage(bot))
 

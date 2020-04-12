@@ -52,6 +52,9 @@ class Emote():
         print("Emote cog online.")
 
     async def emote(self, message: discord.Message):
+        if not message.content.lower().startswith('emote '):
+            return False
+
         cleaned_message = clean_message(message.content[6:].lower())
         if message_is_an_acceptable_length(cleaned_message):
 
@@ -83,3 +86,5 @@ class Emote():
                 await message.channel.send("> " + message_to_output)
         else:
             await message.channel.send("That message is too long.")
+
+        return True
