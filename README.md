@@ -23,6 +23,7 @@ in the project directory.
 To update the current production instance of the AI you have to:
 1. kill the running process
 2. navigate into the project repo
-3. `git pull`
-4. navigate back up
-5. `sh start_ai.sh`
+3. `git fetch`
+4. `git checkout <NEW_VERSION>`
+5. navigate back up
+6. `sh start_ai.sh`
