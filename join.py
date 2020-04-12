@@ -29,6 +29,7 @@ class Join():
         self.roles_whitelist = [roles.INITIATE]
         self.roles_blacklist = []
         self.on_message = [self.consent]
+        self.on_ready = []
 
     async def on_member_join(self, member: discord.Member):
         '''On join, Give initiate role'''

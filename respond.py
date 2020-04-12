@@ -74,6 +74,7 @@ class Respond():
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.question]
+        self.on_ready = []
 
     def is_question(self, message: discord.Message):
         return self.bot.user.mentioned_in(message) and message.content.endswith('?')

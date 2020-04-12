@@ -14,11 +14,11 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 MODULES = [
     join.Join(bot),
     assign.Assign(bot),
-    respond.Respond(bot)
+    respond.Respond(bot),
+    emote.Emote(bot)
 ]
 
 # register Cogs
-# bot.add_cog(respond.Respond(bot))
 # bot.add_cog(emote.Emote(bot))
 # bot.add_cog(drone_mode.Drone_Mode(bot))
 # bot.add_cog(storage.Storage(bot))
@@ -45,5 +45,11 @@ async def on_member_join(member: discord.Member):
     for module in MODULES:
         if module.on_member_join is not None:
             await module.on_member_join(member)
+
+@bot.event
+async def on_ready():
+    for module in MODULES:
+        for listener in module.on_ready:
+            await listener()
 
 bot.run(sys.argv[1])

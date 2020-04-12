@@ -48,6 +48,7 @@ class Assign():
         self.roles_whitelist = [roles.ASSOCIATE]
         self.roles_blacklist = []
         self.on_message = [self.assign]
+        self.on_ready = []
 
     async def assign(self, message: discord.Message):
         # if the message is correct for being added, yay! if not, delete the message and let them know its bad
