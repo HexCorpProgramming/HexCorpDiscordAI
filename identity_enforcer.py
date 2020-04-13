@@ -17,7 +17,7 @@ class Identity_Enforcer():
         self.DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
 
     async def send_webhook(self, message: discord.Message, webhook: discord.Webhook):
-        if(has_role(message.author, ENFORCER_DRONE)):
+        if has_role(message.author, ENFORCER_DRONE):
             await webhook.send(message.content, username="⬢-Drone #"+get_id(message.author.display_name), avatar_url=self.ENFORCER_AVATAR)
         else:
             await webhook.send(message.content, username="⬡-Drone #"+get_id(message.author.display_name), avatar_url=self.DRONE_AVATAR)
