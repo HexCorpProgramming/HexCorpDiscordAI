@@ -103,11 +103,11 @@ class Storage():
                 if drone_id == target_id:
                     drone_id == "yourself"
                 await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
-                return True
+                return False
 
         # if no drone was stored answer with error
         await messages.delete_request(message, f'Drone with ID {target_id} could not be found.')
-        return True
+        return False
 
     async def report_storage(self):
         '''
