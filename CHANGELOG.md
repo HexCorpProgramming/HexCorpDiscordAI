@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.0.1]
+### Fixed
+- fixed an error when the AI tried to react to messages created by webhooks
+
 ## [1.1.0.0]
 ### Added
 - messages by drones are now properly formatted thanks to the power of webhooks
