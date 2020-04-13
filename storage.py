@@ -12,7 +12,7 @@ from discord.utils import get
 
 import messages
 import roles
-from channels import HIVE_STORAGE_FACILITY, HIVE_STORAGE_CHAMBERS
+from channels import STORAGE_FACILITY, STORAGE_CHAMBERS
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -52,7 +52,7 @@ class Storage():
         self.bot = bot
         self.reporter_started = False
         self.release_started = False
-        self.channels = [HIVE_STORAGE_FACILITY]
+        self.channels = [STORAGE_FACILITY]
         self.roles_whitelist = [roles.HIVE_MXTRESS, roles.DRONE]
         self.roles_blacklist = []
         self.on_message = [self.release, self.store]
@@ -98,7 +98,7 @@ class Storage():
                 persist_storage()
 
                 #Inform the drone that they have been stored.
-                storage_chambers = get(self.bot.guilds[0].channels, name=HIVE_STORAGE_CHAMBERS)
+                storage_chambers = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
                 plural = "hour" if time == 1 else "hours"
                 if drone_id == target_id:
                     drone_id == "yourself"
@@ -119,7 +119,7 @@ class Storage():
 
         self.reporter_started = True
         storage_channel = get(
-            self.bot.guilds[0].channels, name=HIVE_STORAGE_CHAMBERS)
+            self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
         while True:
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(REPORT_INTERVAL_SECONDS)

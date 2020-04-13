@@ -9,6 +9,7 @@ import drone_mode
 import toggle_drone_mode
 import channels
 import asyncio
+import identity_enforcer
 from roles import has_any_role
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
@@ -16,10 +17,11 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 # register modules
 MODULES = [
     join.Join(bot),
+    drone_mode.Drone_Mode(bot),
+    identity_enforcer.Identity_Enforcer(bot),
     assign.Assign(bot),
     respond.Respond(bot),
     emote.Emote(bot),
-    drone_mode.Drone_Mode(bot),
     toggle_drone_mode.Toggle_Drone_Mode(bot),
     storage.Storage(bot)
 ]
@@ -37,8 +39,6 @@ async def on_message(message: discord.Message):
                 # when a listener returns True, event has been handled
                 if await listener(message):
                     return
-
-    await bot.process_commands(message)
 
 
 @bot.event

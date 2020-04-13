@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord.utils import get
 import discord
 from roles import HIVE_MXTRESS, DRONE_MODE, has_role
-from channels import HIVE_STORAGE_FACILITY, EVERYWHERE
+from channels import EVERYWHERE
 
 
 class Toggle_Drone_Mode():

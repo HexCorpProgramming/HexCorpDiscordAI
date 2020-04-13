@@ -3,13 +3,14 @@ from discord.utils import get
 import discord
 import messages
 from roles import HIVE_MXTRESS, DRONE_MODE, has_role
-from channels import HIVE_STORAGE_FACILITY, EVERYWHERE
+from channels import STORAGE_FACILITY, EVERYWHERE
+from bot_utils import get_id
 import re
 
 
 def get_acceptable_messages(author):
 
-    user_id = get_user_id(author.display_name)
+    user_id = get_id(author.display_name)
 
     return [
         # Affirmative
@@ -72,12 +73,6 @@ def get_acceptable_messages(author):
         user_id + ' :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
     ]
 
-
-def get_user_id(username):
-    drone_id = re.search(r"\d{4}", username).group()
-    return drone_id if drone_id is not None else 0000
-
-
 class Drone_Mode():
 
     def __init__(self, bot):
@@ -94,7 +89,7 @@ class Drone_Mode():
     async def post(self, message: discord.Message):
         # If the message is written by a drone mode drone, and the message is NOT a valid message, delete it.
         # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
-        if message.channel.name != HIVE_STORAGE_FACILITY:
+        if message.channel.name != STORAGE_FACILITY:
             if message.content not in get_acceptable_messages(message.author):
                 await message.delete()
                 return True
