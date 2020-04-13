@@ -23,13 +23,11 @@ class Identity_Enforcer():
             await webhook.send(message.content, username="⬡-Drone #"+get_id(message.author.display_name), avatar_url=self.DRONE_AVATAR)
 
     async def enforce_identity(self, message: discord.Message):
-        webhooks = await message.guild.webhooks()
+        webhooks = await message.channel.webhooks()
+        if(len(webhooks) == 0):
+            webhooks = [await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel.")]
         await message.delete()
-        for webhook in webhooks:
-            if webhook.channel == message.channel:
-                await self.send_webhook(message, webhook)
-                return False
-        await self.send_webhook(message, await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel."))
+        await self.send_webhook(message, webhooks[0])
         return False
     
     async def report_online(self):
