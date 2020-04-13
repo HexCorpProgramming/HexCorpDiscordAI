@@ -29,8 +29,8 @@ MODULES = [
 
 @bot.event
 async def on_message(message: discord.Message):
-    # ignore all messages by the bot
-    if message.author == bot.user:
+    # ignore all messages by any bot (AI Mxtress and webhooks)
+    if message.author.bot:
         return
 
     for module in MODULES:
