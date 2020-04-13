@@ -44,8 +44,11 @@ async def on_message(message: discord.Message):
 @bot.event
 async def on_member_join(member: discord.Member):
     for module in MODULES:
-        if module.on_member_join is not None:
+        try:
             await module.on_member_join(member)
+        except AttributeError:
+            # do not raise an error, if this is not defined
+            pass
 
 
 @bot.event
