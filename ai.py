@@ -18,8 +18,8 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 MODULES = [
     join.Join(bot),
     drone_mode.Drone_Mode(bot),
-    storage.Storage(bot),
     identity_enforcer.Identity_Enforcer(bot),
+    storage.Storage(bot),
     assign.Assign(bot),
     respond.Respond(bot),
     emote.Emote(bot),
@@ -31,14 +31,17 @@ MODULES = [
 async def on_message(message: discord.Message):
     # ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
+        print("Ignoring bot message.")
         return
-
     for module in MODULES:
         if (channels.EVERYWHERE in module.channels or message.channel.name in module.channels) and has_any_role(message.author, module.roles_whitelist) and not has_any_role(message.author, module.roles_blacklist):
             for listener in module.on_message:
                 # when a listener returns True, event has been handled
+                print("Executing listener: " + str(listener) + " for message: [" + message.content + "] in server " + message.guild.name)
                 if await listener(message):
+                    print("Listener returned true. Terminating early.")
                     return
+    print("Module stack execution complete.")
 
 
 @bot.event
@@ -49,7 +52,6 @@ async def on_member_join(member: discord.Member):
         except AttributeError:
             # do not raise an error, if this is not defined
             pass
-
 
 @bot.event
 async def on_ready():
