@@ -107,7 +107,7 @@ class Storage():
 
         # if no drone was stored answer with error
         await messages.delete_request(message, f'Drone with ID {target_id} could not be found.')
-        return False
+        return True
 
     async def report_storage(self):
         '''
@@ -198,7 +198,9 @@ class Storage():
                 await member.add_roles(*get_roles_for_names(message.guild, drone.roles))
                 STORED_DRONES.remove(drone)
                 persist_storage()
+                print("Drone released from storage.")
                 return True
+        return True
 
 
 def find_id(name: str) -> str:
