@@ -18,12 +18,12 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 MODULES = [
     join.Join(bot),
     drone_mode.Drone_Mode(bot),
+    storage.Storage(bot),
     identity_enforcer.Identity_Enforcer(bot),
     assign.Assign(bot),
     respond.Respond(bot),
     emote.Emote(bot),
     toggle_drone_mode.Toggle_Drone_Mode(bot),
-    storage.Storage(bot)
 ]
 
 
