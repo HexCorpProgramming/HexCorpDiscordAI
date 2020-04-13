@@ -10,7 +10,7 @@ class Identity_Enforcer():
         self.bot = bot
         self.on_message = [self.enforce_identity]
         self.on_ready = [self.report_online]
-        self.channels = [] + DRONE_HIVE_CHANNELS
+        self.channels = DRONE_HIVE_CHANNELS
         self.roles_whitelist = [DRONE, ENFORCER_DRONE]
         self.roles_blacklist = []
         self.ENFORCER_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799510064-SOAGMV8AOH0VEMXDPDPE/ke17ZwdGBToddI8pDm48kDaNRrNi77yKIgWxrt8GYAFZw-zPPgdn4jUwVcJE1ZvWhcwhEtWJXoshNdA9f1qD7WT60LcluGrsDtzPCYop9hMAtVe_QtwQD93aIXqwqJR_bmnO89YJVTj9tmrodtnPlQ/Enforcer_Drone.png"
