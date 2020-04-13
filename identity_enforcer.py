@@ -24,7 +24,7 @@ class Identity_Enforcer():
 
     async def enforce_identity(self, message: discord.Message):
         webhooks = await message.channel.webhooks()
-        if(len(webhooks) == 0):
+        if len(webhooks) == 0:
             webhooks = [await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel.")]
         await message.delete()
         await self.send_webhook(message, webhooks[0])
