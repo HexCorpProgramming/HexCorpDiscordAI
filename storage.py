@@ -67,7 +67,7 @@ class Storage():
 
         # parse message
         if not re.match(MESSAGE_FORMAT, message.content):
-            await messages.delete_request(message, REJECT_MESSAGE)
+            await message.channel.send(REJECT_MESSAGE)
             return True
 
         [(drone_id, target_id, time, purpose)] = re.findall(
@@ -76,12 +76,12 @@ class Storage():
         # check if drone is already in storage
         for stored in STORED_DRONES:
             if stored.target_id == target_id:
-                await messages.delete_request(message, f'{target_id} is already in storage.')
+                await message.channel.send(f'{target_id} is already in storage.')
                 return True
 
         # validate time
         if not 0 < int(time) < 24:
-            await messages.delete_request(message, f'{time} is not between 0 and 24.')
+            await message.channel.send(f'{time} is not between 0 and 24.')
             return True
 
         # find target drone and store it
@@ -106,7 +106,7 @@ class Storage():
                 return False
 
         # if no drone was stored answer with error
-        await messages.delete_request(message, f'Drone with ID {target_id} could not be found.')
+        await message.channel.send(f'Drone with ID {target_id} could not be found.')
         return True
 
     async def report_storage(self):
