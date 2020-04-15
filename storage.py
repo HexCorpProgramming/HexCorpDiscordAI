@@ -99,7 +99,7 @@ class Storage():
 
                 #Inform the drone that they have been stored.
                 storage_chambers = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
-                plural = "hour" if time == 1 else "hours"
+                plural = "hour" if int(time) == 1 else "hours"
                 if drone_id == target_id:
                     drone_id == "yourself"
                 await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
