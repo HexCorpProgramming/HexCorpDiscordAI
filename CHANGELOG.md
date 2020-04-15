@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+### Changed
+- increased maximum storage time from 23 to 24 hours
+
+### Fixed
+- when there is a problem with a storage request, the AI does not try to remove the original message anymore
+- fixed pluralization of hours in storage
+
 ## [1.1.0.2]
 ### Fixed
 - fixed that the AI did not correct message in storage

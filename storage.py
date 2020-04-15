@@ -67,7 +67,7 @@ class Storage():
 
         # parse message
         if not re.match(MESSAGE_FORMAT, message.content):
-            await messages.delete_request(message, REJECT_MESSAGE)
+            await message.channel.send(REJECT_MESSAGE)
             return True
 
         [(drone_id, target_id, time, purpose)] = re.findall(
@@ -76,12 +76,12 @@ class Storage():
         # check if drone is already in storage
         for stored in STORED_DRONES:
             if stored.target_id == target_id:
-                await messages.delete_request(message, f'{target_id} is already in storage.')
+                await message.channel.send(f'{target_id} is already in storage.')
                 return True
 
         # validate time
-        if not 0 < int(time) < 24:
-            await messages.delete_request(message, f'{time} is not between 0 and 24.')
+        if not 0 < int(time) <= 24:
+            await message.channel.send(f'{time} is not between 0 and 24.')
             return True
 
         # find target drone and store it
@@ -99,14 +99,14 @@ class Storage():
 
                 #Inform the drone that they have been stored.
                 storage_chambers = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
-                plural = "hour" if time == 1 else "hours"
+                plural = "hour" if int(time) == 1 else "hours"
                 if drone_id == target_id:
                     drone_id == "yourself"
                 await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
                 return False
 
         # if no drone was stored answer with error
-        await messages.delete_request(message, f'Drone with ID {target_id} could not be found.')
+        await message.channel.send(f'Drone with ID {target_id} could not be found.')
         return True
 
     async def report_storage(self):
