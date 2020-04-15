@@ -80,7 +80,7 @@ class Storage():
                 return True
 
         # validate time
-        if not 0 < int(time) < 24:
+        if not 0 < int(time) <= 24:
             await message.channel.send(f'{time} is not between 0 and 24.')
             return True
 
