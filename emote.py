@@ -37,12 +37,13 @@ class Emote():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [TRANSMISSIONS_CHANNEL,
+        self.channels_whitelist = [TRANSMISSIONS_CHANNEL,
                          LEWD_TRANSMISSIONS_CHANNEL,
                          CREATIVE_LABOR_CHANNEL,
                          LEWD_CREATIVE_LABOR_CHANNEL,
                          GAMER_DRONE_LOBBY_CHANNEL,
                          MINECRAFT_DIRECTION_CHANNEL]
+        self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.emote]

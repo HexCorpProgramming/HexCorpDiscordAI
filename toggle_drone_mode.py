@@ -9,7 +9,8 @@ class Toggle_Drone_Mode():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [EVERYWHERE]
+        self.channels_whitelist = [EVERYWHERE]
+        self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS]
         self.roles_blacklist = []
         self.on_message = [self.dronemode]
