@@ -78,7 +78,7 @@ class Drone_Mode():
     def __init__(self, bot):
         self.bot = bot
         self.channels_whitelist = [EVERYWHERE]
-        self.channels_blacklist = [DRONE_DEV_CHANNELS]
+        self.channels_blacklist = DRONE_DEV_CHANNELS
         self.roles_whitelist = [DRONE_MODE]
         self.roles_blacklist = []
         self.on_message = [self.post]

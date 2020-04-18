@@ -44,7 +44,8 @@ class Assign():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [ASSIGNMENT_CHANNEL]
+        self.channels_whitelist = [ASSIGNMENT_CHANNEL]
+        self.channels_blacklist = []
         self.roles_whitelist = [roles.ASSOCIATE]
         self.roles_blacklist = []
         self.on_message = [self.assign]

@@ -33,8 +33,11 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         print("Ignoring bot message.")
         return
+
     for module in MODULES:
-        if (channels.EVERYWHERE in module.channels_whitelist or message.channel.name in module.channels_whitelist and message.channel.name not in module.channels_blacklist) and has_any_role(message.author, module.roles_whitelist) and not has_any_role(message.author, module.roles_blacklist):
+        channel_valid = message.channel.name not in module.channels_blacklist and (message.channel.name in module.channels_whitelist or channels.EVERYWHERE in module.channels_whitelist)
+        roles_valid = has_any_role(message.author, module.roles_whitelist) and not has_any_role(message.author, module.roles_blacklist)
+        if channel_valid and roles_valid:
             for listener in module.on_message:
                 # when a listener returns True, event has been handled
                 print("Executing listener: " + str(listener) + " for message: [" + message.content + "] in server " + message.guild.name)
