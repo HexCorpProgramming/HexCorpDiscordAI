@@ -69,8 +69,9 @@ class Respond():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
+        self.channels_whitelist = [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
                          GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL]
+        self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.question]
