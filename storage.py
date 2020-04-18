@@ -52,7 +52,8 @@ class Storage():
         self.bot = bot
         self.reporter_started = False
         self.release_started = False
-        self.channels = [STORAGE_FACILITY]
+        self.channels_whitelist = [STORAGE_FACILITY]
+        self.channels_blacklist = []
         self.roles_whitelist = [roles.HIVE_MXTRESS, roles.DRONE]
         self.roles_blacklist = []
         self.on_message = [self.release, self.store]

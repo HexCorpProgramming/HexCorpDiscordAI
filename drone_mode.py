@@ -3,7 +3,7 @@ from discord.utils import get
 import discord
 import messages
 from roles import HIVE_MXTRESS, DRONE_MODE, has_role
-from channels import STORAGE_FACILITY, EVERYWHERE
+from channels import STORAGE_FACILITY, EVERYWHERE, DRONE_DEV_CHANNELS
 from bot_utils import get_id
 import re
 
@@ -77,7 +77,8 @@ class Drone_Mode():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [EVERYWHERE]
+        self.channels_whitelist = [EVERYWHERE]
+        self.channels_blacklist = [DRONE_DEV_CHANNELS]
         self.roles_whitelist = [DRONE_MODE]
         self.roles_blacklist = []
         self.on_message = [self.post]

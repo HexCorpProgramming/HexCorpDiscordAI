@@ -27,6 +27,13 @@ DRONESPACE = 'hive-dronespace'
 THRONE_ROOM = 'hive-throne-room'
 REPETITIONS = 'hive-repetitions'
 
+#HexCorp-R&D-Department
+GAME_DEV_GUIDE = 'game-dev-guide'
+GAME_DEV_FEATURES = 'game-dev-features'
+GAME_DEV_COMMS = 'game-dev-comms'
+BOT_DEV_GUIDE = 'bot-dev-guide'
+BOT_DEV_COMMS = 'bot-dev-comms'
+
 #HexCorp-Drone-Hive (Storage)
 STORAGE_FACILITY = 'hive-storage-facility'
 STORAGE_CHAMBERS = 'hive-storage-chambers'
@@ -47,4 +54,12 @@ DRONE_HIVE_CHANNELS = [
     THRONE_ROOM,
     REPETITIONS,
     STORAGE_FACILITY
+]
+
+DRONE_DEV_CHANNELS = [
+    GAME_DEV_GUIDE,
+    GAME_DEV_COMMS,
+    GAME_DEV_FEATURES,
+    BOT_DEV_COMMS,
+    BOT_DEV_GUIDE
 ]
