@@ -25,7 +25,8 @@ class Join():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = [CONSENT_CHANNEL]
+        self.channels_whitelist = [CONSENT_CHANNEL]
+        self.channels_blacklist = []
         self.roles_whitelist = [roles.INITIATE]
         self.roles_blacklist = []
         self.on_message = [self.consent]
