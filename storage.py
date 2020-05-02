@@ -58,6 +58,7 @@ class Storage():
         self.roles_blacklist = []
         self.on_message = [self.release, self.store]
         self.on_ready = [self.load_storage, self.report_storage, self.release_timed]
+        self.help_content = {'name': 'storage', 'value': 'store your favourite drone with `[DRONE ID HERE] :: [TARGET DRONE (can be its own ID) HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]`'}
 
     async def store(self, message: discord.Message):
         '''
@@ -65,6 +66,10 @@ class Storage():
         '''
         stored_role = get(message.guild.roles, name=roles.STORED)
         drone_role = get(message.guild.roles, name=roles.DRONE)
+
+        # ignore help commands
+        if message.content.lower().startswith('help'):
+            return False
 
         # parse message
         if not re.match(MESSAGE_FORMAT, message.content):

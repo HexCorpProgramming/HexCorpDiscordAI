@@ -11,6 +11,7 @@ from respond import Respond
 from storage import Storage
 from emote import Emote
 from assign import Assign
+from ai_help import AI_Help
 #Constants
 from roles import has_any_role
 import channels
@@ -29,6 +30,7 @@ MODULES = [
     Toggle_Speech_Optimization(bot)
 ]
 
+MODULES = MODULES + [AI_Help(bot, MODULES)]
 
 @bot.event
 async def on_message(message: discord.Message):
