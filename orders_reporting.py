@@ -6,7 +6,7 @@ from channels import ORDERS_REPORTING
 from roles import DRONE
 
 ORDERS_FILE_PATH = "data/orders.json"
-ACTIVE_ORDERS = []
+active_orders = []
 
 class Active_Order():
     def __init__(self, drone, protocol, time):
@@ -51,6 +51,8 @@ class Orders_Reporting():
         await message.channel.send(f"Drone {drone_id} activate.")
         await message.channel.send(f"Drone {drone_id} will elaborate on its exact tasks before proceeding with them.")
 
+        active_orders
+
         return False
 
     def persist_storage():
@@ -62,7 +64,7 @@ class Orders_Reporting():
 
     with storage_path.open('w') as storage_file:
         json.dump([vars(stored_drone)
-                   for order in ACTIVE_ORDERS], storage_file)
+                   for order in active_orders], storage_file)
 
     async def load_storage(self):
         '''
@@ -73,8 +75,8 @@ class Orders_Reporting():
             return
 
         with storage_path.open('r') as storage_file:
-            ACTIVE_ORDERS.clear()
-            ACTIVE_ORDERS.extend([StoredDrone(**deserialized)
+            active_orders.clear()
+            active_orders.extend([StoredDrone(**deserialized)
                                   for deserialized in json.load(storage_file)])
 
 
