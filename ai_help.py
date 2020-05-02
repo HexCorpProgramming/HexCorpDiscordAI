@@ -25,7 +25,7 @@ class AI_Help():
         '''
         Compile and send an embed with information about available commands.
         '''
-        if not message.content.lower().startswith('help'):
+        if message.content.lower() != 'help':
             return False
 
         # prepare embed
