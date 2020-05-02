@@ -1,29 +1,32 @@
-import assign
+#Core
 import discord
-import join
-import respond
-import storage
-import emote
 import sys
-import drone_mode
-import toggle_drone_mode
-import channels
 import asyncio
-import identity_enforcer
+#Modules
+from identity_enforcer import Identity_Enforcer
+from speech_optimization import Speech_Optimization
+from toggle_speech_optimization import Toggle_Speech_Optimization
+from join import Join
+from respond import Respond
+from storage import Storage
+from emote import Emote
+from assign import Assign
+#Constants
 from roles import has_any_role
+import channels
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 
 # register modules
 MODULES = [
-    join.Join(bot),
-    drone_mode.Drone_Mode(bot),
-    identity_enforcer.Identity_Enforcer(bot),
-    storage.Storage(bot),
-    assign.Assign(bot),
-    respond.Respond(bot),
-    emote.Emote(bot),
-    toggle_drone_mode.Toggle_Drone_Mode(bot),
+    Join(bot),
+    Speech_Optimization(bot),
+    Identity_Enforcer(bot),
+    Storage(bot),
+    Assign(bot),
+    Respond(bot),
+    Emote(bot),
+    Toggle_Speech_Optimization(bot)
 ]
 
 
