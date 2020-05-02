@@ -1,11 +1,18 @@
 import discord
 import re
 import json
+import time
 from channels import ORDERS_REPORTING
 from roles import DRONE
 
 ORDERS_FILE_PATH = "data/orders.json"
 ACTIVE_ORDERS = []
+
+class Active_Order():
+    def __init__(self, drone, protocol, time):
+        self.drone = drone
+        self.protocol = protocol 
+        self.release_at = datetime.now() + timedelta(minutes=time)
 
 class Orders_Reporting():
 
@@ -21,6 +28,9 @@ class Orders_Reporting():
 
     async def report_online(self):
         print("Orders reporting module online.")
+
+    async def monitor_progress(self):
+
 
     async def order_reported(self, message: discord.Message):
         print("An order has been reported, maybe.")
