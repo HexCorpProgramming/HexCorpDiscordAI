@@ -48,6 +48,7 @@ class Emote():
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.emote]
         self.on_ready = [self.report_online]
+        self.help_content = {'name': 'emote', 'value': 'let the AI say stuff with emotes e.g. `emote uwu`'}
 
     async def report_online(self):
         print("Emote cog online.")
