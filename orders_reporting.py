@@ -26,8 +26,9 @@ def persist_storage():
                 for order in active_orders], storage_file)
 
 class Active_Order():
-    def __init__(self, drone, protocol, duration):
+    def __init__(self, drone, user_id, protocol, duration):
         self.drone = drone
+        self.user_id = user_id
         self.protocol = protocol 
         self.release_at = time.time() + duration
 
@@ -70,22 +71,20 @@ class Orders_Reporting():
 
             #Check active orders every minute.
             await asyncio.sleep(60)
-
             print("Awright wots all dis den.")
-
             still_active = []
-
             for order in active_orders:
                 if order.release_at < time.time():
-                    print("Time to be released.")
-                    await ORDERS_REPORTING_CHANNEL.send(f"Beep boop time for {order.drone} to be finished with the {order.protocol}")
+
+                    #get the drone responsible
+                    user = get(self.bot.guilds[0].members, id=order.user_id)
+                    await ORDERS_REPORTING_CHANNEL.send(f"Beep boop time for {user.mention} to be finished with the {order.protocol}")
                 else:
                     still_active.append(order)
             
             active_orders.clear()
             active_orders.extend(still_active)
             persist_storage()
-
 
     async def order_reported(self, message: discord.Message):
         print("An order has been reported, maybe.")
@@ -104,8 +103,7 @@ class Orders_Reporting():
             return
 
         await message.channel.send(f"Drone {drone_id} activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
-
-        active_orders.append(Active_Order(drone_id, protocol_name, int(protocol_time)))
+        active_orders.append(Active_Order(drone_id, message.author.id, protocol_name, int(protocol_time)))
 
         print("debugdebugdebug")
         print(active_orders)
