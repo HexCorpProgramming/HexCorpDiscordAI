@@ -5,8 +5,8 @@ import respond
 import storage
 import emote
 import sys
-import drone_mode
-import toggle_drone_mode
+import speech_optimization
+import toggle_speech_optimization
 import channels
 import asyncio
 import identity_enforcer
@@ -17,13 +17,13 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 # register modules
 MODULES = [
     join.Join(bot),
-    drone_mode.Drone_Mode(bot),
+    speech_optimization.Speech_Optimization(bot),
     identity_enforcer.Identity_Enforcer(bot),
     storage.Storage(bot),
     assign.Assign(bot),
     respond.Respond(bot),
     emote.Emote(bot),
-    toggle_drone_mode.Toggle_Drone_Mode(bot),
+    toggle_speech_optimization.Toggle_Speech_Optimization(bot),
 ]
 
 

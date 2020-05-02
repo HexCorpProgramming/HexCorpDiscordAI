@@ -85,7 +85,7 @@ class Speech_Optimization():
         self.on_ready = [self.report_online]
 
     async def report_online(self):
-        print("Drone mode module online.")
+        print("Speech optimization module online.")
 
     async def post(self, message: discord.Message):
         # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.

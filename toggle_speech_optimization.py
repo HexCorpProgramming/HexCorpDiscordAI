@@ -5,7 +5,7 @@ from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
 from channels import EVERYWHERE
 
 
-class Toggle_Drone_Mode():
+class Toggle_Speech_Optimization():
 
     def __init__(self, bot):
         self.bot = bot
