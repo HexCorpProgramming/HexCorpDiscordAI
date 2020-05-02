@@ -17,15 +17,19 @@ class Toggle_Speech_Optimization():
         self.on_ready = []
 
     async def dronemode(self, message: discord.Message):
-        if not message.content.lower().startswith('dronemode '):
+
+        print("Drone mode command triggered")
+
+        if not message.content.lower().startswith('optimize '):
+            print("Message doesn't start with what we want.")
             return False
 
         target_drone = message.mentions[0]
         if has_role(target_drone, SPEECH_OPTIMIZATION):
-            await message.channel.send(f"Speech optimization activated for {target_drone.display_name}")
+            await message.channel.send(f"Speech optimization deactivated for {target_drone.display_name}")
             await target_drone.remove_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
         else:
-            await message.channel.send(f"Speech optimization deactivated for {target_drone.display_name}")
+            await message.channel.send(f"Speech optimization activated for {target_drone.display_name}")
             await target_drone.add_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
 
         return True
