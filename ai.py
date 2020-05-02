@@ -11,6 +11,7 @@ from respond import Respond
 from storage import Storage
 from emote import Emote
 from assign import Assign
+from orders_reporting import Orders_Reporting
 #Constants
 from roles import has_any_role
 import channels
@@ -22,6 +23,7 @@ MODULES = [
     Join(bot),
     Speech_Optimization(bot),
     Identity_Enforcer(bot),
+    Orders_Reporting(bot),
     Storage(bot),
     Assign(bot),
     Respond(bot),
