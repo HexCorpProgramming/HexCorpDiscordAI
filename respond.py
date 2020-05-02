@@ -76,6 +76,7 @@ class Respond():
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.question]
         self.on_ready = []
+        self.help_content = {'name': 'respond', 'value': 'ask a question and the AI will answer e.g. `@HexCorp Mxtress AI Are drones cute?`'}
 
     def is_question(self, message: discord.Message):
         return self.bot.user.mentioned_in(message) and message.content.endswith('?')
