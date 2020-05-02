@@ -13,7 +13,8 @@ HIVE_MXTRESS = 'Drone Hive Mxtress'
 
 GAGGED = '⬡-Gagged'
 
-DRONE_MODE = '⬡-DroneMode'
+DRONE_MODE = '⬡-DroneMode' #Deprecated
+SPEECH_OPTIMIZATION = "⬡-Optimized"
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
