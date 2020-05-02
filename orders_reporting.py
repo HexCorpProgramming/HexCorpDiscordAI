@@ -44,20 +44,20 @@ class Orders_Reporting():
 
     def persist_storage():
     '''
-    Write the list of stored drones to hard drive.
+    Write the list of orders to hard drive.
     '''
-    storage_path = Path(STORAGE_FILE_PATH)
+    storage_path = Path(ORDERS_FILE_PATH)
     storage_path.parent.mkdir(parents=True, exist_ok=True)
 
     with storage_path.open('w') as storage_file:
         json.dump([vars(stored_drone)
-                   for stored_drone in STORED_DRONES], storage_file)
+                   for order in ACTIVE_ORDERS], storage_file)
 
     async def load_storage(self):
         '''
-        Load storage list from disk.
+        Load list of orders from disk.
         '''
-        storage_path = Path(STORAGE_FILE_PATH)
+        storage_path = Path(ORDERS_FILE_PATH)
         if not storage_path.exists():
             return
 
