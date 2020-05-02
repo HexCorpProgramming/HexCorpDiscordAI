@@ -2,6 +2,7 @@
 import discord
 import sys
 import asyncio
+import logging
 #Modules
 from identity_enforcer import Identity_Enforcer
 from speech_optimization import Speech_Optimization
@@ -16,6 +17,16 @@ from ai_help import AI_Help
 #Constants
 from roles import has_any_role
 import channels
+
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+LOGGER = logging.getLogger('ai')
+LOGGER.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(filename='ai.log', encoding='utf-8', mode='a')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+
+LOGGER.addHandler(file_handler)
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 
@@ -38,7 +49,7 @@ MODULES = MODULES + [AI_Help(bot, MODULES)]
 async def on_message(message: discord.Message):
     # ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
-        print("Ignoring bot message.")
+        LOGGER.debug('Ignoring bot message.')
         return
 
     for module in MODULES:
@@ -47,11 +58,11 @@ async def on_message(message: discord.Message):
         if channel_valid and roles_valid:
             for listener in module.on_message:
                 # when a listener returns True, event has been handled
-                print("Executing listener: " + str(listener) + " for message: [" + message.content + "] in server " + message.guild.name)
+                LOGGER.debug(f'Executing listener: {str(listener)} for message: [{message.content}] in server {message.guild.name}')
                 if await listener(message):
-                    print("Listener returned true. Terminating early.")
+                    LOGGER.debug('Listener returned true. Terminating early.')
                     return
-    print("Module stack execution complete.")
+    LOGGER.debug('Module stack execution complete.')
 
 
 @bot.event
@@ -69,5 +80,9 @@ async def on_ready():
         for listener in module.on_ready:
             # start these concurrently, so they do not block each other
             asyncio.ensure_future(listener())
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    LOGGER.error(f'Exception encountered while handling message with content [{args[0].content}] in channel [{args[0].channel.name}]', exc_info=True)
 
 bot.run(sys.argv[1])

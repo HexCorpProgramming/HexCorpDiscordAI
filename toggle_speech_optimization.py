@@ -1,9 +1,13 @@
+import logging
+
+import discord
 from discord.ext import commands
 from discord.utils import get
-import discord
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
-from channels import EVERYWHERE
 
+from channels import EVERYWHERE
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
+
+LOGGER = logging.getLogger('ai')
 
 class Toggle_Speech_Optimization():
 
@@ -18,11 +22,10 @@ class Toggle_Speech_Optimization():
         self.help_content = {'name': 'optimize', 'value': 'optimize drone speech patterns; this command can only be used by the Hive Mxtress'}
 
     async def dronemode(self, message: discord.Message):
-
-        print("Drone mode command triggered")
+        LOGGER.debug("Drone mode command triggered")
 
         if not message.content.lower().startswith('optimize '):
-            print("Message doesn't start with what we want.")
+            LOGGER.debug("Message does not match command.")
             return False
 
         target_drone = message.mentions[0]

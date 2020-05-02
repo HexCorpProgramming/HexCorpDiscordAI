@@ -1,8 +1,13 @@
-import discord
+import logging
 import re
+
+import discord
+
+from bot_utils import get_id
 from channels import DRONE_HIVE_CHANNELS
 from roles import DRONE, ENFORCER_DRONE, has_role
-from bot_utils import get_id
+
+LOGGER = logging.getLogger('ai')
 
 class Identity_Enforcer():
 
@@ -32,6 +37,4 @@ class Identity_Enforcer():
         return False
     
     async def report_online(self):
-        print("Identity enforcer online.")
-
-    
+        LOGGER.info("Identity enforcer online.")

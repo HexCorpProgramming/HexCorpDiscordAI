@@ -1,12 +1,16 @@
-from discord.ext import commands
-from discord.utils import get
-import discord
-import messages
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
-from channels import STORAGE_FACILITY, EVERYWHERE, DRONE_DEV_CHANNELS
-from bot_utils import get_id
+import logging
 import re
 
+import discord
+from discord.ext import commands
+from discord.utils import get
+
+import messages
+from bot_utils import get_id
+from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
+
+LOGGER = logging.getLogger('ai')
 
 def get_acceptable_messages(author):
 
@@ -85,7 +89,7 @@ class Speech_Optimization():
         self.on_ready = [self.report_online]
 
     async def report_online(self):
-        print("Speech optimization module online.")
+        LOGGER.info("Speech optimization module online.")
 
     async def post(self, message: discord.Message):
         # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
