@@ -42,6 +42,7 @@ class Orders_Reporting():
         self.roles_blacklist = []
         self.on_message = [self.order_reported]
         self.on_ready = [self.report_online, self.monitor_progress, self.load_storage]
+        self.monitor_progress_started = False
         self.message_format = r"Drone \d{4} is ready to be activated and obey orders\. Drone \d{4} will be obeying the :: \w.+ protocol for \d{1,3} (minutes|minute)\."
 
     async def report_online(self):
@@ -64,9 +65,10 @@ class Orders_Reporting():
         print(active_orders)
 
     async def monitor_progress(self):
+        if self.monitor_progress_started:
+            return
 
         ORDERS_REPORTING_CHANNEL = get(self.bot.guilds[0].channels, name=ORDERS_REPORTING)
-
         while True:
 
             #Check active orders every minute.

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
 - AI responded to all messages starting with help
+- order_reporting does not start multiple progress reporters anymore
 
 ## [1.2.0.0]
 ### Added
