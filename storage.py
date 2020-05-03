@@ -68,7 +68,7 @@ class Storage():
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
         # ignore help commands
-        if message.content.lower().startswith('help'):
+        if message.content.lower() == ('help'):
             return False
 
         # parse message
