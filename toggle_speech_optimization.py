@@ -22,11 +22,11 @@ class Toggle_Speech_Optimization():
         self.help_content = {'name': 'optimize', 'value': 'optimize drone speech patterns; this command can only be used by the Hive Mxtress'}
 
     async def dronemode(self, message: discord.Message):
-        LOGGER.debug("Drone mode command triggered")
 
         if not message.content.lower().startswith('optimize '):
-            LOGGER.debug("Message does not match command.")
             return False
+
+        LOGGER.debug('Message is valid for toggling speech optimization.')
 
         target_drone = message.mentions[0]
         if has_role(target_drone, SPEECH_OPTIMIZATION):

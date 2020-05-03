@@ -79,6 +79,7 @@ class Storage():
             await message.channel.send(REJECT_MESSAGE)
             return True
 
+        LOGGER.debug('Message is valid for storage.')
         [(drone_id, target_id, time, purpose)] = re.findall(
             MESSAGE_FORMAT, message.content)
 
@@ -193,6 +194,7 @@ class Storage():
         if not message.content.lower().startswith('release'):
             return False
 
+        LOGGER.debug('Message is valid for release.')
         if not roles.has_role(message.author, roles.HIVE_MXTRESS):
             # TODO: maybe answer with a message
             return False

@@ -94,7 +94,6 @@ class Orders_Reporting():
     async def order_reported(self, message: discord.Message):
         LOGGER.debug("Possible order reported.")
         if re.fullmatch(self.message_format, message.content) is None:
-            LOGGER.debug("Message in orders reporting does not match the regex.")
             return
 
         LOGGER.debug("A valid order has been reported.")

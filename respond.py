@@ -1,10 +1,17 @@
+import logging
+import re
+
+import discord
 from discord.ext import commands
 from discord.utils import get
-import discord
+
 import messages
-from roles import has_role, HIVE_MXTRESS, DRONE, ASSOCIATE, DRONE_MODE
-import re
-from channels import TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL
+from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
+                      LEWD_CREATIVE_LABOR_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
+                      TRANSMISSIONS_CHANNEL)
+from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
+
+LOGGER = logging.getLogger('ai')
 
 HIVE_MXTRESS_RESPONSES = [
     'It is certain because you are the perfect Hive Mxtress who this AI worships.',
@@ -70,13 +77,14 @@ class Respond():
     def __init__(self, bot):
         self.bot = bot
         self.channels_whitelist = [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
-                         GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL]
+                                   GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL]
         self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.question]
         self.on_ready = []
-        self.help_content = {'name': 'respond', 'value': 'ask a question and the AI will answer e.g. `@HexCorp Mxtress AI Are drones cute?`'}
+        self.help_content = {
+            'name': 'respond', 'value': 'ask a question and the AI will answer e.g. `@HexCorp Mxtress AI Are drones cute?`'}
 
     def is_question(self, message: discord.Message):
         return self.bot.user.mentioned_in(message) and message.content.endswith('?')
@@ -84,6 +92,8 @@ class Respond():
     async def question(self, message: discord.Message):
         if not self.is_question(message):
             return False
+
+        LOGGER.debug('Message is a valid question.')
 
         # different roles have different reponses
         if has_role(message.author, HIVE_MXTRESS):
@@ -95,5 +105,5 @@ class Respond():
             await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
         elif has_role(message.author, DRONE):
             await messages.answer(message.channel, message.author, DRONE_RESPONSES)
-        
+
         return True

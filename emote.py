@@ -65,6 +65,7 @@ class Emote():
         if not message.content.lower().startswith('emote '):
             return False
 
+        LOGGER.debug('Message is valid for emote.')
         cleaned_message = clean_message(message.content[6:].lower())
         if message_is_an_acceptable_length(cleaned_message):
 
