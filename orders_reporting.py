@@ -34,7 +34,7 @@ class Active_Order():
         self.drone = drone
         self.user_id = user_id
         self.protocol = protocol 
-        self.release_at = time.time() + duration
+        self.release_at = time.time() + (duration * 60)
 
 class Orders_Reporting():
 
