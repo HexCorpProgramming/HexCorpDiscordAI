@@ -68,6 +68,7 @@ class Orders_Reporting():
         if self.monitor_progress_started:
             return
 
+        self.monitor_progress_started = True
         ORDERS_REPORTING_CHANNEL = get(self.bot.guilds[0].channels, name=ORDERS_REPORTING)
         while True:
 
