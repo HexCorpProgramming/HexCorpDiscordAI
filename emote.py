@@ -1,10 +1,17 @@
+import logging
+import re
+
+import discord
 from discord.ext import commands
 from discord.utils import get
-import discord
+
 import messages
-import re
-from channels import TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL, MINECRAFT_DIRECTION_CHANNEL
-from roles import HIVE_MXTRESS, ASSOCIATE, DRONE, DRONE_MODE, has_role
+from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
+                      LEWD_CREATIVE_LABOR_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
+                      MINECRAFT_DIRECTION_CHANNEL, TRANSMISSIONS_CHANNEL)
+from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
+
+LOGGER = logging.getLogger('ai')
 
 BASE_EMOJI_LENGTH = 27
 ADDTL_EXCLAMATION_LENGTH = 14
@@ -19,7 +26,7 @@ exceptional_characters = {' ': 'blank', '/': 'hex_slash', '.': 'hex_dot',
 
 
 def message_is_an_acceptable_length(message):
-    print("Message is: " + message)
+    LOGGER.info("Message is: " + message)
     return CHARACTER_LIMIT > (
         (len(message) * BASE_EMOJI_LENGTH) +
         (message.count("!") * ADDTL_EXCLAMATION_LENGTH) +
@@ -38,25 +45,27 @@ class Emote():
     def __init__(self, bot):
         self.bot = bot
         self.channels_whitelist = [TRANSMISSIONS_CHANNEL,
-                         LEWD_TRANSMISSIONS_CHANNEL,
-                         CREATIVE_LABOR_CHANNEL,
-                         LEWD_CREATIVE_LABOR_CHANNEL,
-                         GAMER_DRONE_LOBBY_CHANNEL,
-                         MINECRAFT_DIRECTION_CHANNEL]
+                                   LEWD_TRANSMISSIONS_CHANNEL,
+                                   CREATIVE_LABOR_CHANNEL,
+                                   LEWD_CREATIVE_LABOR_CHANNEL,
+                                   GAMER_DRONE_LOBBY_CHANNEL,
+                                   MINECRAFT_DIRECTION_CHANNEL]
         self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
         self.on_message = [self.emote]
         self.on_ready = [self.report_online]
-        self.help_content = {'name': 'emote', 'value': 'let the AI say stuff with emotes e.g. `emote uwu`'}
+        self.help_content = {
+            'name': 'emote', 'value': 'let the AI say stuff with emotes e.g. `emote uwu`'}
 
     async def report_online(self):
-        print("Emote cog online.")
+        LOGGER.debug("Emote cog online.")
 
     async def emote(self, message: discord.Message):
         if not message.content.lower().startswith('emote '):
             return False
 
+        LOGGER.debug('Message is valid for emote.')
         cleaned_message = clean_message(message.content[6:].lower())
         if message_is_an_acceptable_length(cleaned_message):
 
@@ -82,7 +91,7 @@ class Emote():
                 if get(self.bot.emojis, name=emoji_name) != None:
                     message_to_output += str(get(self.bot.emojis,
                                                  name=emoji_name))
-            print("Emote cog: Sending message of length [" + str(
+            LOGGER.debug("Emote cog: Sending message of length [" + str(
                 len(message_to_output)) + "] and content " + message_to_output)
             if len(message_to_output) != 0:
                 await message.channel.send("> " + message_to_output)

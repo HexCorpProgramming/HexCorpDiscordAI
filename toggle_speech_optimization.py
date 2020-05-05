@@ -1,9 +1,13 @@
+import logging
+
+import discord
 from discord.ext import commands
 from discord.utils import get
-import discord
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
-from channels import EVERYWHERE
 
+from channels import EVERYWHERE
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
+
+LOGGER = logging.getLogger('ai')
 
 class Toggle_Speech_Optimization():
 
@@ -19,11 +23,10 @@ class Toggle_Speech_Optimization():
 
     async def dronemode(self, message: discord.Message):
 
-        print("Drone mode command triggered")
-
         if not message.content.lower().startswith('optimize '):
-            print("Message doesn't start with what we want.")
             return False
+
+        LOGGER.debug('Message is valid for toggling speech optimization.')
 
         target_drone = message.mentions[0]
         if has_role(target_drone, SPEECH_OPTIMIZATION):

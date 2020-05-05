@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 import time
 from datetime import datetime, timedelta
@@ -12,7 +13,9 @@ from discord.utils import get
 
 import messages
 import roles
-from channels import STORAGE_FACILITY, STORAGE_CHAMBERS
+from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
+
+LOGGER = logging.getLogger('ai')
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -76,6 +79,7 @@ class Storage():
             await message.channel.send(REJECT_MESSAGE)
             return True
 
+        LOGGER.debug('Message is valid for storage.')
         [(drone_id, target_id, time, purpose)] = re.findall(
             MESSAGE_FORMAT, message.content)
 
@@ -190,6 +194,7 @@ class Storage():
         if not message.content.lower().startswith('release'):
             return False
 
+        LOGGER.debug('Message is valid for release.')
         if not roles.has_role(message.author, roles.HIVE_MXTRESS):
             # TODO: maybe answer with a message
             return False
@@ -204,7 +209,7 @@ class Storage():
                 await member.add_roles(*get_roles_for_names(message.guild, drone.roles))
                 STORED_DRONES.remove(drone)
                 persist_storage()
-                print("Drone released from storage.")
+                LOGGER.debug(f"Drone with ID {to_release_id} released from storage.")
                 return True
         return True
 
