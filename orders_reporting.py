@@ -124,6 +124,7 @@ class Orders_Reporting():
         active_orders.append(Active_Order(drone_id, message.author.id, protocol_name, int(protocol_time)))
 
         LOGGER.debug(f"Current orders: {active_orders}")
+        persist_storage()
 
         return False
 

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Fixed
+- list of orders is persisted when a new order is added
 
 ## [1.2.0.2]
 ### Fixed
@@ -141,8 +143,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - new members get roles necessary to interact with the server when they acknowledge the server rules by posting a specific message
 
 
-[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.1...HEAD
-[1.2.0.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.0...1.2.0.1
+[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.2...HEAD
+[1.2.0.2]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.01..1.2.0.2
+[1.2.0.1]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.0...1.2.0.1
 [1.2.0.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.1.0.5...1.2.0.0
 [1.1.0.5]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.1.0.4...1.1.0.5
 [1.1.0.4]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.1.0.3...1.1.0.4
