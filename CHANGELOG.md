@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Fixed
 - list of orders is persisted when a new order is added
+- list of orders was not deserialized properly
 
 ## [1.2.0.2]
 ### Fixed
