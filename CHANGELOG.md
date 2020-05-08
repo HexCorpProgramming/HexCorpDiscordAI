@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [1.2.0.3]
 ### Changed
 - added more IDs to the blacklist
 - added hive-playroom as a new channel
@@ -148,8 +150,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - new members get roles necessary to interact with the server when they acknowledge the server rules by posting a specific message
 
 
-[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.2...HEAD
-[1.2.0.2]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.01..1.2.0.2
+[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.3...HEAD
+[1.2.0.3]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.2..1.2.0.3
+[1.2.0.2]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.1...1.2.0.2
 [1.2.0.1]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.0...1.2.0.1
 [1.2.0.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.1.0.5...1.2.0.0
 [1.1.0.5]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.1.0.4...1.1.0.5
