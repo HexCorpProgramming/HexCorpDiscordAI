@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Changed
 - added more IDs to the blacklist
+- added hive-playroom as a new channel
 
 ### Fixed
 - list of orders is persisted when a new order is added

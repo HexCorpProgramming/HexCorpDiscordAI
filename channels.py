@@ -26,6 +26,7 @@ COMMUNICATION = 'hive-communication'
 DRONESPACE = 'hive-dronespace'
 THRONE_ROOM = 'hive-throne-room'
 REPETITIONS = 'hive-repetitions'
+PLAYROOM = 'hive-playroom'
 
 #HexCorp-R&D-Department
 GAME_DEV_GUIDE = 'game-dev-guide'
@@ -53,7 +54,8 @@ DRONE_HIVE_CHANNELS = [
     DRONESPACE,
     THRONE_ROOM,
     REPETITIONS,
-    STORAGE_FACILITY
+    STORAGE_FACILITY,
+    PLAYROOM
 ]
 
 DRONE_DEV_CHANNELS = [
