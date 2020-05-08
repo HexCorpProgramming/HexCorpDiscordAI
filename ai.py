@@ -20,6 +20,14 @@ import channels
 
 # set up logging
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+root_logger = logging.getLogger()
+root_file_handler = logging.FileHandler(
+    filename='ai.log', encoding='utf-8', mode='a')
+root_file_handler.setLevel(logging.WARNING)
+root_file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+root_logger.addHandler(root_file_handler)
+
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
 
@@ -30,13 +38,7 @@ file_handler.setFormatter(logging.Formatter(
     '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 LOGGER.addHandler(file_handler)
 
-discord_logger = logging.getLogger('discord')
-discord_file_handler = logging.FileHandler(
-    filename='ai.log', encoding='utf-8', mode='a')
-discord_file_handler.setLevel(logging.WARNING)
-discord_file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-discord_logger.addHandler(discord_file_handler)
+
 
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
