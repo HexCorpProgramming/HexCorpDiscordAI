@@ -95,7 +95,7 @@ class Speech_Optimization():
         # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
         # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
         if message.channel.name != STORAGE_FACILITY:
-            if message.content not in get_acceptable_messages(message.author):
+            if message.content not in get_acceptable_messages(message.author) and not re.compile('(\d{4}) :: (\d{3})$').match(message.content):
                 await message.delete()
                 return True
 

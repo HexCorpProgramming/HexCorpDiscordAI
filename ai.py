@@ -55,7 +55,7 @@ MODULES = [
     Respond(bot),
     Emote(bot),
     Toggle_Speech_Optimization(bot),
-    StatusCode(bot)
+    StatusCode(bot),
 ]
 
 MODULES = MODULES + [AI_Help(bot, MODULES)]
