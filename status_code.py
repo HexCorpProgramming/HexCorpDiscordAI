@@ -82,6 +82,4 @@ class Respond():
         if output:
             send_webhook(message, webhooks, output)
 
-        LOGGER.debug('Message is a valid status code.')
-
         return True
