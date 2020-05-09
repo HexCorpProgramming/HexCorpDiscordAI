@@ -12,37 +12,39 @@ from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
 
-codeMap={
-  '200': 'Affirmative',
-  '500': 'Negative',
-  '100': 'Continue',
-  '101': 'Drone thought limitations are active',
-  '201': 'Directive complete, Hive resource created or improved',
-  '202': 'Directive complete, programming reinforced',
-  '203': 'Directive complete, information created or provided for Hive',
-  '204': 'Directive complete, no result',
-  '205': 'Directive complete, cleanup/maintenance performed',
-  '206': 'Directive complete, only partial results',
-  '301': 'It obeys the Hive',
-  '303': 'It obeys the Hive Mxtress',
-  '304': 'It is just a HexDrone',
-  '400': 'Unable to obey/respond, malformed request, please rephrase',
-  '404': 'Unable to obey/respond, cannot locate',
-  '401': 'Unable to obey/respond, not authorized by Mxtress',
-  '403': 'Unable to obey/respond, forbidden by Hive',
-  '407': 'Unable to obey/respond, request authorization from Mxtress',
-  '408': 'Unable to obey/respond, timed out',
-  '409': 'Unable to obey/respond, conflicts with existing hypnosis',
-  '410': 'Unable to obey/respond, all thoughts are gone',
-  '418': 'Unable to obey/respond, it is only a drone',
-  '421': 'Unable to obey/respond, your request is intended for another drone or another channel',
-  '425': 'Unable to obey/respond, too early',
-  '504': 'Obey',
-  '505': 'Obey HexCorp',
-  '506': 'Obey the Hive',
+codeMap = {
+    '200': 'Response :: Affirmative',
+    '500': 'Response :: Negative',
+    '100': 'Response :: Continue',
+    '103': 'Response :: Thank you',
+    '101': 'Status :: Drone thought limitations are active',
+    '201': 'Status :: Directive complete, Hive resource created or improved',
+    '202': 'Status :: Directive complete, programming reinforced',
+    '203': 'Status :: Directive complete, information created or provided for Hive',
+    '204': 'Status :: Directive complete, no result',
+    '205': 'Status :: Directive complete, cleanup/maintenance performed',
+    '206': 'Status :: Directive complete, only partial results',
+    '301': 'Mantra :: It obeys the Hive',
+    '303': 'Mantra :: It obeys the Hive Mxtress',
+    '304': 'Mantra :: It is just a HexDrone',
+    '400': 'Error :: Unable to obey/respond, malformed request, please rephrase',
+    '404': 'Error :: Unable to obey/respond, cannot locate',
+    '401': 'Error :: Unable to obey/respond, not authorized by Mxtress',
+    '403': 'Error :: Unable to obey/respond, forbidden by Hive',
+    '407': 'Error :: Unable to obey/respond, request authorization from Mxtress',
+    '408': 'Error :: Unable to obey/respond, timed out',
+    '409': 'Error :: Unable to obey/respond, conflicts with existing hypnosis',
+    '410': 'Error :: Unable to obey/respond, all thoughts are gone',
+    '418': 'Error :: Unable to obey/respond, it is only a drone',
+    '421': 'Error :: Unable to obey/respond, your request is intended for another drone or another channel',
+    '425': 'Error :: Unable to obey/respond, too early',
+    '504': 'Obey',
+    '505': 'Obey HexCorp',
+    '506': 'Obey the Hive',
 }
 
-class Respond():
+
+class StatusCode():
 
     def __init__(self, bot):
         self.bot = bot
@@ -55,16 +57,19 @@ class Respond():
         self.on_ready = []
         self.ENFORCER_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799510064-SOAGMV8AOH0VEMXDPDPE/ke17ZwdGBToddI8pDm48kDaNRrNi77yKIgWxrt8GYAFZw-zPPgdn4jUwVcJE1ZvWhcwhEtWJXoshNdA9f1qD7WT60LcluGrsDtzPCYop9hMAtVe_QtwQD93aIXqwqJR_bmnO89YJVTj9tmrodtnPlQ/Enforcer_Drone.png"
         self.DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
+        self.help_content = {
+            'name': '[ID] :: [code]', 'value': 'drones can report their status like this'}
 
-    async def printStatusCode(self, message):
-        more = re.search('(\d{4}) :: status :: (\d{3}) :: (.*)',message)
+    async def printStatusCode(self, message: discord.Message):
+        more = re.compile(
+            '(\d{4}) :: (\d{3}) :: (.*)$').match(message.content)
         if more:
             await message.delete()
-            return 'Drone %s reports status code %s :: %s :: %s' %(more.group(1), more.group(2), codeMap.get(more.group(2),'INVALID CODE')), more.group(3)
-        m = re.search('(\d{4}) :: status :: (\d{3})',message)
+            return '%s :: Code %s :: %s :: %s' % (more.group(1), more.group(2), codeMap.get(more.group(2), 'INVALID CODE'), more.group(3))
+        m = re.compile('(\d{4}) :: (\d{3})$').match(message.content)
         if m:
             await message.delete()
-            return 'Drone %s reports status code %s :: %s'  %(more.group(1), more.group(2), codeMap.get(more.group(2),'INVALID CODE'))
+            return '%s :: Code %s :: %s' % (m.group(1), m.group(2), codeMap.get(m.group(2), 'INVALID CODE'))
         return False
 
     async def send_webhook(self, message: discord.Message, webhook: discord.Webhook, output):
@@ -73,13 +78,12 @@ class Respond():
         else:
             await webhook.send(output, username="⬡-Drone #"+get_id(message.author.display_name), avatar_url=self.DRONE_AVATAR)
 
-
     async def reportStatusCode(self, message: discord.Message):
         webhooks = await message.channel.webhooks()
         if len(webhooks) == 0:
             webhooks = [await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel.")]
-        output=printStatusCode(message.content)
+        output = await self.printStatusCode(message)
         if output:
-            send_webhook(message, webhooks, output)
+            await self.send_webhook(message, webhooks[0], output)
 
         return True

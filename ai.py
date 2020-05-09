@@ -14,6 +14,7 @@ from emote import Emote
 from assign import Assign
 from orders_reporting import Orders_Reporting
 from ai_help import AI_Help
+from status_code import StatusCode
 # Constants
 from roles import has_any_role
 import channels
@@ -53,7 +54,8 @@ MODULES = [
     Assign(bot),
     Respond(bot),
     Emote(bot),
-    Toggle_Speech_Optimization(bot)
+    Toggle_Speech_Optimization(bot),
+    StatusCode(bot)
 ]
 
 MODULES = MODULES + [AI_Help(bot, MODULES)]
