@@ -123,6 +123,8 @@ class Speech_Optimization():
         self.status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
         self.informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
         self.plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
+        self.ENFORCER_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799510064-SOAGMV8AOH0VEMXDPDPE/ke17ZwdGBToddI8pDm48kDaNRrNi77yKIgWxrt8GYAFZw-zPPgdn4jUwVcJE1ZvWhcwhEtWJXoshNdA9f1qD7WT60LcluGrsDtzPCYop9hMAtVe_QtwQD93aIXqwqJR_bmnO89YJVTj9tmrodtnPlQ/Enforcer_Drone.png"
+        self.DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
 
     async def report_online(self):
         LOGGER.info("Speech optimization module online.")
@@ -139,7 +141,7 @@ class Speech_Optimization():
         return False
 
     async def send_webhook(self, message: discord.Message, webhook: discord.Webhook, output):
-        if message.channel in DRONE_HIVE_CHANNELS:
+        if message.channel.name in DRONE_HIVE_CHANNELS:
             if has_role(message.author, ENFORCER_DRONE):
                 await webhook.send(output, username=f"⬢-Drone #{get_id(message.author.display_name)}", avatar_url=self.ENFORCER_AVATAR)
             else:
