@@ -141,9 +141,9 @@ class Speech_Optimization():
     async def send_webhook(self, message: discord.Message, webhook: discord.Webhook, output):
         if message.channel in DRONE_HIVE_CHANNELS:
             if has_role(message.author, ENFORCER_DRONE):
-                await webhook.send(output, username="⬢-Drone #"+get_id(message.author.display_name), avatar_url=self.ENFORCER_AVATAR)
+                await webhook.send(output, username=f"⬢-Drone #{get_id(message.author.display_name)}", avatar_url=self.ENFORCER_AVATAR)
             else:
-                await webhook.send(output, username="⬡-Drone #"+get_id(message.author.display_name), avatar_url=self.DRONE_AVATAR)
+                await webhook.send(output, username=f"⬡-Drone #{get_id(message.author.display_name)}", avatar_url=self.DRONE_AVATAR)
         else:
             await webhook.send(output, username=message.author.display_name, avatar_url=message.author.avatar_url)
 
