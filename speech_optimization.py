@@ -44,6 +44,12 @@ code_map = {
     '505': 'Obey HexCorp',
     '506': 'Obey the Hive',
 }
+plain_status_code_pattern = r'(\d{4}) :: (\d{3})$'
+informative_status_code_pattern = r'(\d{4}) :: (\d{3}) :: (.*)$'
+
+
+def check_is_status_code(self, message):
+    return self.informative_status_code_regex.match(message.content) or self.plain_status_code_regex.match(message.content)
 
 def get_acceptable_messages(author):
 
@@ -120,9 +126,8 @@ class Speech_Optimization():
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
-        self.status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
-        self.informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
-        self.plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
+        self.informative_status_code_regex = re.compile(informative_status_code_pattern)
+        self.plain_status_code_regex = re.compile(plain_status_code_pattern)
         self.ENFORCER_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799510064-SOAGMV8AOH0VEMXDPDPE/ke17ZwdGBToddI8pDm48kDaNRrNi77yKIgWxrt8GYAFZw-zPPgdn4jUwVcJE1ZvWhcwhEtWJXoshNdA9f1qD7WT60LcluGrsDtzPCYop9hMAtVe_QtwQD93aIXqwqJR_bmnO89YJVTj9tmrodtnPlQ/Enforcer_Drone.png"
         self.DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
 
@@ -153,7 +158,7 @@ class Speech_Optimization():
         if message.channel.name != STORAGE_FACILITY:
             # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
-            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and not self.status_code_regex.match(message.content):
+            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and not self.plain_status_code_regex.match(message.content):
                 await message.delete()
                 return True
             # But if the message is a status code, replace it with a status code output
