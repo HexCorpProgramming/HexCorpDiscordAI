@@ -14,7 +14,7 @@ from webhook import send_webhook_with_specific_output
 LOGGER = logging.getLogger('ai')
 
 code_map = {
-    '000': 'Test :: Test.',
+    # '000': 'Test :: Test.',
     '200': 'Response :: Affirmative.',
     '500': 'Response :: Negative.',
     '100': 'Status :: Online and ready to serve.',
@@ -36,7 +36,7 @@ code_map = {
     '403': 'Error :: Unable to obey/respond, forbidden by Hive.',
     '407': 'Error :: Unable to obey/respond, request authorization from Mxtress.',
     '408': 'Error :: Unable to obey/respond, timed out.',
-    '409': 'Error :: Unable to obey/respond, conflicts with existing hypnosis.',
+    '409': 'Error :: Unable to obey/respond, conflicts with existing programming.',
     '410': 'Error :: Unable to obey/respond, all thoughts are gone.',
     '418': 'Error :: Unable to obey/respond, it is only a drone.',
     '421': 'Error :: Unable to obey/respond, your request is intended for another drone or another channel.',
