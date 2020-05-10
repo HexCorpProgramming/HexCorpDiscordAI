@@ -127,6 +127,7 @@ class Speech_Optimization():
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
+        self.help_content = {'name': 'Drone Communication Protocol', 'value': 'Drones can use Drone Communication Protocol by typing `[ID] :: [CODE]`, where the code is a three-digit drone communication code!\nDrones can also type `[ID] :: [CODE] :: [Information]` to make a more informative message!'}
 
     async def report_online(self):
         LOGGER.info("Speech optimization module online.")
@@ -147,7 +148,7 @@ class Speech_Optimization():
             # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
             acceptable_status_code_message=plain_status_code_regex.match(message.content)
-            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and (acceptable_status_code_message.group(1) != get_id(message.author.display_name) or not acceptable_status_code_message):
+            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
                 await message.delete()
                 return True
             # But if the message is a status code, replace it with a status code output
