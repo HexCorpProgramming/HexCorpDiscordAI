@@ -8,7 +8,7 @@ from discord.utils import get
 import messages
 from bot_utils import get_id
 from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, has_role
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 
 LOGGER = logging.getLogger('ai')
 
@@ -116,7 +116,7 @@ class Speech_Optimization():
         self.bot = bot
         self.channels_whitelist = [EVERYWHERE]
         self.channels_blacklist = DRONE_DEV_CHANNELS
-        self.roles_whitelist = []
+        self.roles_whitelist = [DRONE, ENFORCER_DRONE]
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
