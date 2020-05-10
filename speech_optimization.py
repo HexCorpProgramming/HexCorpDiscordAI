@@ -9,6 +9,7 @@ import messages
 from bot_utils import get_id
 from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
+from webhook import send_webhook_with_specific_output
 
 LOGGER = logging.getLogger('ai')
 
@@ -44,8 +45,8 @@ code_map = {
     '505': 'Obey HexCorp',
     '506': 'Obey the Hive',
 }
-plain_status_code_pattern = r'(\d{4}) :: (\d{3})$'
-informative_status_code_pattern = r'(\d{4}) :: (\d{3}) :: (.*)$'
+informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
+plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
 
 def check_is_status_code(self, message):
@@ -126,39 +127,27 @@ class Speech_Optimization():
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
-        self.informative_status_code_regex = re.compile(informative_status_code_pattern)
-        self.plain_status_code_regex = re.compile(plain_status_code_pattern)
-        self.ENFORCER_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799510064-SOAGMV8AOH0VEMXDPDPE/ke17ZwdGBToddI8pDm48kDaNRrNi77yKIgWxrt8GYAFZw-zPPgdn4jUwVcJE1ZvWhcwhEtWJXoshNdA9f1qD7WT60LcluGrsDtzPCYop9hMAtVe_QtwQD93aIXqwqJR_bmnO89YJVTj9tmrodtnPlQ/Enforcer_Drone.png"
-        self.DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
 
     async def report_online(self):
         LOGGER.info("Speech optimization module online.")
 
     async def print_status_code(self, message: discord.Message):
-        more = self.informative_status_code_regex.match(message.content)
+        more = informative_status_code_regex.match(message.content)
         if more and not has_role(message.author, SPEECH_OPTIMIZATION):
             await message.delete()
             return f'{more.group(1)} :: Code `{more.group(2)}` :: {code_map.get(more.group(2), "INVALID CODE")} :: {more.group(3)}'
-        m = self.plain_status_code_regex.match(message.content)
+        m = plain_status_code_regex.match(message.content)
         if m:
             await message.delete()
             return f'{m.group(1)} :: Code `{m.group(2)}` :: {code_map.get(m.group(2), "INVALID CODE")}'
         return False
 
-    async def send_webhook(self, message: discord.Message, webhook: discord.Webhook, output):
-        if message.channel.name in DRONE_HIVE_CHANNELS:
-            if has_role(message.author, ENFORCER_DRONE):
-                await webhook.send(output, username=f"⬢-Drone #{get_id(message.author.display_name)}", avatar_url=self.ENFORCER_AVATAR)
-            else:
-                await webhook.send(output, username=f"⬡-Drone #{get_id(message.author.display_name)}", avatar_url=self.DRONE_AVATAR)
-        else:
-            await webhook.send(output, username=message.author.display_name, avatar_url=message.author.avatar_url)
-
     async def post(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
             # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
-            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and not self.plain_status_code_regex.match(message.content):
+            acceptable_status_code_message=plain_status_code_regex.match(message.content)
+            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and (acceptable_status_code_message.group(1) != get_id(message.author.display_name) or not acceptable_status_code_message):
                 await message.delete()
                 return True
             # But if the message is a status code, replace it with a status code output
@@ -168,6 +157,6 @@ class Speech_Optimization():
                     webhooks = [await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel.")]
                 output = await self.print_status_code(message)
                 if output:
-                    await self.send_webhook(message, webhooks[0], output)
+                    await send_webhook_with_specific_output(message, webhooks[0], output)
 
         return False
