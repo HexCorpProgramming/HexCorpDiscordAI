@@ -53,7 +53,7 @@ MODULES = [
     Assign(bot),
     Respond(bot),
     Emote(bot),
-    Toggle_Speech_Optimization(bot)
+    Toggle_Speech_Optimization(bot),
 ]
 
 MODULES = MODULES + [AI_Help(bot, MODULES)]
