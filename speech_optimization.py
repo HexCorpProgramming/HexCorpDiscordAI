@@ -116,7 +116,7 @@ class Speech_Optimization():
         self.bot = bot
         self.channels_whitelist = [EVERYWHERE]
         self.channels_blacklist = DRONE_DEV_CHANNELS
-        self.roles_whitelist = [SPEECH_OPTIMIZATION]
+        self.roles_whitelist = []
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
