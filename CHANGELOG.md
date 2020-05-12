@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- drones can now use status codes to express ceratin things
+
 ### Changed
 - hive-playroom is now hive-play-room
+- slight changes to logging
 
 ## [1.2.0.3]
 ### Changed
