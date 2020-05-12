@@ -32,7 +32,6 @@ root_logger.addHandler(log_file_handler)
 
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
-LOGGER.addHandler(log_file_handler)
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 
