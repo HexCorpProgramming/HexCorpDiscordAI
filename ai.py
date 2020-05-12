@@ -3,6 +3,7 @@ import discord
 import sys
 import asyncio
 import logging
+from logging import handlers
 # Modules
 from identity_enforcer import Identity_Enforcer
 from speech_optimization import Speech_Optimization
@@ -19,27 +20,19 @@ from roles import has_any_role
 import channels
 
 # set up logging
-logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
-root_logger = logging.getLogger()
-root_file_handler = logging.FileHandler(
-    filename='ai.log', encoding='utf-8', mode='a')
-root_file_handler.setLevel(logging.WARNING)
-root_file_handler.setFormatter(logging.Formatter(
+log_file_handler = handlers.TimedRotatingFileHandler(
+    filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
+log_file_handler.setFormatter(logging.Formatter(
     '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-root_logger.addHandler(root_file_handler)
+
+logging.basicConfig(
+    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s', level=logging.WARNING)
+root_logger = logging.getLogger()
+root_logger.addHandler(log_file_handler)
 
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
-
-file_handler = logging.FileHandler(
-    filename='ai.log', encoding='utf-8', mode='a')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-LOGGER.addHandler(file_handler)
-
-
-
+LOGGER.addHandler(log_file_handler)
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 
