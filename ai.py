@@ -15,6 +15,7 @@ from emote import Emote
 from assign import Assign
 from orders_reporting import Orders_Reporting
 from ai_help import AI_Help
+from status import Status
 # Constants
 from roles import has_any_role
 import channels
@@ -48,7 +49,8 @@ MODULES = [
     Toggle_Speech_Optimization(bot),
 ]
 
-MODULES = MODULES + [AI_Help(bot, MODULES)]
+MODULES.append(AI_Help(bot, MODULES))
+MODULES.append(Status(bot, MODULES))
 
 
 @bot.event

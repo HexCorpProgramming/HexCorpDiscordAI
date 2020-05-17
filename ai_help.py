@@ -30,7 +30,6 @@ class AI_Help():
 
         # prepare embed
         embed = discord.Embed(title='Help', description='These features can be used in this channel.', color=0xff66ff)
-        embed.add_field(**self.help_content, inline=False)
         embed.set_thumbnail(url=self.embed_thumbnail)
 
         # add help_content from all registered modules
