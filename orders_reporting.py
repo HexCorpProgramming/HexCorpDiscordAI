@@ -51,7 +51,7 @@ class Orders_Reporting():
         self.on_ready = [self.report_online,
                          self.monitor_progress, self.load_storage]
         self.monitor_progress_started = False
-        self.message_format = r"Drone \d{4} is ready to be activated and obey orders\. Drone \d{4} will be obeying the :: \w.+ protocol for \d{1,3} (minutes|minute)\."
+        self.message_format = r"Drone \d{4} is ready to be activated and obey orders\. Drone \d{4} will be obeying the :: \w.+ protocol for \d{1,3} (minutes|minute)\.?"
 
     async def report_online(self):
         LOGGER.info("Orders reporting module online.")
