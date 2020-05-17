@@ -8,7 +8,7 @@ from discord.utils import get
 import messages
 from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
                       LEWD_CREATIVE_LABOR_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
-                      MINECRAFT_DIRECTION_CHANNEL, TRANSMISSIONS_CHANNEL)
+                      MINECRAFT_DIRECTION_CHANNEL, TRANSMISSIONS_CHANNEL, ELITE_DIRECTION_CHANNEL)
 from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
 
 LOGGER = logging.getLogger('ai')
@@ -49,7 +49,8 @@ class Emote():
                                    CREATIVE_LABOR_CHANNEL,
                                    LEWD_CREATIVE_LABOR_CHANNEL,
                                    GAMER_DRONE_LOBBY_CHANNEL,
-                                   MINECRAFT_DIRECTION_CHANNEL]
+                                   MINECRAFT_DIRECTION_CHANNEL,
+                                   ELITE_DIRECTION_CHANNEL]
         self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]

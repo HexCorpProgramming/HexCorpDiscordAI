@@ -7,6 +7,7 @@ TRANSMISSIONS_CHANNEL = 'hexcorp-transmissions'
 LEWD_TRANSMISSIONS_CHANNEL = 'lewd-transmissions'
 GAMER_DRONE_LOBBY_CHANNEL = 'gamer-drone-lobby'
 MINECRAFT_DIRECTION_CHANNEL = 'minecraft-direction'
+ELITE_DIRECTION_CHANNEL = 'elite-direction'
 
 #HexCorp-Innovation
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
@@ -27,6 +28,7 @@ DRONESPACE = 'hive-dronespace'
 THRONE_ROOM = 'hive-throne-room'
 REPETITIONS = 'hive-repetitions'
 PLAYROOM = 'hive-play-room'
+HIVE_COORDINATION = 'hive_coordination'
 
 #HexCorp-R&D-Department
 GAME_DEV_GUIDE = 'game-dev-guide'
@@ -55,7 +57,8 @@ DRONE_HIVE_CHANNELS = [
     THRONE_ROOM,
     REPETITIONS,
     STORAGE_FACILITY,
-    PLAYROOM
+    PLAYROOM,
+    HIVE_COORDINATION
 ]
 
 DRONE_DEV_CHANNELS = [
