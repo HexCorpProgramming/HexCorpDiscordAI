@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.2.0.5]
+### Fixed
+- fixed typo in hive-coordination
+
 ## [1.2.0.4]
 ### Added
 - drones can now use status codes to express ceratin things

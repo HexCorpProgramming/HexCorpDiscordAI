@@ -28,7 +28,7 @@ DRONESPACE = 'hive-dronespace'
 THRONE_ROOM = 'hive-throne-room'
 REPETITIONS = 'hive-repetitions'
 PLAYROOM = 'hive-play-room'
-HIVE_COORDINATION = 'hive_coordination'
+HIVE_COORDINATION = 'hive-coordination'
 
 #HexCorp-R&D-Department
 GAME_DEV_GUIDE = 'game-dev-guide'
