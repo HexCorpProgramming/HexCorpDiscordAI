@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Added
 - drones can now use status codes to express ceratin things
+- added ai_status as a command to get debug-information about the AI
 
 ### Changed
 - hive-playroom is now hive-play-room
