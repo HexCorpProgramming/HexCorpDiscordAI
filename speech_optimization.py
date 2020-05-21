@@ -21,7 +21,7 @@ code_map = {
     '099': 'Status :: Recharged and ready to serve.',
     '100': 'Status :: Online and ready to serve.',
     '101': 'Status :: Drone speech optimizations are active.',
-    '099': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
+    '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
     '104': 'Statement :: Welcome to HexCorp.',
     '105': 'Statement :: Greetings.',
     '106': 'Response :: Please clarify.',
