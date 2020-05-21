@@ -170,7 +170,7 @@ class Speech_Optimization():
         more = informative_status_code_regex.match(message.content)
         if more and not has_role(message.author, SPEECH_OPTIMIZATION):
             await message.delete()
-            return f'{more.group(1)} :: Code `{more.group(2)}` :: {code_map.get(more.group(2), "Keysmash :: asfgfds")} :: {more.group(3)}'
+            return f'{more.group(1)} :: Code `{more.group(2)}` :: {code_map.get(more.group(2), "INVALID CODE")} :: {more.group(3)}'
         m = plain_status_code_regex.match(message.content)
         if m:
             await message.delete()
