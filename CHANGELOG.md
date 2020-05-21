@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ## [1.2.0.6]
-### Fixed
+### Added
 - drones can now use even more status codes to express certain things
 
 ## [1.2.0.5]
