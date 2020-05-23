@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Changed
 - full stop at the end of orders are now optional
+- optimize now takes multiple drones as parameters
 
 ## [1.2.0.5]
 ### Fixed
