@@ -28,12 +28,12 @@ class Toggle_Speech_Optimization():
 
         LOGGER.debug('Message is valid for toggling speech optimization.')
 
-        target_drone = message.mentions[0]
-        if has_role(target_drone, SPEECH_OPTIMIZATION):
-            await message.channel.send(f"Speech optimization deactivated for {target_drone.display_name}")
-            await target_drone.remove_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
-        else:
-            await message.channel.send(f"Speech optimization activated for {target_drone.display_name}")
-            await target_drone.add_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
+        for target_drone in message.mentions:
+            if has_role(target_drone, SPEECH_OPTIMIZATION):
+                await message.channel.send(f"Speech optimization deactivated for {target_drone.display_name}")
+                await target_drone.remove_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
+            else:
+                await message.channel.send(f"Speech optimization activated for {target_drone.display_name}")
+                await target_drone.add_roles(get(message.guild.roles, name=SPEECH_OPTIMIZATION))
 
         return True
