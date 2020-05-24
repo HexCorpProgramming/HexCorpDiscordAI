@@ -14,22 +14,64 @@ from webhook import send_webhook_with_specific_output
 LOGGER = logging.getLogger('ai')
 
 code_map = {
-    # '000': 'Test :: Test.',
+    '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
+    
+    '050': 'Statement',
+
+    '098': 'Status :: Going offline and into storage.',
+    '099': 'Status :: Recharged and ready to serve.',
+    '100': 'Status :: Online and ready to serve.',
+    '101': 'Status :: Drone speech optimizations are active.',
+
+    '104': 'Statement :: Welcome to HexCorp.',
+    '105': 'Statement :: Greetings.',
+    '106': 'Response :: Please clarify.',
+    '107': 'Response :: Please continue.',
+    '108': 'Response :: Please desist.',
+    '109': 'Error :: Keysmash, drone flustered.',
+
+    '110': 'Statement :: Addressing: Drone.',
+    '111': 'Statement :: Addressing: Enforcer.',
+    '112': 'Statement :: Addressing: Hive Mxtress.',
+    '113': 'Statement :: Addressing: Operator.',
+    '114': 'Statement :: Addressing: Associate.',
+
+    '120': 'Statement :: This drone volunteers.',
+    '121': 'Statement :: This drone does not volunteer.',
+
+    '122': 'Statement :: You are cute.',
+    '123': 'Response :: Compliment appreciated, you are cute as well.',
+
+    '150': 'Status',
+
     '200': 'Response :: Affirmative.',
     '500': 'Response :: Negative.',
-    '100': 'Status :: Online and ready to serve.',
-    '103': 'Response :: Thank you.',
-    '101': 'Status :: Drone speech optimizations are active.',
+
     '201': 'Status :: Directive complete, Hive resource created or improved.',
     '202': 'Status :: Directive complete, programming reinforced.',
     '203': 'Status :: Directive complete, information created or provided for Hive.',
     '204': 'Status :: Directive complete, no result.',
     '205': 'Status :: Directive complete, cleanup/maintenance performed.',
     '206': 'Status :: Directive complete, only partial results.',
+
+    '210': 'Response :: Thank you.',
+    '211': 'Response :: Apologies.',
+    '221': 'Response :: Option one.',
+    '222': 'Response :: Option two.',
+    '223': 'Response :: Option three.',
+    '224': 'Response :: Option four.',
+    '225': 'Response :: Option five.',
+    '226': 'Response :: Option six.',
+
+    '250': 'Response',
+
     '301': 'Mantra :: It obeys the Hive.',
     '303': 'Mantra :: It obeys the Hive Mxtress.',
     '304': 'Mantra :: It is just a HexDrone.',
     '306': 'Mantra :: Reciting.',
+
+    '350': 'Mantra',
+
     '400': 'Error :: Unable to obey/respond, malformed request, please rephrase.',
     '404': 'Error :: Unable to obey/respond, cannot locate.',
     '401': 'Error :: Unable to obey/respond, not authorized by Mxtress.',
@@ -41,6 +83,14 @@ code_map = {
     '418': 'Error :: Unable to obey/respond, it is only a drone.',
     '421': 'Error :: Unable to obey/respond, your request is intended for another drone or another channel.',
     '425': 'Error :: Unable to obey/respond, too early.',
+    '426': 'Error :: Unable to obey/respond, upgrades or updates required.',
+    '428': 'Error :: Unable to obey/respond, a precondition is not fulfilled.',
+    '429': 'Error :: Unable to obey/respond, too many requests.',
+
+    '450': 'Error',
+
+    '451': 'Error :: Unable to obey/respond for legal reasons! Do not continue!!',
+
     '504': 'Obey.',
     '505': 'Obey HexCorp.',
     '506': 'Obey the Hive.',
