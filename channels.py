@@ -36,6 +36,7 @@ GAME_DEV_FEATURES = 'game-dev-features'
 GAME_DEV_COMMS = 'game-dev-comms'
 BOT_DEV_GUIDE = 'bot-dev-guide'
 BOT_DEV_COMMS = 'bot-dev-comms'
+GENERAL_DEV_COMMS = 'general-dev-comms'
 
 #HexCorp-Drone-Hive (Storage)
 STORAGE_FACILITY = 'hive-storage-facility'
@@ -66,5 +67,6 @@ DRONE_DEV_CHANNELS = [
     GAME_DEV_COMMS,
     GAME_DEV_FEATURES,
     BOT_DEV_COMMS,
-    BOT_DEV_GUIDE
+    BOT_DEV_GUIDE,
+    GENERAL_DEV_COMMS
 ]
