@@ -98,10 +98,6 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
-
-def check_is_status_code(self, message):
-    return self.informative_status_code_regex.match(message.content) or self.plain_status_code_regex.match(message.content)
-
 def get_acceptable_messages(author):
 
     user_id = get_id(author.display_name)
