@@ -4,14 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+
+## [1.2.1.0]
+### Added
+- drones can now use even more status codes to express certain things
+- added role '⬡-Development'
+
 ### Changed
 - full stop at the end of orders are now optional
 - optimize now takes multiple drones as parameters
 - added general-dev-comms as channel
-
-## [1.2.0.6]
-### Added
-- drones can now use even more status codes to express certain things
+- renamed role 'Moderation Drone' to '⬡-Moderation'
 
 ## [1.2.0.5]
 ### Fixed
@@ -172,8 +176,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - new members get roles necessary to interact with the server when they acknowledge the server rules by posting a specific message
 
 
-[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.5...HEAD
-[1.2.0.6]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.4..1.2.0.5
+[Unreleased]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.1.0...HEAD
+[1.2.1.0]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.5..1.2.1.0
+[1.2.0.5]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.4..1.2.0.5
 [1.2.0.4]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.3..1.2.0.4
 [1.2.0.3]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.2..1.2.0.3
 [1.2.0.2]: https://github.com/HexCorpProgramming/HexCorpDiscordAI/compare/1.2.0.1...1.2.0.2
