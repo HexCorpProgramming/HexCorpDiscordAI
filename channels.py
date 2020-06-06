@@ -1,3 +1,6 @@
+#HexCorp Control Tower
+OFFICE = 'hex-office'
+
 #HexCorp-Induction
 CONSENT_CHANNEL = 'hexcorp-submission'
 REGISTRY_CHANNEL = 'hexcorp-registry'
@@ -44,6 +47,8 @@ STORAGE_CHAMBERS = 'hive-storage-chambers'
 
 # meta channel everywhere
 EVERYWHERE = 'everywhere'
+
+
 
 #Lists
 DRONE_HIVE_CHANNELS = [
