@@ -3,7 +3,10 @@ from discord.utils import get
 import re
 from channels import OFFICE
 from roles import HIVE_MXTRESS
+import logging
 import webhook
+
+LOGGER = logging.getLogger('ai')
 
 class Amplifier():
 
@@ -17,7 +20,7 @@ class Amplifier():
             self.on_ready = []
 
     async def amplify(self, message: discord.Message):
-        print("Amplifying message.")
+        LOGGER.info("Amplifying message.")
         drone_ids = re.findall(r"\d{4} ", message.content)
         target_message_pos = message.content.rfind("|")
 
