@@ -48,8 +48,6 @@ STORAGE_CHAMBERS = 'hive-storage-chambers'
 # meta channel everywhere
 EVERYWHERE = 'everywhere'
 
-
-
 #Lists
 DRONE_HIVE_CHANNELS = [
     DRONETALK,
