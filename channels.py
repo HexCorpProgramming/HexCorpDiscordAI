@@ -1,3 +1,6 @@
+#HexCorp Control Tower
+OFFICE = 'hex-office'
+
 #HexCorp-Induction
 CONSENT_CHANNEL = 'hexcorp-submission'
 REGISTRY_CHANNEL = 'hexcorp-registry'

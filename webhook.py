@@ -21,3 +21,13 @@ async def send_webhook_with_specific_output(message: discord.Message, webhook: d
 
 async def send_webhook(message: discord.Message, webhook: discord.Webhook):
     await send_webhook_with_specific_output(message, webhook, message.content)
+
+async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webhook:
+    webhooks = await channel.webhooks()
+    if len(webhooks) == 0:
+        #No webhook available, create one.
+        return_webhook = await channel.create_webhook(name = "AI Webhook")
+    else:
+        return_webhook = webhooks[0]
+
+    return return_webhook

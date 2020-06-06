@@ -9,4 +9,4 @@ env/
 data/
 
 # logs
-ai.log
+ai.log*
