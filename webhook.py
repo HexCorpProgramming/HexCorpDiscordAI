@@ -1,5 +1,3 @@
-
-
 import discord
 
 from bot_utils import get_id

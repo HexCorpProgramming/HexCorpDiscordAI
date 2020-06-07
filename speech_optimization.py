@@ -8,8 +8,9 @@ from discord.utils import get
 import messages
 from bot_utils import get_id
 from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, GLITCHED, has_role
 from webhook import send_webhook_with_specific_output
+from glitch import glitch
 
 LOGGER = logging.getLogger('ai')
 
@@ -182,11 +183,11 @@ class Speech_Optimization():
         more = informative_status_code_regex.match(message.content)
         if more and not has_role(message.author, SPEECH_OPTIMIZATION):
             await message.delete()
-            return f'{more.group(1)} :: Code `{more.group(2)}` :: {code_map.get(more.group(2), "INVALID CODE")} :: {more.group(3)}'
+            return f'{more.group(1)} :: Code `{glitch(more.group(2))}` :: {glitch(code_map.get(more.group(2), "INVALID CODE"))} :: {glitch(more.group(3))}'
         m = plain_status_code_regex.match(message.content)
         if m:
             await message.delete()
-            return f'{m.group(1)} :: Code `{m.group(2)}` :: {code_map.get(m.group(2), "INVALID CODE")}'
+            return f'{m.group(1)} :: Code `{glitch(m.group(2))}` :: {glitch(code_map.get(m.group(2), "INVALID CODE"))}'
         return False
 
     async def post(self, message: discord.Message):

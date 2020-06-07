@@ -14,6 +14,7 @@ from storage import Storage
 from emote import Emote
 from assign import Assign
 from orders_reporting import Orders_Reporting
+from toggle_glitched import Toggle_Glitched
 from ai_help import AI_Help
 from status import Status
 from amplifier import Amplifier
@@ -48,6 +49,7 @@ MODULES = [
     Respond(bot),
     Emote(bot),
     Toggle_Speech_Optimization(bot),
+    Toggle_Glitched(bot),
     Amplifier(bot),
 ]
 
