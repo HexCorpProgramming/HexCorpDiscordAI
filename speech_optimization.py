@@ -8,7 +8,7 @@ from discord.utils import get
 import messages
 from bot_utils import get_id
 from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, GLITCHED, has_role
+from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from glitch import glitch_if_applicable
 

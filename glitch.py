@@ -5,6 +5,7 @@ import re
 
 combining_characters = list(range(0x0300, 0x036F))
 
+
 def glitch(text: str):
     glitched_text = ""
 
@@ -15,7 +16,9 @@ def glitch(text: str):
 
     return glitched_text
 
+
 glitch_template = re.compile(r'(\d{4} :: )(.*)')
+
 
 def glitch_if_applicable(text: str, author: discord.Member):
     if has_role(author, GLITCHED):
