@@ -16,6 +16,7 @@ GAGGED = '⬡-Gagged'
 
 DRONE_MODE = '⬡-DroneMode' #Deprecated
 SPEECH_OPTIMIZATION = "⬡-Optimized"
+GLITCHED = "⬡-Glitched"
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 

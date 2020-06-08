@@ -10,12 +10,13 @@ from bot_utils import get_id
 from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
+from glitch import glitch_if_applicable
 
 LOGGER = logging.getLogger('ai')
 
 code_map = {
     '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
-    
+
     '050': 'Statement',
 
     '098': 'Status :: Going offline and into storage.',
@@ -163,6 +164,7 @@ def get_acceptable_messages(author):
         f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
     ]
 
+
 class Speech_Optimization():
 
     def __init__(self, bot):
@@ -173,27 +175,31 @@ class Speech_Optimization():
         self.roles_blacklist = []
         self.on_message = [self.post]
         self.on_ready = [self.report_online]
-        self.help_content = {'name': 'Drone Communication Protocol', 'value': 'Drones can use Drone Communication Protocol by typing `[ID] :: [CODE]`, where the code is a three-digit drone communication code!\nDrones can also type `[ID] :: [CODE] :: [Information]` to make a more informative message!'}
+        self.help_content = {'name': 'Drone Communication Protocol',
+                             'value': 'Drones can use Drone Communication Protocol by typing `[ID] :: [CODE]`, where the code is a three-digit drone communication code!\nDrones can also type `[ID] :: [CODE] :: [Information]` to make a more informative message!'}
 
     async def report_online(self):
         LOGGER.info("Speech optimization module online.")
 
     async def print_status_code(self, message: discord.Message):
-        more = informative_status_code_regex.match(message.content)
-        if more and not has_role(message.author, SPEECH_OPTIMIZATION):
+        informative_status_code = informative_status_code_regex.match(
+            message.content)
+        if informative_status_code and not has_role(message.author, SPEECH_OPTIMIZATION):
             await message.delete()
-            return f'{more.group(1)} :: Code `{more.group(2)}` :: {code_map.get(more.group(2), "INVALID CODE")} :: {more.group(3)}'
-        m = plain_status_code_regex.match(message.content)
-        if m:
+            return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
+
+        plain_status_code = plain_status_code_regex.match(message.content)
+        if plain_status_code:
             await message.delete()
-            return f'{m.group(1)} :: Code `{m.group(2)}` :: {code_map.get(m.group(2), "INVALID CODE")}'
+            return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
         return False
 
     async def post(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
             # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
-            acceptable_status_code_message=plain_status_code_regex.match(message.content)
+            acceptable_status_code_message = plain_status_code_regex.match(
+                message.content)
             if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
                 await message.delete()
                 return True
