@@ -1,30 +1,35 @@
+import logging
+import re
+
 import discord
 from discord.utils import get
-import re
-from channels import OFFICE
-from roles import HIVE_MXTRESS
-import logging
+
 import webhook
+from channels import DRONE_HIVE_CHANNELS, OFFICE
+from roles import ENFORCER_DRONE, HIVE_MXTRESS, has_role
+from resources import *
 
 LOGGER = logging.getLogger('ai')
+
 
 class Amplifier():
 
     def __init__(self, bot):
-            self.bot = bot
-            self.channels_whitelist = [OFFICE]
-            self.channels_blacklist = []
-            self.roles_whitelist = [HIVE_MXTRESS]
-            self.roles_blacklist = []
-            self.on_message = [self.amplify]
-            self.on_ready = []
+        self.bot = bot
+        self.channels_whitelist = [OFFICE]
+        self.channels_blacklist = []
+        self.roles_whitelist = [HIVE_MXTRESS]
+        self.roles_blacklist = []
+        self.on_message = [self.amplify]
+        self.on_ready = []
 
     async def amplify(self, message: discord.Message):
         LOGGER.info("Amplifying message.")
         drone_ids = re.findall(r"\d{4} ", message.content)
         target_message_pos = message.content.rfind("|")
 
-        if target_message_pos == -1 or len(drone_ids) == 0 or len(message.channel_mentions) == 0: return
+        if target_message_pos == -1 or len(drone_ids) == 0 or len(message.channel_mentions) == 0:
+            return
 
         target_channel = message.channel_mentions[0]
         target_message = message.content[target_message_pos + 2:]
@@ -39,7 +44,14 @@ class Amplifier():
                     amplifier_drone = member
                 elif member.display_name == "⬢-Drone #" + drone_id:
                     amplifier_drone = member
-                if amplifier_drone is not None:
-                    await target_webhook.send(drone_id + " :: " + target_message, username=amplifier_drone.display_name, avatar_url=amplifier_drone.avatar_url)
-                    break
 
+                if amplifier_drone is not None:
+                    avatar_url = amplifier_drone.avatar_url
+                    if target_channel.name in DRONE_HIVE_CHANNELS:
+                        if has_role(amplifier_drone, ENFORCER_DRONE):
+                            avatar_url = ENFORCER_AVATAR
+                        else:
+                            avatar_url = DRONE_AVATAR
+
+                    await target_webhook.send(drone_id + " :: " + target_message, username=amplifier_drone.display_name, avatar_url=avatar_url)
+                    break
