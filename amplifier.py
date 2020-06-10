@@ -23,11 +23,11 @@ class Amplifier():
         LOGGER.info("Amplifying message.")
         parts = message.content.split('|')
 
+        if len(message.channel_mentions) == 0 or len(parts) < 3:
+            return
+
         # use a set to make the list of IDs unique
         drone_ids = set(re.findall(r"\d{4}", parts[0]))
-
-        if len(drone_ids) == 0 or len(message.channel_mentions) == 0:
-            return
 
         target_channel = message.channel_mentions[0]
         target_message = parts[2].strip()
