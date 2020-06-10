@@ -110,8 +110,8 @@ def get_acceptable_messages(author, channel):
             f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
         ]
     else:
-        return
-
+	    return []
+	
 
 class Speech_Optimization():
 
@@ -140,7 +140,7 @@ class Speech_Optimization():
         if plain_status_code:
             await message.delete()
             return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-        return False
+        return None
 
     async def post(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
