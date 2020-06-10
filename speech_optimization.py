@@ -140,7 +140,7 @@ class Speech_Optimization():
         if plain_status_code:
             await message.delete()
             return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-        return None
+        return False
 
     async def post(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
