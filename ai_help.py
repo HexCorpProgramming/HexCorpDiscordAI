@@ -1,5 +1,7 @@
 import discord
+
 from channels import EVERYWHERE
+from resources import DRONE_AVATAR
 from roles import EVERYONE
 
 
@@ -18,8 +20,7 @@ class AI_Help():
         self.roles_blacklist = []
         self.modules = modules
         self.help_content = {'name': 'help',
-                          'value': 'you are using this right now'}
-        self.embed_thumbnail = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
+                             'value': 'you are using this right now'}
 
     async def send_bot_help(self, message: discord.Message):
         '''
@@ -29,8 +30,9 @@ class AI_Help():
             return False
 
         # prepare embed
-        embed = discord.Embed(title='Help', description='These features can be used in this channel.', color=0xff66ff)
-        embed.set_thumbnail(url=self.embed_thumbnail)
+        embed = discord.Embed(
+            title='Help', description='These features can be used in this channel.', color=0xff66ff)
+        embed.set_thumbnail(url=DRONE_AVATAR)
 
         # add help_content from all registered modules
         for module in self.modules:
