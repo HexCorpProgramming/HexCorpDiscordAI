@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
+
+import discord
+
 import roles
 from channels import BOT_DEV_COMMS
-import logging
-import discord
+from resources import DRONE_AVATAR
 
 LOGGER = logging.getLogger('ai')
 
@@ -29,7 +32,6 @@ class Status():
         self.on_ready = []
         self.help_content = {'name': 'ai_status',
                              'value': 'get a status report from the AI'}
-        self.embed_thumbnail = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502f14199/1586799484353-XBXNJR1XBM84C9YJJ0RU/ke17ZwdGBToddI8pDm48kLxnK526YWAH1qleWz-y7AFZw-zPPgdn4jUwVcJE1ZvWEtT5uBSRWt4vQZAgTJucoTqqXjS3CfNDSuuf31e0tVFUQAah1E2d0qOFNma4CJuw0VgyloEfPuSsyFRoaaKT76QvevUbj177dmcMs1F0H-0/Drone.png"
         self.modules = modules
 
     async def report_status(self, message: discord.Message):
@@ -39,13 +41,14 @@ class Status():
         if message.content.lower() != 'ai_status':
             return False
 
-        embed = discord.Embed(title='AI status report', description='HexCorp Mxtress AI online', color=0xff66ff)
-        embed.set_thumbnail(url=self.embed_thumbnail)
+        embed = discord.Embed(
+            title='AI status report', description='HexCorp Mxtress AI online', color=0xff66ff)
+        embed.set_thumbnail(url=DRONE_AVATAR)
 
-        embed.add_field(name='deployed commit', value=read_version(), inline=False)
-        embed.add_field(name='active modules', value=[module.__class__.__name__ for module in self.modules], inline=False)
+        embed.add_field(name='deployed commit',
+                        value=read_version(), inline=False)
+        embed.add_field(name='active modules', value=[
+                        module.__class__.__name__ for module in self.modules], inline=False)
 
         await message.channel.send(embed=embed)
         return False
-
-
