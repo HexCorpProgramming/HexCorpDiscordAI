@@ -25,19 +25,20 @@ class Amplifier():
 
     async def amplify(self, message: discord.Message):
         LOGGER.info("Amplifying message.")
-        drone_ids = re.findall(r"\d{4} ", message.content)
-        target_message_pos = message.content.rfind("|")
+        parts = message.content.split('|')
 
-        if target_message_pos == -1 or len(drone_ids) == 0 or len(message.channel_mentions) == 0:
+
+        if len(message.channel_mentions) == 0 or len(parts) < 3:
             return
 
-        target_channel = message.channel_mentions[0]
-        target_message = message.content[target_message_pos + 2:]
+        # use a set to make the list of IDs unique
+        drone_ids = set(re.findall(r"\d{4}", parts[0]))
 
+        target_channel = message.channel_mentions[0]
+        target_message = parts[2].strip()
         target_webhook = await webhook.get_webhook_for_channel(target_channel)
 
         for drone_id in drone_ids:
-            drone_id = drone_id[:-1]
             for member in message.guild.members:
                 amplifier_drone = None
                 if member.display_name == "⬡-Drone #" + drone_id:
@@ -55,3 +56,5 @@ class Amplifier():
 
                     await target_webhook.send(drone_id + " :: " + target_message, username=amplifier_drone.display_name, avatar_url=avatar_url)
                     break
+
+        return True
