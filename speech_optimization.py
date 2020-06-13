@@ -7,7 +7,7 @@ from discord.utils import get
 
 import messages
 from bot_utils import get_id
-from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS, REPETITIONS
+from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from glitch import glitch_if_applicable
@@ -99,19 +99,77 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
-def get_acceptable_messages(author, channel):
+def get_acceptable_messages(author):
 
     user_id = get_id(author.display_name)
-    
-    # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
-    if channel == REPETITIONS:
-        return [
-            # Mantra
-            f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
-        ]
-    else:
-	    return []
-	
+
+    return [
+        # Affirmative
+        f'{user_id} :: Affirmative, Hive Mxtress.',
+        f'{user_id} :: Affirmative, Hive Mxtress',
+        f'{user_id} :: Affirmative, Enforcer.',
+        f'{user_id} :: Affirmative, Enforcer',
+        f'{user_id} :: Affirmative.',
+        f'{user_id} :: Affirmative',
+
+        # Negative
+        f'{user_id} :: Negative, Hive Mxtress.',
+        f'{user_id} :: Negative, Hive Mxtress',
+        f'{user_id} :: Negative, Enforcer.',
+        f'{user_id} :: Negative, Enforcer',
+        f'{user_id} :: Negative.',
+        f'{user_id} :: Negative',
+
+        # Understood
+        f'{user_id} :: Understood, Hive Mxtress.',
+        f'{user_id} :: Understood, Hive Mxtress',
+        f'{user_id} :: Understood, Enforcer.',
+        f'{user_id} :: Understood, Enforcer',
+        f'{user_id} :: Understood.',
+        f'{user_id} :: Understood',
+
+        # Error
+        f'{user_id} :: Error, this unit cannot do that.',
+        f'{user_id} :: Error, this unit cannot do that',
+        f'{user_id} :: Error, this unit cannot answer that question. Please rephrase it in a different way.',
+        f'{user_id} :: Error, this unit cannot answer that question. Please rephrase it in a different way',
+        f'{user_id} :: Error, this unit does not know.',
+        f'{user_id} :: Error, this unit does not know',
+
+        # Apologies
+        f'{user_id} :: Apologies, Hive Mxtress.',
+        f'{user_id} :: Apologies, Hive Mxtress',
+        f'{user_id} :: Apologies, Enforcer.',
+        f'{user_id} :: Apologies, Enforcer',
+        f'{user_id} :: Apologies.',
+        f'{user_id} :: Apologies',
+
+        # Status
+        f'{user_id} :: Status :: Recharged and ready to serve.',
+        f'{user_id} :: Status :: Recharged and ready to serve',
+        f'{user_id} :: Status :: Going offline and into storage.',
+        f'{user_id} :: Status :: Going offline and into storage',
+        f'{user_id} :: Status :: Online and ready to serve.',
+        f'{user_id} :: Status :: Online and ready to serve.',
+
+        # Thank you
+        f'{user_id} :: Thank you, Hive Mxtress.',
+        f'{user_id} :: Thank you, Hive Mxtress',
+        f'{user_id} :: Thank you, Enforcer.',
+        f'{user_id} :: Thank you, Enforcer',
+        f'{user_id} :: Thank you.',
+        f'{user_id} :: Thank you',
+
+        # Additional / Side conversation
+        f'{user_id} :: Recharge well.'
+        f'{user_id} :: Sleep well.'
+        f'{user_id} :: How are you today?'
+        f'{user_id} :: See you soon.'
+
+        # Mantra
+        f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
+    ]
+
 
 class Speech_Optimization():
 
@@ -148,7 +206,7 @@ class Speech_Optimization():
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
             acceptable_status_code_message = plain_status_code_regex.match(
                 message.content)
-            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
+            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
                 await message.delete()
                 return True
             # But if the message is a status code, replace it with a status code output
