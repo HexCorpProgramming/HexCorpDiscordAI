@@ -21,6 +21,7 @@ from amplifier import Amplifier
 # Constants
 from roles import has_any_role
 import channels
+import database
 
 # set up logging
 log_file_handler = handlers.TimedRotatingFileHandler(
@@ -35,6 +36,9 @@ root_logger.addHandler(log_file_handler)
 
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
+
+# prepare database
+database.prepare()
 
 bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 
