@@ -20,7 +20,7 @@ GLITCHED = "⬡-Glitched"
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
-NITRO_BOOSTER = 'Nitro Booster'
+NITRO_BOOSTER = '⬡-Battery'
 PATREON_SUPPORTER = '⬡-Patreon'
 
 EVERYONE = '@everyone'
