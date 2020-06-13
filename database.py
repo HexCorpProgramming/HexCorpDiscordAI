@@ -28,6 +28,7 @@ def prepare():
             if saved_hash is not None and script_hash != saved_hash:
                 raise Exception(f"Bad migration. For script {script_file} expected has {saved_hash} but got {script_hash}")
 
+            script.seek(0)
             c.executescript(script.read())
             c.execute("INSERT INTO schema_version values (:file, :hashed)",
                       {'file': script_file, 'hashed': script_hash})
