@@ -15,6 +15,8 @@ import messages
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 
+import database
+
 LOGGER = logging.getLogger('ai')
 
 # currently 1 hour

@@ -10,3 +10,6 @@ data/
 
 # logs
 ai.log*
+
+# database
+ai.db
