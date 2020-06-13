@@ -98,7 +98,7 @@ code_map = {
 
     '600': 'Sleep well.',
     '601': 'Recharge well.',
-    '602': 'How are you today?'
+    '602': 'How are you today?',
     '603': 'See you soon.'
 }
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
