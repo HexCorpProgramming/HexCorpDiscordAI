@@ -95,6 +95,11 @@ code_map = {
     '504': 'Obey.',
     '505': 'Obey HexCorp.',
     '506': 'Obey the Hive.',
+
+    '600': 'Sleep well.',
+    '601': 'Recharge well.',
+    '602': 'How are you today?'
+    '603': 'See you soon.'
 }
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
@@ -159,12 +164,6 @@ def get_acceptable_messages(author):
         f'{user_id} :: Thank you, Enforcer',
         f'{user_id} :: Thank you.',
         f'{user_id} :: Thank you',
-
-        # Additional / Side conversation
-        f'{user_id} :: Recharge well.'
-        f'{user_id} :: Sleep well.'
-        f'{user_id} :: How are you today?'
-        f'{user_id} :: See you soon.'
 
         # Mantra
         f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
