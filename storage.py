@@ -73,7 +73,7 @@ class Storage():
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
         # ignore help commands
-        if message.content.lower() == ('help'):
+        if message.content.lower() == 'help':
             return False
 
         # parse message
@@ -113,7 +113,7 @@ class Storage():
                 storage_chambers = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
                 plural = "hour" if int(time) == 1 else "hours"
                 if drone_id == target_id:
-                    drone_id == "yourself"
+                    drone_id = "yourself"
                 await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
                 return False
 
