@@ -95,6 +95,11 @@ code_map = {
     '504': 'Obey.',
     '505': 'Obey HexCorp.',
     '506': 'Obey the Hive.',
+
+    '600': 'Sleep well.',
+    '601': 'Recharge well.',
+    '602': 'See you soon.',
+    '603': 'How are you today?'
 }
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
