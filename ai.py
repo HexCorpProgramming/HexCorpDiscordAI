@@ -96,6 +96,8 @@ async def on_member_join(member: discord.Member):
 
 @bot.event
 async def on_ready():
+    await database.add_drones(bot.guilds[0].members)
+
     for module in MODULES:
         for listener in module.on_ready:
             # start these concurrently, so they do not block each other
