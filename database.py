@@ -38,6 +38,7 @@ def prepare():
                     c.executescript(script.read())
                     c.execute("INSERT INTO schema_version values (:file, :hashed)",
                             {'file': script_file, 'hashed': script_hash})
+                    continue
 
                 if script_hash != saved_hash[0]:
                     raise Exception(
