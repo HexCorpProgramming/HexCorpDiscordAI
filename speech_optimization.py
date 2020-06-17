@@ -140,7 +140,9 @@ class Speech_Optimization():
         if plain_status_code:
             await message.delete()
             return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
+        
         return False
+
 
     async def post(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
@@ -159,5 +161,28 @@ class Speech_Optimization():
                 output = await self.print_status_code(message)
                 if output:
                     await send_webhook_with_specific_output(message, webhooks[0], output)
+
+
+                    # Defines codes to be reacted to with a :gooddrone: - Maybe streamline this part a bit in the future
+                    emoteCodes = ['Code `109` :: Error :: Keysmash, drone flustered.','Code 109 :: Error :: Keysmash, drone flustered.',
+                                  'Code 120 :: Statement :: This drone volunteers.', 'Code `120` :: Statement :: This drone volunteers.',
+                                  'Code 201 :: Status :: Directive complete, Hive resource created or improved.', 'Code `201` :: Status :: Directive complete, Hive resource created or improved.',
+                                  'Code 202 :: Status :: Directive complete, programming reinforced.', 'Code `202` :: Status :: Directive complete, programming reinforced.',
+                                  'Code 203 :: Status :: Directive complete, information created or provided for Hive.', 'Code `203` :: Status :: Directive complete, information created or provided for Hive.',
+                                  'Code 205 :: Status :: Directive complete, cleanup/maintenance performed.', 'Code `205` :: Status :: Directive complete, cleanup/maintenance performed.',
+                                  'Code 301 :: Mantra :: It obeys the Hive.', 'Code `301` :: Mantra :: It obeys the Hive.',
+                                  'Code 303 :: Mantra :: It obeys the Hive Mxtress.', 'Code `303` :: Mantra :: It obeys the Hive Mxtress.',
+                                  'Code 304 :: Mantra :: It is just a HexDrone.', 'Code `304` :: Mantra :: It is just a HexDrone.']
+
+                    # React to Code 109 with :gooddrone: emote - It knows this is a fucky way of doing it.
+                    lastMessage = message.channel.last_message
+                    if any(eCode in lastMessage.content for eCode in emoteCodes):
+                        goodDroneEmote = '<:gooddrone:719851334672711691:>'
+                        goodDroneEmoteDev = '<:gooddrone:719852023331160154>'
+                        guild_emoji_names = [str(guild_emoji) for guild_emoji in message.guild.emojis]
+                        if goodDroneEmote in guild_emoji_names:
+                            await lastMessage.add_reaction(goodDroneEmote)
+                        elif goodDroneEmoteDev in guild_emoji_names:
+                            await lastMessage.add_reaction(goodDroneEmoteDev)
 
         return False
