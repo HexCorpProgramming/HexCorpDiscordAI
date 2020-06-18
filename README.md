@@ -27,3 +27,11 @@ To update the current production instance of the AI you have to:
 4. `git checkout <NEW_VERSION>`
 5. navigate back up
 6. `sh start_ai.sh`
+
+## Hints for development
+### Database
+We use a SQLite DB to persist certain data. It is recommended to get a SQL client so you can poke around in it.
+
+When you want to change the DB schema, you can create a new sql-file in `res/db/migrate`. The number in the beginning has to be higher then every other number of the migration scripts. These scripts are executed in sequence when the AI starts.
+
+If you manage to screw up your DB you can remove it by simply deleting the file `ai.db`. On the next AI start the DB will be recreated.

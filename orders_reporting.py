@@ -13,6 +13,7 @@ from discord.utils import get
 from channels import ORDERS_REPORTING
 from roles import DRONE
 import database
+from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
 
@@ -56,7 +57,7 @@ class Orders_Reporting():
             for order in get_current_orders():
                 if datetime.now() > datetime.fromisoformat(order.finish_time):
                     for member in self.bot.guilds[0].members:
-                        if find_id(member.display_name) == order.drone_id:
+                        if get_id(member.display_name) == order.drone_id:
                             # get the drone responsible
                             await ORDERS_REPORTING_CHANNEL.send(f"{member.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
                             database.change(
@@ -108,13 +109,3 @@ def get_current_orders():
         'SELECT id, drone_id, protocol, finish_time FROM drone_order', {})
     current_orders = [ActiveOrder(*row) for row in fetched]
     return current_orders
-
-def find_id(name: str) -> str:
-    '''
-    Find the four digit ID in a nickname.
-    '''
-    matches = re.findall(r'\d{4}', name)
-    if len(matches) == 0:
-        return ''
-    else:
-        return matches[0]

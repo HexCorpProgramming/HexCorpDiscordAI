@@ -11,5 +11,6 @@ data/
 # logs
 ai.log*
 
-# database
+# database and the journal sqlite keeps
 ai.db
+ai.db-journal

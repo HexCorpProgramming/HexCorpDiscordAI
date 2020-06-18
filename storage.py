@@ -16,6 +16,7 @@ import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 
 import database
+from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
 
@@ -94,7 +95,7 @@ class Storage():
 
         # find target drone and store it
         for member in message.guild.members:
-            if find_id(member.display_name) == target_id and drone_role in member.roles:
+            if get_id(member.display_name) == target_id and drone_role in member.roles:
                 former_roles = filter_out_non_removable_roles(member.roles)
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
@@ -161,7 +162,7 @@ class Storage():
                 if now > datetime.fromisoformat(stored.release_time):
                     # find drone member
                     for member in self.bot.guilds[0].members:
-                        if find_id(member.display_name) == stored.target_id:
+                        if get_id(member.display_name) == stored.target_id:
                             # restore roles to release from storage
                             await member.remove_roles(stored_role)
                             await member.add_roles(*get_roles_for_names(self.bot.guilds[0], stored.roles.split('|')))
@@ -184,7 +185,7 @@ class Storage():
         stored_role = get(message.guild.roles, name=roles.STORED)
         # find stored drone
         member = message.mentions[0]
-        to_release_id = find_id(member.display_name)
+        to_release_id = get_id(member.display_name)
         for drone in get_stored_drones():
             if drone.target_id == to_release_id:
                 await member.remove_roles(stored_role)
@@ -196,16 +197,6 @@ class Storage():
                 return True
         return True
 
-
-def find_id(name: str) -> str:
-    '''
-    Find the four digit ID in a nickname.
-    '''
-    matches = re.findall(r'\d{4}', name)
-    if len(matches) == 0:
-        return ''
-    else:
-        return matches[0]
 
 def hours_from_now(target: datetime) -> int:
     '''
