@@ -1,8 +1,8 @@
 import asyncio
-import json
 import logging
 import re
 import time
+from uuid import uuid4
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
@@ -28,24 +28,19 @@ RELEASE_INTERVAL_SECONDS = 60
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
-# path to the file where information about stored drones is kept
-STORAGE_FILE_PATH = 'data/storage.json'
-
-# central storage list; contains StoredDrone entities
-STORED_DRONES = []
-
 
 class StoredDrone():
     '''
     A simple object that stores information about stored drones.
     '''
 
-    def __init__(self, drone_id: str, target_id: str, release_time: str, purpose: str, roles: List[str]):
+    def __init__(self, id: str, drone_id: str, target_id: str, purpose: str, roles: str, release_time: str):
+        self.id = id
         self.drone_id = drone_id
         self.target_id = target_id
-        self.release_time = release_time
         self.purpose = purpose
         self.roles = roles
+        self.release_time = release_time
 
 
 class Storage():
@@ -62,8 +57,9 @@ class Storage():
         self.roles_whitelist = [roles.HIVE_MXTRESS, roles.DRONE]
         self.roles_blacklist = []
         self.on_message = [self.release, self.store]
-        self.on_ready = [self.load_storage, self.report_storage, self.release_timed]
-        self.help_content = {'name': 'storage', 'value': 'store your favourite drone with `[DRONE ID HERE] :: [TARGET DRONE (can be its own ID) HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]`'}
+        self.on_ready = [self.report_storage, self.release_timed]
+        self.help_content = {
+            'name': 'storage', 'value': 'store your favourite drone with `[DRONE ID HERE] :: [TARGET DRONE (can be its own ID) HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]`'}
 
     async def store(self, message: discord.Message):
         '''
@@ -86,7 +82,7 @@ class Storage():
             MESSAGE_FORMAT, message.content)
 
         # check if drone is already in storage
-        for stored in STORED_DRONES:
+        for stored in get_stored_drones():
             if stored.target_id == target_id:
                 await message.channel.send(f'{target_id} is already in storage.')
                 return True
@@ -102,15 +98,15 @@ class Storage():
                 former_roles = filter_out_non_removable_roles(member.roles)
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
-                stored_until = (datetime.now() +
-                                timedelta(hours=int(time))).timestamp()
-                stored_drone = StoredDrone(
-                    drone_id, target_id, stored_until, purpose, get_names_for_roles(former_roles))
-                STORED_DRONES.append(stored_drone)
-                persist_storage()
+                stored_until = str(datetime.now() + timedelta(hours=int(time)))
+                stored_drone = StoredDrone(str(uuid4()),
+                                           drone_id, target_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
+                database.change(
+                    'INSERT INTO storage VALUES (:id, :drone_id, :target_id, :purpose, :roles, :release_time)', vars(stored_drone))
 
-                #Inform the drone that they have been stored.
-                storage_chambers = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
+                # Inform the drone that they have been stored.
+                storage_chambers = get(
+                    self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
                 plural = "hour" if int(time) == 1 else "hours"
                 if drone_id == target_id:
                     drone_id = "yourself"
@@ -136,10 +132,11 @@ class Storage():
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(REPORT_INTERVAL_SECONDS)
 
-            if len(STORED_DRONES) == 0:
+            stored_drones = get_stored_drones()
+            if len(stored_drones) == 0:
                 await storage_channel.send('No drones in storage.')
             else:
-                for stored in STORED_DRONES:
+                for stored in stored_drones:
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
                         datetime.fromtimestamp(stored.release_time))
@@ -158,36 +155,19 @@ class Storage():
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
 
-            still_stored = []
             now = datetime.now()
-            for stored in STORED_DRONES:
-                if now > datetime.fromtimestamp(stored.release_time):
+            stored_drones = get_stored_drones()
+            for stored in stored_drones:
+                if now > datetime.fromisoformat(stored.release_time):
                     # find drone member
                     for member in self.bot.guilds[0].members:
                         if find_id(member.display_name) == stored.target_id:
                             # restore roles to release from storage
                             await member.remove_roles(stored_role)
-                            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], stored.roles))
+                            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], stored.roles.split('|')))
+                            database.change('DELETE FROM storage WHERE id=:id', {
+                                            'id': stored.id})
                             break
-                else:
-                    still_stored.append(stored)
-
-            STORED_DRONES.clear()
-            STORED_DRONES.extend(still_stored)
-            persist_storage()
-
-    async def load_storage(self):
-        '''
-        Load storage list from disk.
-        '''
-        storage_path = Path(STORAGE_FILE_PATH)
-        if not storage_path.exists():
-            return
-
-        with storage_path.open('r') as storage_file:
-            STORED_DRONES.clear()
-            STORED_DRONES.extend([StoredDrone(**deserialized)
-                                  for deserialized in json.load(storage_file)])
 
     async def release(self, message: discord.Message):
         '''
@@ -205,13 +185,14 @@ class Storage():
         # find stored drone
         member = message.mentions[0]
         to_release_id = find_id(member.display_name)
-        for drone in STORED_DRONES:
+        for drone in get_stored_drones():
             if drone.target_id == to_release_id:
                 await member.remove_roles(stored_role)
-                await member.add_roles(*get_roles_for_names(message.guild, drone.roles))
-                STORED_DRONES.remove(drone)
-                persist_storage()
-                LOGGER.debug(f"Drone with ID {to_release_id} released from storage.")
+                await member.add_roles(*get_roles_for_names(message.guild, drone.roles.split('|')))
+                database.change('DELETE FROM storage WHERE id=:id', {
+                                            'id': drone.id})
+                LOGGER.debug(
+                    f"Drone with ID {to_release_id} released from storage.")
                 return True
         return True
 
@@ -225,19 +206,6 @@ def find_id(name: str) -> str:
         return ''
     else:
         return matches[0]
-
-
-def persist_storage():
-    '''
-    Write the list of stored drones to hard drive.
-    '''
-    storage_path = Path(STORAGE_FILE_PATH)
-    storage_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with storage_path.open('w') as storage_file:
-        json.dump([vars(stored_drone)
-                   for stored_drone in STORED_DRONES], storage_file)
-
 
 def hours_from_now(target: datetime) -> int:
     '''
@@ -277,3 +245,10 @@ def filter_out_non_removable_roles(unfiltered_roles: List[discord.Role]) -> List
             removable_roles.append(role)
 
     return removable_roles
+
+
+def get_stored_drones():
+    fetched = database.fetchall(
+        'SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage', {})
+    stored_drones = [StoredDrone(*row) for row in fetched]
+    return stored_drones

@@ -12,9 +12,10 @@ from uuid import uuid4
 
 LOGGER = logging.getLogger('ai')
 
+DB_FILE = 'ai.db'
 
 def prepare():
-    with sqlite3.connect('ai.db') as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
 
         c.execute(
@@ -50,7 +51,7 @@ def prepare():
 
 
 async def add_drones(members: List[discord.Member]):
-    with sqlite3.connect('ai.db') as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         for member in members:
             if has_any_role(member, [DRONE, STORED]):
@@ -68,3 +69,15 @@ async def add_drones(members: List[discord.Member]):
         c.execute("SELECT * from drone")
         LOGGER.info(f'DB schema after migration {c.fetchall()}')
         conn.commit()
+
+def change(query: str, params):
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        conn.commit()
+
+def fetchall(query: str, params):
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchall()
