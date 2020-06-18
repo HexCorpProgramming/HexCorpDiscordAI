@@ -18,6 +18,7 @@ from toggle_glitched import Toggle_Glitched
 from ai_help import AI_Help
 from status import Status
 from amplifier import Amplifier
+from rename_drone import RenameDrone
 # Constants
 from roles import has_any_role
 import channels
@@ -54,6 +55,7 @@ MODULES = [
     Emote(bot),
     Toggle_Speech_Optimization(bot),
     Toggle_Glitched(bot),
+    RenameDrone(bot),
     Amplifier(bot),
 ]
 
