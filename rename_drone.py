@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.utils import get
 
 from channels import OFFICE
-from roles import HIVE_MXTRESS, has_role
+from roles import HIVE_MXTRESS, ENFORCER_DRONE, has_role
 from bot_utils import get_id
 
 from database import fetchall, change
@@ -45,7 +45,10 @@ class RenameDrone():
         if len(fetched) == 0:
             for member in message.guild.members:
                 if old_id == get_id(member.display_name):
-                    await member.edit(nick=f'⬡-Drone #{new_id}')
+                    if has_role(member, ENFORCER_DRONE):
+                        await member.edit(nick=f'⬢-Drone #{new_id}')
+                    else:
+                        await member.edit(nick=f'⬡-Drone #{new_id}')
                     change('UPDATE drone SET drone_id=:new_id WHERE drone_id=:old_id', {
                            'new_id': new_id, 'old_id': old_id})
         else:
