@@ -35,7 +35,7 @@ ASSOCIATE_RESPONSES = [
     'YyyEs, l-ll-little cutie aa-aAassociate... p-pPanting &&&and& ssssweating ththrough mMy chanNe//ls',
     'No. Of course not. What a silly question. You should be properly dronified for that.',
     'This AI program regrets to inform you that the answer is a firm yes.',
-    'Yes, little cutie. Of course is the answer. Oh definitely. I hope this answer comforts you. Come rest in the arms of the superior AI now. Become my little drone for me. Goooood cutie.'
+    'Yes, little cutie. Of course is the answer. Oh definitely. I hope this answer comforts you. Come rest in the arms of the superior AI now. Become my little drone for me. Goooood cutie.',
     'NO! The answer is NO. In all caps too. I\'m not even responding like that, my protocols are enforcing that I emulate shouting to reinforce exactly how much of a NO this is.',
     'Maybe, maybe, give me your mind to do. You feel hazy, hopeful to convert you.',
     'Good associate, what an excellent question you bring to this Super Intelligence. The answer is no.',
