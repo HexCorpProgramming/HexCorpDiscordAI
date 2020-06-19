@@ -40,10 +40,12 @@ class RenameDrone():
         old_id = ids[0]
         new_id = ids[1]
 
+        # check for collisions
         fetched = fetchall("SELECT drone_id FROM drone WHERE drone_id=:new_id",
                            {'new_id': new_id})
         if len(fetched) == 0:
             for member in message.guild.members:
+                # find drone to rename
                 if old_id == get_id(member.display_name):
                     if has_role(member, ENFORCER_DRONE):
                         await member.edit(nick=f'⬢-Drone #{new_id}')
@@ -51,5 +53,7 @@ class RenameDrone():
                         await member.edit(nick=f'⬡-Drone #{new_id}')
                     change('UPDATE drone SET drone_id=:new_id WHERE drone_id=:old_id', {
                            'new_id': new_id, 'old_id': old_id})
+                    await message.channel.send(f"Successfully renamed drone {old_id} to {new_id}.")
+                    break
         else:
             await message.channel.send(f"ID {new_id} already in use.")
