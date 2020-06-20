@@ -1,6 +1,6 @@
 import asyncio
-import json
 import logging
+from uuid import uuid4
 import re
 import time
 from datetime import datetime, timedelta
@@ -12,31 +12,18 @@ from discord.utils import get
 
 from channels import ORDERS_REPORTING
 from roles import DRONE
+import database
+from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
 
-ORDERS_FILE_PATH = "data/orders.json"
-active_orders = []
 
-
-def persist_storage():
-    '''
-    Write the list of orders to hard drive.
-    '''
-    storage_path = Path(ORDERS_FILE_PATH)
-    storage_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with storage_path.open('w') as storage_file:
-        json.dump([vars(order)
-                   for order in active_orders], storage_file)
-
-
-class Active_Order():
-    def __init__(self, drone, user_id, protocol, release_at):
-        self.drone = drone
-        self.user_id = user_id
+class ActiveOrder():
+    def __init__(self, id: str, drone_id: str, protocol: str, finish_time: str):
+        self.id = id
+        self.drone_id = drone_id
         self.protocol = protocol
-        self.release_at = release_at
+        self.finish_time = finish_time
 
 
 class Orders_Reporting():
@@ -49,28 +36,12 @@ class Orders_Reporting():
         self.roles_blacklist = []
         self.on_message = [self.order_reported]
         self.on_ready = [self.report_online,
-                         self.monitor_progress, self.load_storage]
+                         self.monitor_progress]
         self.monitor_progress_started = False
         self.message_format = r"Drone \d{4} is ready to be activated and obey orders\. Drone \d{4} will be obeying the :: \w.+ protocol for \d{1,3} (minutes|minute)\.?"
 
     async def report_online(self):
         LOGGER.info("Orders reporting module online.")
-
-    async def load_storage(self):
-        '''
-        Load list of orders from disk.
-        '''
-        storage_path = Path(ORDERS_FILE_PATH)
-        if not storage_path.exists():
-            return
-
-        with storage_path.open('r') as storage_file:
-            active_orders.clear()
-            active_orders.extend([Active_Order(**deserialized)
-                                  for deserialized in json.load(storage_file)])
-
-        LOGGER.debug("Storage successfully loaded for active orders.")
-        LOGGER.debug(f"Current orders: {active_orders}")
 
     async def monitor_progress(self):
         if self.monitor_progress_started:
@@ -83,19 +54,14 @@ class Orders_Reporting():
             # Check active orders every minute.
             await asyncio.sleep(60)
             LOGGER.debug("Checking for completed orders")
-            still_active = []
-            for order in active_orders:
-                if order.release_at < time.time():
-
-                    # get the drone responsible
-                    user = get(self.bot.guilds[0].members, id=order.user_id)
-                    await ORDERS_REPORTING_CHANNEL.send(f"{user.mention} Drone {order.drone} Deactivate.\nDrone {order.drone}, good drone.")
-                else:
-                    still_active.append(order)
-
-            active_orders.clear()
-            active_orders.extend(still_active)
-            persist_storage()
+            for order in get_current_orders():
+                if datetime.now() > datetime.fromisoformat(order.finish_time):
+                    for member in self.bot.guilds[0].members:
+                        if get_id(member.display_name) == order.drone_id:
+                            # get the drone responsible
+                            await ORDERS_REPORTING_CHANNEL.send(f"{member.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
+                            database.change(
+                                'DELETE FROM drone_order WHERE id=:id', {'id': order.id})
 
     async def order_reported(self, message: discord.Message):
         LOGGER.debug("Possible order reported.")
@@ -113,7 +79,7 @@ class Orders_Reporting():
             await message.channel.send("Your drone ID does not match the declaration.")
             return
 
-        for order in active_orders:
+        for order in get_current_orders():
             if order.user_id == message.author.id:
                 await message.channel.send(f"Drone {drone_id} has already been assigned an order.")
                 return
@@ -128,10 +94,18 @@ class Orders_Reporting():
             return
 
         await message.channel.send(f"Drone {drone_id} Activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
-        active_orders.append(Active_Order(
-            drone_id, message.author.id, protocol_name, time.time() + (int(protocol_time) * 60)))
-
-        LOGGER.debug(f"Current orders: {active_orders}")
-        persist_storage()
+        finish_time = str(
+            datetime.now() + timedelta(minutes=int(protocol_time)))
+        created_order = ActiveOrder(
+            str(uuid4()), drone_id, protocol_name, finish_time)
+        database.change(
+            'INSERT INTO drone_order values (:id, :drone_id, :protocol, :finish_time)', vars(created_order))
 
         return False
+
+
+def get_current_orders():
+    fetched = database.fetchall(
+        'SELECT id, drone_id, protocol, finish_time FROM drone_order', {})
+    current_orders = [ActiveOrder(*row) for row in fetched]
+    return current_orders

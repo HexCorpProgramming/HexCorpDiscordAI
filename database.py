@@ -12,9 +12,13 @@ from uuid import uuid4
 
 LOGGER = logging.getLogger('ai')
 
+DB_FILE = 'ai.db'
 
 def prepare():
-    with sqlite3.connect('ai.db') as conn:
+    '''
+    Creates the DB and initializes it by executing the migration scripts if necessary.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
 
         c.execute(
@@ -50,7 +54,10 @@ def prepare():
 
 
 async def add_drones(members: List[discord.Member]):
-    with sqlite3.connect('ai.db') as conn:
+    '''
+    Adds the given list of Members as drone entities to the DB.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         for member in members:
             if has_any_role(member, [DRONE, STORED]):
@@ -66,5 +73,22 @@ async def add_drones(members: List[discord.Member]):
                         "id": str(uuid4()), "drone_id": drone_id, "last_activity": datetime.now()})
 
         c.execute("SELECT * from drone")
-        LOGGER.info(f'DB schema after migration {c.fetchall()}')
         conn.commit()
+
+def change(query: str, params):
+    '''
+    Executes a given query and commits changes.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        conn.commit()
+
+def fetchall(query: str, params):
+    '''
+    Executes a given query and retrieves the result. Does not change data.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchall()
