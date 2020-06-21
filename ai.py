@@ -19,9 +19,12 @@ from ai_help import AI_Help
 from status import Status
 from amplifier import Amplifier
 from rename_drone import RenameDrone
+from unassign import UnassignDrone, remove_drone_from_db
 # Constants
-from roles import has_any_role
+from roles import has_any_role, has_role, DRONE, STORED
 import channels
+from bot_utils import get_id
+
 import database
 
 # set up logging
@@ -56,6 +59,7 @@ MODULES = [
     Toggle_Speech_Optimization(bot),
     Toggle_Glitched(bot),
     RenameDrone(bot),
+    UnassignDrone(bot),
     Amplifier(bot),
 ]
 
@@ -94,7 +98,12 @@ async def on_member_join(member: discord.Member):
         except AttributeError:
             # do not raise an error, if this is not defined
             pass
-
+@bot.event
+async def on_member_remove(member: discord.Member):
+    # remove entry from DB if member was drone
+    if has_any_role(member, [DRONE, STORED]):
+        drone_id = get_id(member.display_name)
+        remove_drone_from_db(drone_id)
 
 @bot.event
 async def on_ready():
