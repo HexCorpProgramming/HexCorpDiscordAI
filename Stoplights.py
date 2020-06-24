@@ -27,8 +27,8 @@ class Stoplights():
                              'value': 'Anyone can use a spotlight emote, even optimized drones in order to stop a scene if they feel uncomfortable.'}
 
     async def check_for_stoplight(self, message: discord.Message):
-        important_moderator_message = ["🔴"]
-        important_messages = ["🟡", "🟢"]
+        important_moderator_message = ["⏰"]
+        important_messages = ["🔴", "🟡", "🟢"]
         # List of any important emoji, can be updated.
         for important in important_moderator_message:
 
