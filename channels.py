@@ -7,14 +7,15 @@ REGISTRY_CHANNEL = 'hexcorp-registry'
 
 #HexCorp-Lobby
 TRANSMISSIONS_CHANNEL = 'hexcorp-transmissions'
-LEWD_TRANSMISSIONS_CHANNEL = 'lewd-transmissions'
+KINK_TRANSMISSIONS_CHANNEL = 'kink-transmissions'
 GAMER_DRONE_LOBBY_CHANNEL = 'gamer-drone-lobby'
 MINECRAFT_DIRECTION_CHANNEL = 'minecraft-direction'
 ELITE_DIRECTION_CHANNEL = 'elite-direction'
 
 #HexCorp-Innovation
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
-LEWD_CREATIVE_LABOR_CHANNEL = 'lewd-creative-labor'
+KINK_CREATIVE_LABOR_CHANNEL = 'kink-creative-labor'
+HEXCORP_CREATIONS = 'hexcorp-creations'
 
 #HexCorp-Drone-Hive
 INITIATION = 'drone-hive-initiation'
