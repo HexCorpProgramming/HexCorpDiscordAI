@@ -15,6 +15,7 @@ ELITE_DIRECTION_CHANNEL = 'elite-direction'
 #HexCorp-Innovation
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
 KINK_CREATIVE_LABOR_CHANNEL = 'kink-creative-labor'
+HEXCORP_CREATIONS = 'hexcorp-creations'
 
 #HexCorp-Drone-Hive
 INITIATION = 'drone-hive-initiation'

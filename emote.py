@@ -7,7 +7,7 @@ from discord.utils import get
 
 import messages
 from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
-                      KINK_CREATIVE_LABOR_CHANNEL, KINK_TRANSMISSIONS_CHANNEL,
+                      KINK_CREATIVE_LABOR_CHANNEL, KINK_TRANSMISSIONS_CHANNEL, HEXCORP_CREATIONS,
                       MINECRAFT_DIRECTION_CHANNEL, TRANSMISSIONS_CHANNEL, ELITE_DIRECTION_CHANNEL)
 from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
 
@@ -48,6 +48,7 @@ class Emote():
                                    KINK_TRANSMISSIONS_CHANNEL,
                                    CREATIVE_LABOR_CHANNEL,
                                    KINK_CREATIVE_LABOR_CHANNEL,
+                                   HEXCORP_CREATIONS,
                                    GAMER_DRONE_LOBBY_CHANNEL,
                                    MINECRAFT_DIRECTION_CHANNEL,
                                    ELITE_DIRECTION_CHANNEL]
