@@ -7,7 +7,7 @@ from discord.utils import get
 
 import messages
 from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
-                      LEWD_CREATIVE_LABOR_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
+                      KINK_CREATIVE_LABOR_CHANNEL, KINK_TRANSMISSIONS_CHANNEL,
                       TRANSMISSIONS_CHANNEL)
 from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
 
@@ -76,8 +76,8 @@ class Respond():
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels_whitelist = [TRANSMISSIONS_CHANNEL, LEWD_TRANSMISSIONS_CHANNEL,
-                                   GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, LEWD_CREATIVE_LABOR_CHANNEL]
+        self.channels_whitelist = [TRANSMISSIONS_CHANNEL, KINK_TRANSMISSIONS_CHANNEL,
+                                   GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, KINK_CREATIVE_LABOR_CHANNEL]
         self.channels_blacklist = []
         self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
         self.roles_blacklist = [DRONE_MODE]
