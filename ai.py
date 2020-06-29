@@ -5,7 +5,7 @@ import asyncio
 import logging
 from logging import handlers
 # Modules
-from Stoplights import Stoplights
+from stoplights import Stoplights
 from identity_enforcer import Identity_Enforcer
 from speech_optimization import Speech_Optimization
 from toggle_speech_optimization import Toggle_Speech_Optimization
