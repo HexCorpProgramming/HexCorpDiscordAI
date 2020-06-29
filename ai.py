@@ -5,6 +5,7 @@ import asyncio
 import logging
 from logging import handlers
 # Modules
+from Stoplights import Stoplights
 from identity_enforcer import Identity_Enforcer
 from speech_optimization import Speech_Optimization
 from toggle_speech_optimization import Toggle_Speech_Optimization
@@ -49,6 +50,7 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 # register modules
 MODULES = [
     Join(bot),
+    Stoplights(bot),
     Speech_Optimization(bot),
     Identity_Enforcer(bot),
     Orders_Reporting(bot),
