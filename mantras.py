@@ -10,7 +10,7 @@ class Mantras():
 
     async def load_mantra(self):
         if Mantras.current_mantra != "": return True #No need to load a mantra if it's already there.
-        with open("current_mantra", "r+") as mantra_file:
+        with open("current_mantra", "r") as mantra_file:
             Mantras.current_mantra = mantra_file.readline()
             self.LOGGER.info(f"Mantra loaded from file: {Mantras.current_mantra}")
             mantra_file.close()
