@@ -20,7 +20,7 @@ class Mantras():
         print("CURRENT MANTRA IS:")
         print(Mantras.current_mantra)
 
-        if message.content.startswith("Repeat :: ") == False: return False #Only accept for the correct format.
+        if message.content.startswith("Repeat :: ") == False: return False
         new_mantra = message.content.replace("Repeat :: ","")
         with open("data/current_mantra.txt", "w") as mantra_file:
             mantra_file.write(new_mantra)
