@@ -21,7 +21,7 @@ from bot_utils import get_id
 LOGGER = logging.getLogger('ai')
 
 # currently 1 hour
-REPORT_INTERVAL_SECONDS = 10
+REPORT_INTERVAL_SECONDS = 60 * 60
 
 # currently 1 minute
 RELEASE_INTERVAL_SECONDS = 60
