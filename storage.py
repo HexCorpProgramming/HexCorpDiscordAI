@@ -140,7 +140,7 @@ class Storage():
                 for stored in stored_drones:
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
-                        datetime.fromtimestamp(stored.release_time))
+                        datetime.fromisoformat(stored.release_time))
                     await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
     async def release_timed(self):
