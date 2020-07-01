@@ -106,10 +106,6 @@ def get_acceptable_messages(author, channel):
     
     # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
     if channel == REPETITIONS:
-
-        print("ADDING ADDITIONAL MANTRA:")
-        print(Mantras.current_mantra)
-
         return [
             # Mantra
             f'{user_id} :: {Mantras.current_mantra}'

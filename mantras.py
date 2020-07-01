@@ -50,8 +50,7 @@ class Mantras():
             topic_message = message.content.replace("Repeat :: ", "Repeat :: [ID] :: ")
             await message.channel.edit(topic=topic_message) #Update the channel description
             self.LOGGER.info(f"Mantra updated and written to file: {Mantras.current_mantra}")
-            mantra_file.close()
-
+            
         return True
 
     def __init__(self, bot):
