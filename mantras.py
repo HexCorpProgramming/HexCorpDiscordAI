@@ -9,11 +9,17 @@ class Mantras():
     current_mantra = ""
 
     async def load_mantra(self):
-        if Mantras.current_mantra != "": return True #No need to load a mantra if it's already there.
+        if Mantras.current_mantra != "":
+            #No need to load a mantra if it's already there.
+            return
+        
+        if not os.path.exists("data/current_mantra.txt"):
+            Mantras.current_mantra = 'DEFAULT_MANTRA'
+            return
+        
         with open("data/current_mantra.txt", "r") as mantra_file:
             Mantras.current_mantra = mantra_file.readline()
             self.LOGGER.info(f"Mantra loaded from file: {Mantras.current_mantra}")
-            mantra_file.close()
 
     async def update_mantra(self, message):
 
