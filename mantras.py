@@ -62,3 +62,5 @@ class Mantras():
         self.on_message = [self.update_mantra]
         self.on_ready = [self.load_mantra]
         self.LOGGER = logging.getLogger('ai')
+        self.help_content = {'name': 'Mantra Updating Module',
+                             'value': 'The Hive Mxtress can set a new mantra for the repetitions channel by beginning a message with "Repeat :: "'}
