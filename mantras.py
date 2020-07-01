@@ -17,9 +17,6 @@ class Mantras():
 
     async def update_mantra(self, message):
 
-        print("CURRENT MANTRA IS:")
-        print(Mantras.current_mantra)
-
         if message.content.startswith("Repeat :: ") == False: return False
         new_mantra = message.content.replace("Repeat :: ","")
         with open("data/current_mantra.txt", "w") as mantra_file:
@@ -29,9 +26,6 @@ class Mantras():
             await message.channel.edit(topic=topic_message) #Update the channel description
             self.LOGGER.info(f"Mantra updated and written to file: {Mantras.current_mantra}")
             mantra_file.close()
-
-        print("UPDATED MANTRA IS:")
-        print(Mantras.current_mantra)
 
         return True
 
