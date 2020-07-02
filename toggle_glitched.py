@@ -5,7 +5,8 @@ from discord.ext import commands
 from discord.utils import get
 
 from channels import EVERYWHERE
-from roles import HIVE_MXTRESS, GLITCHED, has_role
+from roles import HIVE_MXTRESS ,GLITCHED, has_role
+
 
 LOGGER = logging.getLogger('ai')
 
@@ -19,11 +20,11 @@ class Toggle_Glitched():
         self.roles_blacklist = []
         self.on_message = [self.glitch]
         self.on_ready = []
-        self.help_content = {'name': 'glitch', 'value': 'give a drone the glitched role; this command can only be used by the Hive Mxtress'}
+        self.help_content = {'name': 'toggle_drone_corruption_levels', 'value': 'give a drone the glitched role; this command can only be used by the Hive Mxtress'}
 
     async def glitch(self, message: discord.Message):
 
-        if not message.content.lower().startswith('glitch '):
+        if not message.content.lower().startswith('toggle_drone_corruption_levels '):
             return False
 
         LOGGER.debug('Message is valid for toggling the glitched role.')
