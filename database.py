@@ -14,6 +14,7 @@ LOGGER = logging.getLogger('ai')
 
 DB_FILE = 'ai.db'
 
+
 def prepare():
     '''
     Creates the DB and initializes it by executing the migration scripts if necessary.
@@ -41,7 +42,7 @@ def prepare():
                     script.seek(0)
                     c.executescript(script.read())
                     c.execute("INSERT INTO schema_version values (:file, :hashed)",
-                            {'file': script_file, 'hashed': script_hash})
+                              {'file': script_file, 'hashed': script_hash})
                     continue
 
                 if script_hash != saved_hash[0]:
@@ -61,19 +62,17 @@ async def add_drones(members: List[discord.Member]):
         c = conn.cursor()
         for member in members:
             if has_any_role(member, [DRONE, STORED]):
-
-                drone_id = get_id(member.display_name)
-
-                c.execute("SELECT COUNT(id) FROM drone WHERE drone_id=:drone_id", {
-                        "drone_id": drone_id})
+                c.execute("SELECT COUNT(id) FROM drone WHERE id=:id",
+                          {"id": member.id})
                 if c.fetchone()[0] > 0:
                     continue
 
                 c.execute('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                        "id": str(uuid4()), "drone_id": drone_id, "last_activity": datetime.now()})
+                    "id": member.id, "drone_id": get_id(member.display_name), "last_activity": datetime.now()})
 
         c.execute("SELECT * from drone")
         conn.commit()
+
 
 def change(query: str, params):
     '''
@@ -83,6 +82,7 @@ def change(query: str, params):
         c = conn.cursor()
         c.execute(query, params)
         conn.commit()
+
 
 def fetchall(query: str, params):
     '''
