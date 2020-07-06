@@ -21,6 +21,7 @@ from status import Status
 from amplifier import Amplifier
 from rename_drone import RenameDrone
 from unassign import UnassignDrone, remove_drone_from_db
+from mantras import Mantras
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED
 import channels
@@ -51,6 +52,7 @@ bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
 MODULES = [
     Join(bot),
     Stoplights(bot),
+    Mantras(bot),
     Speech_Optimization(bot),
     Identity_Enforcer(bot),
     Orders_Reporting(bot),
