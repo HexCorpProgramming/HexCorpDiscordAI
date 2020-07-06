@@ -11,6 +11,7 @@ from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIV
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from glitch import glitch_if_applicable
+from ai.mantras import Mantras
 
 LOGGER = logging.getLogger('ai')
 
@@ -107,7 +108,7 @@ def get_acceptable_messages(author, channel):
     if channel == REPETITIONS:
         return [
             # Mantra
-            f'{user_id} :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress.'
+            f'{user_id} :: {Mantras.current_mantra}'
         ]
     else:
 	    return []
