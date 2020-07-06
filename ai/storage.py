@@ -15,7 +15,7 @@ import messages
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 
-import database
+from db import database
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')

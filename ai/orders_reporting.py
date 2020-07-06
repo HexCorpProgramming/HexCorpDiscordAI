@@ -12,7 +12,7 @@ from discord.utils import get
 
 from channels import ORDERS_REPORTING
 from roles import DRONE
-import database
+from db import database
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
