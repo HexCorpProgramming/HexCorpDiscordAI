@@ -92,3 +92,12 @@ def fetchall(query: str, params):
         c = conn.cursor()
         c.execute(query, params)
         return c.fetchall()
+
+def fetchone(query: str, params):
+    '''
+    Executes a given query and retrieves a single result. Does not change data.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchone()
