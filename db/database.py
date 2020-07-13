@@ -1,18 +1,19 @@
 import glob
 import logging
 import sqlite3
-from hashlib import sha256
-from typing import List
 from datetime import datetime
+from hashlib import sha256
+
+from uuid import uuid4
 
 import discord
-from roles import has_any_role, DRONE, STORED
-from bot_utils import get_id
-from uuid import uuid4
+
+from db.data_objects import Drone
 
 LOGGER = logging.getLogger('ai')
 
 DB_FILE = 'ai.db'
+
 
 def prepare():
     '''
@@ -41,7 +42,7 @@ def prepare():
                     script.seek(0)
                     c.executescript(script.read())
                     c.execute("INSERT INTO schema_version values (:file, :hashed)",
-                            {'file': script_file, 'hashed': script_hash})
+                              {'file': script_file, 'hashed': script_hash})
                     continue
 
                 if script_hash != saved_hash[0]:
@@ -53,28 +54,6 @@ def prepare():
         conn.commit()
 
 
-async def add_drones(members: List[discord.Member]):
-    '''
-    Adds the given list of Members as drone entities to the DB.
-    '''
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        for member in members:
-            if has_any_role(member, [DRONE, STORED]):
-
-                drone_id = get_id(member.display_name)
-
-                c.execute("SELECT COUNT(id) FROM drone WHERE drone_id=:drone_id", {
-                        "drone_id": drone_id})
-                if c.fetchone()[0] > 0:
-                    continue
-
-                c.execute('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                        "id": str(uuid4()), "drone_id": drone_id, "last_activity": datetime.now()})
-
-        c.execute("SELECT * from drone")
-        conn.commit()
-
 def change(query: str, params):
     '''
     Executes a given query and commits changes.
@@ -84,6 +63,7 @@ def change(query: str, params):
         c.execute(query, params)
         conn.commit()
 
+
 def fetchall(query: str, params):
     '''
     Executes a given query and retrieves the result. Does not change data.
@@ -92,3 +72,13 @@ def fetchall(query: str, params):
         c = conn.cursor()
         c.execute(query, params)
         return c.fetchall()
+
+
+def fetchone(query: str, params):
+    '''
+    Executes a given query and retrieves a single result. Does not change data.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchone()

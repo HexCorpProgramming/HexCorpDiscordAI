@@ -8,7 +8,9 @@ from discord.utils import get
 from channels import OFFICE
 from roles import DRONE, ENFORCER_DRONE, GLITCHED, STORED, HIVE_MXTRESS, ASSOCIATE, has_role
 
-from database import change, fetchall
+from db.drone_dao import delete_drone_by_drone_id, fetch_drone_with_drone_id
+from db.drone_order_dao import delete_drone_order_by_drone_id
+from db.storage_dao import delete_storage_by_target_id
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
@@ -33,20 +35,16 @@ class UnassignDrone():
             return False
 
         drone_id = get_id(message.content)
+        drone = fetch_drone_with_drone_id(drone_id)
         # check for existence
-        fetched = fetchall("SELECT drone_id FROM drone WHERE drone_id=:drone_id",
-                           {'drone_id': drone_id})
-        if len(fetched) == 0:
+        if drone is None:
             await message.channel.send(f"There is no drone with the ID {drone_id} in the DB.")
             return False
 
-        for member in message.guild.members:
-            # find drone to unassign
-            if drone_id == get_id(member.display_name):
-                await member.edit(nick=None)
-                await member.remove_roles(get(message.guild.roles, name=DRONE), get(message.guild.roles, name=ENFORCER_DRONE), get(message.guild.roles, name=GLITCHED), get(message.guild.roles, name=STORED))
-                await member.add_roles(get(message.guild.roles, name=ASSOCIATE))
-                break
+        member = self.bot.guilds[0].get_member(drone.id)
+        await member.edit(nick=None)
+        await member.remove_roles(get(message.guild.roles, name=DRONE), get(message.guild.roles, name=ENFORCER_DRONE), get(message.guild.roles, name=GLITCHED), get(message.guild.roles, name=STORED))
+        await member.add_roles(get(message.guild.roles, name=ASSOCIATE))
 
         # remove from DB
         remove_drone_from_db(drone_id)
@@ -56,9 +54,6 @@ class UnassignDrone():
 
 def remove_drone_from_db(drone_id: str):
     # delete all references and then the actual drone entry
-    change('DELETE FROM storage WHERE target_id=:drone_id',
-           {'drone_id': drone_id})
-    change('DELETE FROM drone_order WHERE drone_id=:drone_id',
-           {'drone_id': drone_id})
-    change('DELETE FROM drone WHERE drone_id=:drone_id',
-           {'drone_id': drone_id})
+    delete_drone_order_by_drone_id(drone_id)
+    delete_storage_by_target_id(drone_id)
+    delete_drone_by_drone_id(drone_id)
