@@ -1,14 +1,14 @@
 import glob
 import logging
 import sqlite3
-from hashlib import sha256
-from typing import List
 from datetime import datetime
+from hashlib import sha256
+
+from uuid import uuid4
 
 import discord
-from roles import has_any_role, DRONE, STORED
-from bot_utils import get_id
-from uuid import uuid4
+
+from db.data_objects import Drone
 
 LOGGER = logging.getLogger('ai')
 
@@ -54,26 +54,6 @@ def prepare():
         conn.commit()
 
 
-async def add_drones(members: List[discord.Member]):
-    '''
-    Adds the given list of Members as drone entities to the DB.
-    '''
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        for member in members:
-            if has_any_role(member, [DRONE, STORED]):
-                c.execute("SELECT COUNT(id) FROM drone WHERE id=:id",
-                          {"id": member.id})
-                if c.fetchone()[0] > 0:
-                    continue
-
-                c.execute('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                    "id": member.id, "drone_id": get_id(member.display_name), "last_activity": datetime.now()})
-
-        c.execute("SELECT * from drone")
-        conn.commit()
-
-
 def change(query: str, params):
     '''
     Executes a given query and commits changes.
@@ -92,3 +72,13 @@ def fetchall(query: str, params):
         c = conn.cursor()
         c.execute(query, params)
         return c.fetchall()
+
+
+def fetchone(query: str, params):
+    '''
+    Executes a given query and retrieves a single result. Does not change data.
+    '''
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchone()

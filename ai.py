@@ -28,6 +28,7 @@ import channels
 from bot_utils import get_id
 
 from db import database
+from db import drone_dao
 
 # set up logging
 log_file_handler = handlers.TimedRotatingFileHandler(
@@ -111,7 +112,7 @@ async def on_member_remove(member: discord.Member):
 
 @bot.event
 async def on_ready():
-    await database.add_drones(bot.guilds[0].members)
+    drone_dao.add_new_drone_members(bot.guilds[0].members)
 
     for module in MODULES:
         for listener in module.on_ready:

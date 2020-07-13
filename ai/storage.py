@@ -15,7 +15,9 @@ import messages
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 
-from db import database
+from db.data_objects import Storage as StorageDO
+from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
+from db.drone_dao import fetch_drone_with_drone_id
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')
@@ -28,21 +30,6 @@ RELEASE_INTERVAL_SECONDS = 60
 
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
-
-
-class StoredDrone():
-    '''
-    A simple object that stores information about stored drones.
-    '''
-
-    def __init__(self, id: str, drone_id: str, target_id: str, purpose: str, roles: str, release_time: str):
-        self.id = id
-        self.drone_id = drone_id
-        self.target_id = target_id
-        self.purpose = purpose
-        self.roles = roles
-        self.release_time = release_time
-
 
 class Storage():
     '''
@@ -83,10 +70,9 @@ class Storage():
             MESSAGE_FORMAT, message.content)
 
         # check if drone is already in storage
-        for stored in get_stored_drones():
-            if stored.target_id == target_id:
-                await message.channel.send(f'{target_id} is already in storage.')
-                return True
+        if fetch_storage_by_target_id(target_id) is not None:
+            await message.channel.send(f'{target_id} is already in storage.')
+            return True
 
         # validate time
         if not 0 < int(time) <= 24:
@@ -100,10 +86,9 @@ class Storage():
                 await member.remove_roles(*former_roles)
                 await member.add_roles(stored_role)
                 stored_until = str(datetime.now() + timedelta(hours=int(time)))
-                stored_drone = StoredDrone(str(uuid4()),
-                                           drone_id, target_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
-                database.change(
-                    'INSERT INTO storage VALUES (:id, :drone_id, :target_id, :purpose, :roles, :release_time)', vars(stored_drone))
+                stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(
+                    get_names_for_roles(former_roles)), stored_until)
+                insert_storage(stored_drone)
 
                 # Inform the drone that they have been stored.
                 storage_chambers = get(
@@ -133,7 +118,7 @@ class Storage():
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(REPORT_INTERVAL_SECONDS)
 
-            stored_drones = get_stored_drones()
+            stored_drones = fetch_all_storage()
             if len(stored_drones) == 0:
                 await storage_channel.send('No drones in storage.')
             else:
@@ -141,7 +126,7 @@ class Storage():
                     # calculate remaining hours
                     remaining_hours = hours_from_now(
                         datetime.fromisoformat(stored.release_time))
-                    await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                    await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
     async def release_timed(self):
         '''
@@ -156,19 +141,14 @@ class Storage():
             # use async sleep to avoid the bot locking up
             await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
 
-            now = datetime.now()
-            stored_drones = get_stored_drones()
-            for stored in stored_drones:
-                if now > datetime.fromisoformat(stored.release_time):
-                    # find drone member
-                    for member in self.bot.guilds[0].members:
-                        if get_id(member.display_name) == stored.target_id:
-                            # restore roles to release from storage
-                            await member.remove_roles(stored_role)
-                            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], stored.roles.split('|')))
-                            database.change('DELETE FROM storage WHERE id=:id', {
-                                            'id': stored.id})
-                            break
+            for elapsed_storage in fetch_all_elapsed_storage():
+                drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
+                member = self.bot.guilds[0].get_member(drone.id)
+
+                # restore roles to release from storage
+                await member.remove_roles(stored_role)
+                await member.add_roles(*get_roles_for_names(self.bot.guilds[0], elapsed_storage.roles.split('|')))
+                delete_storage(elapsed_storage.id)
 
     async def release(self, message: discord.Message):
         '''
@@ -186,15 +166,17 @@ class Storage():
         # find stored drone
         member = message.mentions[0]
         to_release_id = get_id(member.display_name)
-        for drone in get_stored_drones():
-            if drone.target_id == to_release_id:
-                await member.remove_roles(stored_role)
-                await member.add_roles(*get_roles_for_names(message.guild, drone.roles.split('|')))
-                database.change('DELETE FROM storage WHERE id=:id', {
-                                            'id': drone.id})
-                LOGGER.debug(
-                    f"Drone with ID {to_release_id} released from storage.")
-                return True
+        storage_to_release = fetch_storage_by_target_id(to_release_id)
+        if storage_to_release is not None:
+            # TODO: does this really return None or throw an error?
+            drone = fetch_drone_with_drone_id(storage_to_release.target_id)
+            member = self.bot.guilds[0].get_member(drone.id)
+            await member.remove_roles(stored_role)
+            await member.add_roles(*get_roles_for_names(message.guild, storage_to_release.roles.split('|')))
+            delete_storage(storage_to_release.id)
+            LOGGER.debug(
+                f"Drone with ID {to_release_id} released from storage.")
+
         return True
 
 
@@ -237,9 +219,3 @@ def filter_out_non_removable_roles(unfiltered_roles: List[discord.Role]) -> List
 
     return removable_roles
 
-
-def get_stored_drones():
-    fetched = database.fetchall(
-        'SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage', {})
-    stored_drones = [StoredDrone(*row) for row in fetched]
-    return stored_drones

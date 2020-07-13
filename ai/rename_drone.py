@@ -8,7 +8,7 @@ from channels import OFFICE
 from roles import HIVE_MXTRESS, ENFORCER_DRONE, has_role
 from bot_utils import get_id
 
-from db.database import fetchall, change
+from db.drone_dao import rename_drone, fetch_drone_with_drone_id
 
 LOGGER = logging.getLogger('ai')
 
@@ -41,19 +41,15 @@ class RenameDrone():
         new_id = ids[1]
 
         # check for collisions
-        fetched = fetchall("SELECT drone_id FROM drone WHERE drone_id=:new_id",
-                           {'new_id': new_id})
-        if len(fetched) == 0:
-            for member in message.guild.members:
-                # find drone to rename
-                if old_id == get_id(member.display_name):
-                    if has_role(member, ENFORCER_DRONE):
-                        await member.edit(nick=f'⬢-Drone #{new_id}')
-                    else:
-                        await member.edit(nick=f'⬡-Drone #{new_id}')
-                    change('UPDATE drone SET drone_id=:new_id WHERE drone_id=:old_id', {
-                           'new_id': new_id, 'old_id': old_id})
-                    await message.channel.send(f"Successfully renamed drone {old_id} to {new_id}.")
-                    break
+        collision = fetch_drone_with_drone_id(new_id)
+        if collision is None:
+            drone = fetch_drone_with_drone_id(old_id)
+            member = self.bot.guilds[0].get_member(drone.id)
+            rename_drone(old_id, new_id)
+            if has_role(member, ENFORCER_DRONE):
+                await member.edit(nick=f'⬢-Drone #{new_id}')
+            else:
+                await member.edit(nick=f'⬡-Drone #{new_id}')
+            await message.channel.send(f"Successfully renamed drone {old_id} to {new_id}.")
         else:
             await message.channel.send(f"ID {new_id} already in use.")
