@@ -1,5 +1,5 @@
 CREATE TABLE drone (
-    id VARCHAR(36) PRIMARY KEY,
+    id UNSIGNED INT PRIMARY KEY,
     drone_id CHAR(4) UNIQUE,
     optimized BOOL,
     glitched BOOL,

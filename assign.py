@@ -2,7 +2,6 @@ import random
 import re
 from datetime import datetime
 from typing import List
-from uuid import uuid4
 
 import discord
 from discord.ext import commands
@@ -83,7 +82,7 @@ class Assign():
 
             # add new drone to DB
             change('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                        "id": str(uuid4()), "drone_id": assigned_id, "last_activity": datetime.now()})
+                        "id": message.author.id, "drone_id": assigned_id, "last_activity": datetime.now()})
 
             await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
