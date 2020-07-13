@@ -11,7 +11,7 @@ from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIV
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from glitch import glitch_if_applicable
-from mantras import Mantras
+from ai.mantras import Mantras
 
 LOGGER = logging.getLogger('ai')
 

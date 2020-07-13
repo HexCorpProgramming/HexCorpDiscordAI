@@ -8,7 +8,7 @@ from discord.utils import get
 from channels import OFFICE
 from roles import DRONE, ENFORCER_DRONE, GLITCHED, STORED, HIVE_MXTRESS, ASSOCIATE, has_role
 
-from database import change, fetchall
+from db.database import change, fetchall
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')

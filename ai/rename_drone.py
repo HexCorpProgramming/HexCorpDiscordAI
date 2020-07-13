@@ -8,7 +8,7 @@ from channels import OFFICE
 from roles import HIVE_MXTRESS, ENFORCER_DRONE, has_role
 from bot_utils import get_id
 
-from database import fetchall, change
+from db.database import fetchall, change
 
 LOGGER = logging.getLogger('ai')
 

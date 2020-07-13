@@ -5,29 +5,29 @@ import asyncio
 import logging
 from logging import handlers
 # Modules
-from stoplights import Stoplights
-from identity_enforcer import Identity_Enforcer
-from speech_optimization import Speech_Optimization
-from toggle_speech_optimization import Toggle_Speech_Optimization
-from join import Join
-from respond import Respond
-from storage import Storage
-from emote import Emote
-from assign import Assign
-from orders_reporting import Orders_Reporting
-from toggle_glitched import Toggle_Glitched
-from ai_help import AI_Help
-from status import Status
-from amplifier import Amplifier
-from rename_drone import RenameDrone
-from unassign import UnassignDrone, remove_drone_from_db
-from mantras import Mantras
+from ai.stoplights import Stoplights
+from ai.identity_enforcer import Identity_Enforcer
+from ai.speech_optimization import Speech_Optimization
+from ai.toggle_speech_optimization import Toggle_Speech_Optimization
+from ai.join import Join
+from ai.respond import Respond
+from ai.storage import Storage
+from ai.emote import Emote
+from ai.assign import Assign
+from ai.orders_reporting import Orders_Reporting
+from ai.toggle_glitched import Toggle_Glitched
+from ai.ai_help import AI_Help
+from ai.status import Status
+from ai.amplifier import Amplifier
+from ai.rename_drone import RenameDrone
+from ai.unassign import UnassignDrone, remove_drone_from_db
+from ai.mantras import Mantras
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED
 import channels
 from bot_utils import get_id
 
-import database
+from db import database
 
 # set up logging
 log_file_handler = handlers.TimedRotatingFileHandler(

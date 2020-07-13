@@ -10,7 +10,7 @@ from discord.utils import get
 import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
-from database import change
+from db.database import change
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
