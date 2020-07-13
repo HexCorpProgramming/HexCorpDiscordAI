@@ -15,7 +15,7 @@ import messages
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 
-from db.dos import Storage as StorageDO
+from db.data_objects import Storage as StorageDO
 from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
 from bot_utils import get_id

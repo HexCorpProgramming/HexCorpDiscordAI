@@ -1,5 +1,5 @@
 from db.database import fetchall, change, fetchone
-from db.dos import Storage, map_to_objects, map_to_object
+from db.data_objects import Storage, map_to_objects, map_to_object
 
 from datetime import datetime
 from typing import List

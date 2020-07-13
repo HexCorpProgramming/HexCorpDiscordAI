@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import discord
 
-from db.dos import Drone
+from db.data_objects import Drone
 
 LOGGER = logging.getLogger('ai')
 

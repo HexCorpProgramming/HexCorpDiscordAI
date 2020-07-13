@@ -12,7 +12,7 @@ import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
 from db.drone_dao import insert_drone
-from db.dos import Drone
+from db.data_objects import Drone
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'

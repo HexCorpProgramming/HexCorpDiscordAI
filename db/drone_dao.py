@@ -6,7 +6,7 @@ from db.database import fetchone, change
 from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
-from db.dos import Drone, map_to_object
+from db.data_objects import Drone, map_to_object
 
 
 def add_new_drone_members(members: List[discord.Member]):
