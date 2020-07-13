@@ -21,7 +21,7 @@ class Toggle_Speech_Optimization():
         self.roles_blacklist = []
         self.on_message = [self.dronemode]
         self.on_ready = []
-        self.help_content = {'name': 'toggle_drone_corruption_levels', 'value': 'optimize drone speech patterns; this command can only be used by the Hive Mxtress'}
+        self.help_content = {'name': 'toggle_speech_optimization', 'value': 'optimize drone speech patterns; this command can only be used by the Hive Mxtress'}
 
     async def dronemode(self, message: discord.Message):
 
