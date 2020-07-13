@@ -2,7 +2,6 @@ import random
 import re
 from datetime import datetime
 from typing import List
-from uuid import uuid4
 
 import discord
 from discord.ext import commands
