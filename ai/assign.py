@@ -11,7 +11,8 @@ from discord.utils import get
 import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
-from db.database import change
+from db.drone import insert_drone
+from db.dos import Drone
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -82,8 +83,8 @@ class Assign():
             await message.author.edit(nick=assigned_nick)
 
             # add new drone to DB
-            change('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                        "id": str(uuid4()), "drone_id": assigned_id, "last_activity": datetime.now()})
+            new_drone = Drone(message.author.id, assigned_id, False, False, "", datetime.now())
+            insert_drone(new_drone)
 
             await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
