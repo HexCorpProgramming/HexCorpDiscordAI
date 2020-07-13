@@ -7,7 +7,7 @@ from discord.utils import get
 
 import messages
 from bot_utils import get_id
-from channels import DRONE_DEV_CHANNELS, EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS, REPETITIONS
+from channels import EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS, REPETITIONS
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from glitch import glitch_if_applicable
@@ -119,7 +119,7 @@ class Speech_Optimization():
     def __init__(self, bot):
         self.bot = bot
         self.channels_whitelist = [EVERYWHERE]
-        self.channels_blacklist = DRONE_DEV_CHANNELS
+        self.channels_blacklist = []
         self.roles_whitelist = [DRONE, ENFORCER_DRONE]
         self.roles_blacklist = []
         self.on_message = [self.post]
