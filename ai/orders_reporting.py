@@ -13,7 +13,7 @@ from discord.utils import get
 from channels import ORDERS_REPORTING
 from roles import DRONE
 from bot_utils import get_id
-from db.drone_order import delete_drone_order, insert_drone_order, fetch_all_drone_orders
+from db.drone_order_dao import delete_drone_order, insert_drone_order, fetch_all_drone_orders
 
 LOGGER = logging.getLogger('ai')
 

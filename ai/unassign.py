@@ -8,9 +8,9 @@ from discord.utils import get
 from channels import OFFICE
 from roles import DRONE, ENFORCER_DRONE, GLITCHED, STORED, HIVE_MXTRESS, ASSOCIATE, has_role
 
-from db.drone import delete_drone_by_drone_id, fetch_drone_with_drone_id
-from db.drone_order import delete_drone_order_by_drone_id
-from db.storage import delete_storage_by_target_id
+from db.drone_dao import delete_drone_by_drone_id, fetch_drone_with_drone_id
+from db.drone_order_dao import delete_drone_order_by_drone_id
+from db.storage_dao import delete_storage_by_target_id
 from bot_utils import get_id
 
 LOGGER = logging.getLogger('ai')

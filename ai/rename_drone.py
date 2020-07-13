@@ -8,7 +8,7 @@ from channels import OFFICE
 from roles import HIVE_MXTRESS, ENFORCER_DRONE, has_role
 from bot_utils import get_id
 
-from db.drone import rename_drone, fetch_drone_with_drone_id
+from db.drone_dao import rename_drone, fetch_drone_with_drone_id
 
 LOGGER = logging.getLogger('ai')
 

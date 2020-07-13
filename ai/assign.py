@@ -11,7 +11,7 @@ from discord.utils import get
 import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
-from db.drone import insert_drone
+from db.drone_dao import insert_drone
 from db.dos import Drone
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
