@@ -2,7 +2,6 @@ import random
 import re
 from datetime import datetime
 from typing import List
-from uuid import uuid4
 
 import discord
 from discord.ext import commands
@@ -17,7 +16,7 @@ ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
 ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 
-RESERVED_IDS = ['0006', '0000', '0001', '0002', '0003', '0004', '0005', '6969', '0420', '4200', '3141', '0710', '7100']
+RESERVED_IDS = ['0006', '0000', '0001', '0002', '0003', '0004', '0005', '6969', '0420', '4200', '3141', '0710', '7100', '1488']
 
 
 def find_id(text: str) -> str:
@@ -83,7 +82,7 @@ class Assign():
 
             # add new drone to DB
             change('INSERT INTO drone VALUES (:id, :drone_id, 0, 0, "", :last_activity)', {
-                        "id": str(uuid4()), "drone_id": assigned_id, "last_activity": datetime.now()})
+                        "id": message.author.id, "drone_id": assigned_id, "last_activity": datetime.now()})
 
             await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
         else:
