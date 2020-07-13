@@ -1,5 +1,12 @@
 from datetime import datetime
 
+def map_to_objects(rows, constructor):
+    return [constructor(*row) for row in rows]
+
+def map_to_object(row, constructor):
+    if row is None:
+        return None
+    return constructor(*row)
 
 class Drone:
 
