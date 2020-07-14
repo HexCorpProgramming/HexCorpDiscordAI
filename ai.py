@@ -47,7 +47,7 @@ LOGGER.setLevel(logging.DEBUG)
 # prepare database
 database.prepare()
 
-bot = discord.ext.commands.Bot(command_prefix='!!', case_insensitive=True)
+bot = discord.ext.commands.Bot(command_prefix='hc!', case_insensitive=True)
 
 # Instance modules
 stoplights = Stoplights(bot)
@@ -78,7 +78,7 @@ MODULES.append(Status(bot, MODULES))
 
 @bot.command()
 async def emote(context, sentence):
-    emote_handler.generate_big_text(context.channel, sentence)
+    await emote_handler.generate_big_text(context.channel, sentence)
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -118,11 +118,6 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
-
-    for module in MODULES:
-        for listener in module.on_ready:
-            # start these concurrently, so they do not block each other
-            asyncio.ensure_future(listener())
 
 
 @bot.event
