@@ -48,3 +48,9 @@ def delete_drone_by_drone_id(drone_id: str):
     Deletes the drone with the given drone_id.
     '''
     change('DELETE FROM drone WHERE drone_id=:drone_id',{'drone_id': drone_id})
+
+def get_discord_id_of_drone(drone_id: str) -> str:
+    '''
+    Returns the discord ID associated with a given drone
+    '''
+    return fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})

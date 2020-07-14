@@ -18,7 +18,7 @@ from ai.orders_reporting import Orders_Reporting
 from ai.toggle_glitched import Toggle_Glitched
 from ai.ai_help import AI_Help
 from ai.status import Status
-from ai.amplifier import Amplifier
+import ai.amplifier as amplification_handler
 from ai.rename_drone import RenameDrone
 from ai.unassign import UnassignDrone, remove_drone_from_db
 from ai.mantras import Mantras
@@ -70,7 +70,6 @@ MODULES = [
     Toggle_Glitched(bot),
     RenameDrone(bot),
     UnassignDrone(bot),
-    Amplifier(bot),
 ]
 
 MODULES.append(AI_Help(bot, MODULES))
@@ -79,6 +78,10 @@ MODULES.append(Status(bot, MODULES))
 @bot.command()
 async def emote(context, sentence):
     await emote_handler.generate_big_text(context.channel, sentence)
+
+@bot.command()
+async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
+    await amplification_handler.amplify_message(context, message, target_channel, drones)
 
 @bot.event
 async def on_message(message: discord.Message):

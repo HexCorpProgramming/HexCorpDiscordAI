@@ -4,57 +4,43 @@ import re
 import discord
 from discord.utils import get
 
+from db.drone_dao import get_discord_id_of_drone
+
 import webhook
 from channels import DRONE_HIVE_CHANNELS, OFFICE
 from roles import ENFORCER_DRONE, HIVE_MXTRESS, has_role
-from resources import *
+from resources import DRONE_AVATAR, ENFORCER_AVATAR
+from webhook import get_webhook_for_channel
 
 LOGGER = logging.getLogger('ai')
 
+async def amplify_message(context, amplification_message: str, target_channel: discord.TextChannel, drones):
+    LOGGER.info("Amplifying message.")
 
-class Amplifier():
+    #if context.channel.name != OFFICE: return
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [OFFICE]
-        self.channels_blacklist = []
-        self.roles_whitelist = [HIVE_MXTRESS]
-        self.roles_blacklist = []
-        self.on_message = [self.amplify]
-        self.on_ready = []
+    for drone in drones:
 
-    async def amplify(self, message: discord.Message):
-        LOGGER.info("Amplifying message.")
-        parts = message.content.split('|')
+        LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
+        if not re.match(r"\d{4}", drone): continue #Skip non-drone IDs.
 
-        if len(message.channel_mentions) == 0 or len(parts) < 3:
-            return
+        LOGGER.debug(f"Getting discord ID from database.")
+        if (discord_id := get_discord_id_of_drone(drone)) is None: continue #Given drone does not exist on server.
 
-        # use a set to make the list of IDs unique
-        drone_ids = set(re.findall(r"\d{4}", parts[0]))
+        amplifier_drone = get(context.guild.members, id=(discord_id[0])) #Unpack that darned tuple
+        if amplifier_drone is None: continue #If getting the member somehow failed, keep calm and carry on.
 
-        target_channel = message.channel_mentions[0]
-        target_message = parts[2].strip()
-        target_webhook = await webhook.get_webhook_for_channel(target_channel)
+        webhook = await get_webhook_for_channel(target_channel)
 
-        for drone_id in drone_ids:
-            for member in message.guild.members:
-                amplifier_drone = None
-                if member.display_name == "⬡-Drone #" + drone_id:
-                    amplifier_drone = member
-                elif member.display_name == "⬢-Drone #" + drone_id:
-                    amplifier_drone = member
+        amplification_avatar = amplifier_drone.avatar_url
+        if target_channel.name in DRONE_HIVE_CHANNELS:
+            if has_role(amplifier_drone, ENFORCER_DRONE):
+                amplification_avatar = ENFORCER_AVATAR
+            else:
+                amplification_avatar = DRONE_AVATAR
 
-                if amplifier_drone is not None:
-                    avatar_url = amplifier_drone.avatar_url
-                    if target_channel.name in DRONE_HIVE_CHANNELS:
-                        if has_role(amplifier_drone, ENFORCER_DRONE):
-                            avatar_url = ENFORCER_AVATAR
-                        else:
-                            avatar_url = DRONE_AVATAR
-
-                    await target_webhook.send(drone_id + " :: " + target_message, username=amplifier_drone.display_name, avatar_url=avatar_url)
-                    break
-
-        return True
+        LOGGER.debug(f"Amplifying message with unit {drone}")
+        await webhook.send(content=f"{drone} :: {amplification_message}", 
+        username = amplifier_drone.display_name,
+        avatar_url = amplification_avatar)
