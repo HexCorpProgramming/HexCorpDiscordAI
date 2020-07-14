@@ -21,12 +21,12 @@ class Stoplights():
         self.channels_blacklist = DRONE_DEV_CHANNELS
         self.roles_whitelist = [EVERYONE]
         self.roles_blacklist = []
-        self.on_message = [self.check_for_stoplight]
+        self.on_message = [self.check_for_stoplights]
         self.on_ready = []
         self.help_content = {'name': 'Emergency Stoplight',
                              'value': 'Anyone can use a stoplight emote, even optimized drones in order to stop a scene if they feel uncomfortable.'}
 
-    async def check_for_stoplight(self, message: discord.Message):
+    async def check_for_stoplights(self, message: discord.Message):
         important_moderator_message = ["⏰"]
         important_messages = ["🔴", "🟡", "🟢"]
         # List of any important emoji, can be updated.

@@ -11,7 +11,7 @@ from webhook import send_webhook
 
 LOGGER = logging.getLogger('ai')
 
-class Identity_Enforcer():
+class Identity_Enforcement():
 
     def __init__(self, bot):
         self.bot = bot
@@ -28,6 +28,10 @@ class Identity_Enforcer():
         return self.informative_status_code_regex.match(message.content) or self.plain_status_code_regex.match(message.content)
 
     async def enforce_identity(self, message: discord.Message):
+
+        if message.channel.name not in DRONE_HIVE_CHANNELS:
+            return
+
         if not self.check_is_status_code(message):
             webhooks = await message.channel.webhooks()
             if len(webhooks) == 0:

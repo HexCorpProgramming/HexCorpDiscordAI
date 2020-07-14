@@ -122,7 +122,7 @@ class Speech_Optimization():
         self.channels_blacklist = []
         self.roles_whitelist = [DRONE, ENFORCER_DRONE]
         self.roles_blacklist = []
-        self.on_message = [self.post]
+        self.on_message = [self.optimize_speech]
         self.on_ready = [self.report_online]
         self.help_content = {'name': 'Drone Communication Protocol',
                              'value': 'Drones can use Drone Communication Protocol by typing `[ID] :: [CODE]`, where the code is a three-digit drone communication code!\nDrones can also type `[ID] :: [CODE] :: [Information]` to make a more informative message!'}
@@ -143,7 +143,7 @@ class Speech_Optimization():
             return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
         return False
 
-    async def post(self, message: discord.Message):
+    async def optimize_speech(self, message: discord.Message):
         if message.channel.name != STORAGE_FACILITY:
             # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
             # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?

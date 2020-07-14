@@ -6,13 +6,13 @@ import logging
 from logging import handlers
 # Modules
 from ai.stoplights import Stoplights
-from ai.identity_enforcer import Identity_Enforcer
+from ai.identity_enforcement import Identity_Enforcement
 from ai.speech_optimization import Speech_Optimization
 from ai.toggle_speech_optimization import Toggle_Speech_Optimization
 from ai.join import Join
 from ai.respond import Respond
 from ai.storage import Storage
-from ai.emote import Emote
+import ai.emote as emote_handler
 from ai.assign import Assign
 from ai.orders_reporting import Orders_Reporting
 from ai.toggle_glitched import Toggle_Glitched
@@ -47,20 +47,25 @@ LOGGER.setLevel(logging.DEBUG)
 # prepare database
 database.prepare()
 
-bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
+bot = discord.ext.commands.Bot(command_prefix='!!', case_insensitive=True)
+
+# Instance modules
+stoplights = Stoplights(bot)
+speech_optimization = Speech_Optimization(bot)
+identity_enforcement = Identity_Enforcement(bot)
 
 # register modules
 MODULES = [
     Join(bot),
-    Stoplights(bot),
+    stoplights,
     Mantras(bot),
-    Speech_Optimization(bot),
-    Identity_Enforcer(bot),
+    speech_optimization,
+    identity_enforcement,
     Orders_Reporting(bot),
     Storage(bot),
     Assign(bot),
     Respond(bot),
-    Emote(bot),
+    emote_handler,
     Toggle_Speech_Optimization(bot),
     Toggle_Glitched(bot),
     RenameDrone(bot),
@@ -71,29 +76,29 @@ MODULES = [
 MODULES.append(AI_Help(bot, MODULES))
 MODULES.append(Status(bot, MODULES))
 
+@bot.command()
+async def emote(context, sentence):
+    emote_handler.generate_big_text(context.channel, sentence)
 
 @bot.event
 async def on_message(message: discord.Message):
     # ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
-        LOGGER.debug('Ignoring bot message.')
         return
 
-    for module in MODULES:
-        channel_valid = message.channel.name not in module.channels_blacklist and (
-            message.channel.name in module.channels_whitelist or channels.EVERYWHERE in module.channels_whitelist)
-        roles_valid = has_any_role(message.author, module.roles_whitelist) and not has_any_role(
-            message.author, module.roles_blacklist)
-        if channel_valid and roles_valid:
-            for listener in module.on_message:
-                # when a listener returns True, event has been handled
-                LOGGER.debug(
-                    f'Executing listener: {str(listener)} for message: [{message.content}] in server {message.guild.name}')
-                if await listener(message):
-                    LOGGER.debug('Listener returned true. Terminating early.')
-                    return
-    LOGGER.debug('Module stack execution complete.')
+    #Check for stoplights
+    if await stoplights.check_for_stoplights(message):
+        return #Don't alter the message if it contains a stoplight.
 
+    #Check for speech optimization
+    if await speech_optimization.optimize_speech(message):
+        return #Message has been deleted or status code has been proxied.
+
+    #Enforce identity if in Hive
+    await identity_enforcement.enforce_identity(message)
+
+    #Finally, process additional commands where applicable
+    await bot.process_commands(message)
 
 @bot.event
 async def on_member_join(member: discord.Member):
