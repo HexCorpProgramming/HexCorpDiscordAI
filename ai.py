@@ -26,7 +26,7 @@ from ai.mantras import Mantras
 from roles import has_any_role, has_role, DRONE, STORED
 import channels
 from bot_utils import get_id
-from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR
+from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
 from db import database
 from db import drone_dao
@@ -108,10 +108,10 @@ async def add_trusted_user(context):
 async def help(context):
     
     commands_card = discord.Embed(color=0xff66ff, title="Common commands", description = "Here is a list of common commands server members can utilize.")
-    commands_card.set_thumbnail(url = DRONE_AVATAR)
+    commands_card.set_thumbnail(url = HEXCORP_AVATAR)
 
     droneOS_card = discord.Embed(color=0xff66ff, title="DroneOS commands", description = "This is a list of DroneOS commands used to alter and manipulate DroneOS drones.")
-    droneOS_card.set_thumbnail(url = ENFORCER_AVATAR)
+    droneOS_card.set_thumbnail(url = DRONE_AVATAR)
 
     Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description = "Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
     Hive_Mxtress_card.set_thumbnail(url = HIVE_MXTRESS_AVATAR)
