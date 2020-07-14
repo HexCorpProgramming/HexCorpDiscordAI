@@ -8,7 +8,7 @@ from logging import handlers
 from ai.stoplights import Stoplights
 from ai.identity_enforcement import Identity_Enforcement
 from ai.speech_optimization import Speech_Optimization
-from ai.toggle_speech_optimization import Toggle_Speech_Optimization
+import ai.toggle_speech_optimization as speech_optimization_toggler
 from ai.join import Join
 from ai.respond import Respond
 from ai.storage import Storage
@@ -48,6 +48,7 @@ LOGGER.setLevel(logging.DEBUG)
 database.prepare()
 
 bot = discord.ext.commands.Bot(command_prefix='hc!', case_insensitive=True)
+bot.remove_command("help")
 
 # Instance modules
 stoplights = Stoplights(bot)
@@ -66,7 +67,6 @@ MODULES = [
     Assign(bot),
     Respond(bot),
     emote_handler,
-    Toggle_Speech_Optimization(bot),
     Toggle_Glitched(bot),
     RenameDrone(bot),
     UnassignDrone(bot),
@@ -75,13 +75,34 @@ MODULES = [
 MODULES.append(AI_Help(bot, MODULES))
 MODULES.append(Status(bot, MODULES))
 
-@bot.command()
-async def emote(context, sentence):
+@bot.command(aliases = ['big', 'emote'])
+async def bigtext(context, sentence):
+    '''
+    Transforms small text into heckin' chonky text.
+    '''
     await emote_handler.generate_big_text(context.channel, sentence)
 
 @bot.command()
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
+    '''
+    Allows the Hive Mxtress to speak through other drones.
+    '''
     await amplification_handler.amplify_message(context, message, target_channel, drones)
+
+@bot.command(alias = ['optimize', 'toggle_speech_op', 'tso'])
+async def toggle_speech_optimization(context, *drones):
+    '''
+    Lets the Hive Mxtress or trusted users to toggle drone speech optimization.
+    '''
+    await speech_optimization_toggler.toggle(context, drones)
+
+@bot.command()
+async def help(context):
+    help_card = discord.Embed()
+    for command in bot.commands:
+        help_card.add_field(name=command.name, value=command.help, inline=False)
+    await context.send(embed=help_card)
+
 
 @bot.event
 async def on_message(message: discord.Message):
