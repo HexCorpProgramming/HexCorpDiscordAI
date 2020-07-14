@@ -26,6 +26,7 @@ from ai.mantras import Mantras
 from roles import has_any_role, has_role, DRONE, STORED
 import channels
 from bot_utils import get_id
+from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR
 
 from db import database
 from db import drone_dao
@@ -82,26 +83,50 @@ async def bigtext(context, sentence):
     '''
     await emote_handler.generate_big_text(context.channel, sentence)
 
-@bot.command()
+@bot.command(brief = "Hive Mxtress")
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
     await amplification_handler.amplify_message(context, message, target_channel, drones)
 
-@bot.command(alias = ['optimize', 'toggle_speech_op', 'tso'])
+@bot.command(alias = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress")
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users to toggle drone speech optimization.
     '''
     await speech_optimization_toggler.toggle(context, drones)
 
+@bot.command(brief = "DroneOS")
+async def add_trusted_user(context):
+    '''
+    This is a placeholder command.
+    '''
+    return "Drone OS example command."
+
 @bot.command()
 async def help(context):
-    help_card = discord.Embed()
+    
+    commands_card = discord.Embed(color=0xff66ff, title="Common commands", description = "Here is a list of common commands server members can utilize.")
+    commands_card.set_thumbnail(url = DRONE_AVATAR)
+
+    droneOS_card = discord.Embed(color=0xff66ff, title="DroneOS commands", description = "This is a list of DroneOS commands used to alter and manipulate DroneOS drones.")
+    droneOS_card.set_thumbnail(url = ENFORCER_AVATAR)
+
+    Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description = "Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
+    Hive_Mxtress_card.set_thumbnail(url = HIVE_MXTRESS_AVATAR)
+
     for command in bot.commands:
-        help_card.add_field(name=command.name, value=command.help, inline=False)
-    await context.send(embed=help_card)
+        if command.brief == "Hive Mxtress":
+            Hive_Mxtress_card.add_field(name=command.name, value=command.help, inline=False)
+        elif command.brief == "DroneOS":
+            droneOS_card.add_field(name=command.name, value=command.help, inline=False)
+        else:
+            commands_card.add_field(name=command.name, value=command.help, inline=False)
+
+    await context.send(embed=commands_card)
+    await context.send(embed=droneOS_card)
+    await context.send(embed=Hive_Mxtress_card)
 
 
 @bot.event
