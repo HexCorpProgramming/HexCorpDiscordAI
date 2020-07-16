@@ -1,4 +1,7 @@
 from datetime import datetime
+import logging
+
+LOGGER = logging.getLogger("ai")
 
 def map_to_objects(rows, constructor):
     return [constructor(*row) for row in rows]
@@ -6,6 +9,11 @@ def map_to_objects(rows, constructor):
 def map_to_object(row, constructor):
     if row is None:
         return None
+
+    LOGGER.info("hello world")
+    LOGGER.info(row)
+    LOGGER.info(*row)
+
     return constructor(*row)
 
 class Drone:
@@ -32,8 +40,9 @@ class Storage:
 
 class DroneOrder:
 
-    def __init__(self, id: str, drone_id: str, protocol: str, finish_time: datetime):
+    def __init__(self, id: str = None, drone_id: str = None, protocol: str = None, finish_time: datetime = None):
         self.id = id
         self.drone_id = drone_id
         self.protocol = protocol
         self.finish_time = finish_time
+

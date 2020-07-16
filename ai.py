@@ -14,7 +14,7 @@ from ai.respond import Respond
 from ai.storage import Storage
 import ai.emote as emote_handler
 from ai.assign import Assign
-from ai.orders_reporting import Orders_Reporting
+import ai.orders_reporting as orders_reporting
 from ai.toggle_glitched import Toggle_Glitched
 from ai.ai_help import AI_Help
 from ai.status import Status
@@ -54,13 +54,15 @@ bot.remove_command("help")
 # Instance modules
 mantra_handler = Mantra_Handler(bot)
 
+#Run-forever checkers.
+checking_for_completed_orders = False
+
 # register modules
 MODULES = [
     Join(bot),
     stoplights,
     speech_optimization,
     identity_enforcement,
-    Orders_Reporting(bot),
     Storage(bot),
     Assign(bot),
     Respond(bot),
@@ -140,6 +142,11 @@ async def help(context):
 async def repeat(context, *messages):
     await mantra_handler.update_mantra(context.message, messages)
 
+@bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
+async def report(context, protocol_name: str, protocol_time: str):
+    LOGGER.info("Report order command triggered.")
+    await orders_reporting.report_order(context, protocol_name, int(protocol_time))
+
 @bot.event
 async def on_message(message: discord.Message):
     # ignore all messages by any bot (AI Mxtress and webhooks)
@@ -188,6 +195,8 @@ async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
     await mantra_handler.load_mantra()
 
+    if not checking_for_completed_orders:
+        asyncio.ensure_future(orders_reporting.check_for_completed_orders(bot))
 
 @bot.event
 async def on_error(event, *args, **kwargs):
