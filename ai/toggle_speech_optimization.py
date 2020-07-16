@@ -8,7 +8,6 @@ from channels import EVERYWHERE
 
 from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, has_role
 
-
 LOGGER = logging.getLogger('ai')
 
 async def toggle(context, target_drones):

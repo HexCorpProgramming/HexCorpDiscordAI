@@ -5,9 +5,9 @@ import asyncio
 import logging
 from logging import handlers
 # Modules
-from ai.stoplights import Stoplights
-from ai.identity_enforcement import Identity_Enforcement
-from ai.speech_optimization import Speech_Optimization
+import ai.stoplights as stoplights
+import ai.identity_enforcement as identity_enforcement
+import ai.speech_optimization as speech_optimization
 import ai.toggle_speech_optimization as speech_optimization_toggler
 from ai.join import Join
 from ai.respond import Respond
@@ -21,7 +21,7 @@ from ai.status import Status
 import ai.amplifier as amplification_handler
 from ai.rename_drone import RenameDrone
 from ai.unassign import UnassignDrone, remove_drone_from_db
-from ai.mantras import Mantras
+from ai.mantras import Mantra_Handler
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED
 import channels
@@ -52,15 +52,12 @@ bot = discord.ext.commands.Bot(command_prefix='hc!', case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
-stoplights = Stoplights(bot)
-speech_optimization = Speech_Optimization(bot)
-identity_enforcement = Identity_Enforcement(bot)
+mantra_handler = Mantra_Handler(bot)
 
 # register modules
 MODULES = [
     Join(bot),
     stoplights,
-    Mantras(bot),
     speech_optimization,
     identity_enforcement,
     Orders_Reporting(bot),
@@ -76,6 +73,8 @@ MODULES = [
 MODULES.append(AI_Help(bot, MODULES))
 MODULES.append(Status(bot, MODULES))
 
+
+
 @bot.command(aliases = ['big', 'emote'])
 async def bigtext(context, sentence):
     '''
@@ -83,14 +82,14 @@ async def bigtext(context, sentence):
     '''
     await emote_handler.generate_big_text(context.channel, sentence)
 
-@bot.command(brief = "Hive Mxtress")
+@bot.command(brief = "Hive Mxtress", usage = "hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
     await amplification_handler.amplify_message(context, message, target_channel, drones)
 
-@bot.command(alias = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress")
+@bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users to toggle drone speech optimization.
@@ -99,9 +98,6 @@ async def toggle_speech_optimization(context, *drones):
 
 @bot.command(brief = "DroneOS")
 async def add_trusted_user(context):
-    '''
-    This is a placeholder command.
-    '''
     return "Drone OS example command."
 
 @bot.command()
@@ -117,17 +113,32 @@ async def help(context):
     Hive_Mxtress_card.set_thumbnail(url = HIVE_MXTRESS_AVATAR)
 
     for command in bot.commands:
+
+        command_name = command.name
+        if len(command.aliases) != 0:
+            command_name += " ("
+            for alias in command.aliases:
+                command_name += f"{alias}, "
+            command_name = f"{command_name[:-2]})"
+
+        command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
+        command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
+
         if command.brief == "Hive Mxtress":
-            Hive_Mxtress_card.add_field(name=command.name, value=command.help, inline=False)
+
+            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
         elif command.brief == "DroneOS":
-            droneOS_card.add_field(name=command.name, value=command.help, inline=False)
+            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
         else:
-            commands_card.add_field(name=command.name, value=command.help, inline=False)
+            commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     await context.send(embed=commands_card)
     await context.send(embed=droneOS_card)
     await context.send(embed=Hive_Mxtress_card)
 
+@bot.command(brief = "Hive Mxtress")
+async def repeat(context, *messages):
+    await mantra_handler.update_mantra(context.message, messages)
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -135,16 +146,24 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
 
+    LOGGER.info("Checking for stoplights.")
+
     #Check for stoplights
     if await stoplights.check_for_stoplights(message):
         return #Don't alter the message if it contains a stoplight.
+
+    LOGGER.info("Checking for speech optimization.")
 
     #Check for speech optimization
     if await speech_optimization.optimize_speech(message):
         return #Message has been deleted or status code has been proxied.
 
+    LOGGER.info("Checking for identity enforcement.")
+
     #Enforce identity if in Hive
     await identity_enforcement.enforce_identity(message)
+
+    LOGGER.info("Processing additional commands.")
 
     #Finally, process additional commands where applicable
     await bot.process_commands(message)
@@ -167,6 +186,7 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
+    await mantra_handler.load_mantra()
 
 
 @bot.event
