@@ -16,6 +16,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           pip install -r requirements.txt
-      - name: Lint with pylint
+      - name: Lint with flake8
         run: |
           flake8
