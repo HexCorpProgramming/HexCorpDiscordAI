@@ -18,4 +18,4 @@ jobs:
           pip install -r requirements.txt
       - name: Lint with pylint
         run: |
-          pylint **/*.py
+          python -m pylint **/*.py
