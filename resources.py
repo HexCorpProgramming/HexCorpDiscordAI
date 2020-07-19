@@ -6,3 +6,4 @@ HEXCORP_AVATAR = "https://images.squarespace-cdn.com/content/5cd68fb28dfc8ce502f
 #Scene comfort indicators
 CLOCK = "⏰"
 TRAFFIC_LIGHTS = ["🔴", "🟡", "🟢"]
+BOT_IDS = [673470104519835659, 665846816121815071]

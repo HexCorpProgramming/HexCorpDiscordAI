@@ -4,6 +4,7 @@ import re
 import discord
 from discord.ext import commands
 from discord.utils import get
+from resources import BOT_IDS
 
 import messages
 from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
@@ -71,39 +72,29 @@ def strip_recipient(message: str) -> str:
     '''
     return re.sub(r'^<@!?\d*>', '', message, 1)
 
+def is_question(message: discord.Message):
+    if not message.content.endswith("?"): return False
 
-class Respond():
+    for mention in message.mentions:
+        if mention.id in BOT_IDS:
+            return True
+    return False
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [TRANSMISSIONS_CHANNEL, KINK_TRANSMISSIONS_CHANNEL,
-                                   GAMER_DRONE_LOBBY_CHANNEL, CREATIVE_LABOR_CHANNEL, HEXCORP_CREATIONS, KINK_CREATIVE_LABOR_CHANNEL]
-        self.channels_blacklist = []
-        self.roles_whitelist = [HIVE_MXTRESS, ASSOCIATE, DRONE]
-        self.roles_blacklist = [DRONE_MODE]
-        self.on_message = [self.question]
-        self.on_ready = []
-        self.help_content = {
-            'name': 'respond', 'value': 'ask a question and the AI will answer e.g. `@HexCorp Mxtress AI Are drones cute?`'}
+async def respond_to_question(message: discord.Message):
+    if not is_question(message):
+        return False
 
-    def is_question(self, message: discord.Message):
-        return self.bot.user.mentioned_in(message) and message.content.endswith('?')
+    LOGGER.debug('Message is a valid question.')
 
-    async def question(self, message: discord.Message):
-        if not self.is_question(message):
-            return False
+    # different roles have different reponses
+    if has_role(message.author, HIVE_MXTRESS):
+        if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
+            await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
+        else:
+            await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES)
+    elif has_role(message.author, ASSOCIATE):
+        await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
+    elif has_role(message.author, DRONE):
+        await messages.answer(message.channel, message.author, DRONE_RESPONSES)
 
-        LOGGER.debug('Message is a valid question.')
-
-        # different roles have different reponses
-        if has_role(message.author, HIVE_MXTRESS):
-            if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
-                await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
-            else:
-                await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES)
-        elif has_role(message.author, ASSOCIATE):
-            await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
-        elif has_role(message.author, DRONE):
-            await messages.answer(message.channel, message.author, DRONE_RESPONSES)
-
-        return True
+    return True

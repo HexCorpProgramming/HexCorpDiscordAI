@@ -32,6 +32,9 @@ REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HE
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
 async def store_drone(message: discord.Message):
+
+    if message.channel.name != STORAGE_FACILITY: return False
+
     '''
     Process posted messages.
     '''

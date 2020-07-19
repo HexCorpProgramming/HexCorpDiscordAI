@@ -10,17 +10,16 @@ import ai.identity_enforcement as identity_enforcement
 import ai.speech_optimization as speech_optimization
 import ai.toggle_speech_optimization as speech_optimization_toggler
 import ai.join as join_handler
-from ai.respond import Respond
+import ai.respond as ai_responder
 import ai.storage as storage
 import ai.emote as emote_handler
 from ai.assign import Assign
 import ai.orders_reporting as orders_reporting
 from ai.toggle_glitched import Toggle_Glitched
 from ai.ai_help import AI_Help
-from ai.status import Status
+import ai.status as status
 import ai.amplifier as amplification_handler
-from ai.rename_drone import RenameDrone
-from ai.unassign import unassign_drone, remove_drone_from_db
+from ai.drone_management import unassign_drone, rename_drone, remove_drone_from_db
 from ai.mantras import Mantra_Handler
 from ai.toggle_role import toggle_role
 # Constants
@@ -49,26 +48,27 @@ LOGGER.setLevel(logging.DEBUG)
 # prepare database
 database.prepare()
 
+# Setup bot
 bot = discord.ext.commands.Bot(command_prefix='hc!', case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
 mantra_handler = Mantra_Handler(bot)
 
-#Run-forever checkers.
+# Run-forever checkers.
 checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
 
-#Register message listeners.
+# Register message listeners.
 message_listeners = [
     join_handler.check_for_consent,
     stoplights.check_for_stoplights,
     speech_optimization.optimize_speech,
+    ai_responder.respond_to_question,
     identity_enforcement.enforce_identity,
-    storage.store_drone
+    storage.store_drone,
 ]
-
 
 
 @bot.command(aliases = ['big', 'emote'])
@@ -102,7 +102,11 @@ async def toggle_drone_glitch(context, *drones):
 
 @bot.command(usage = "hc!unassign 0000")
 async def unassign(context, drone):
-    await unassign(context, drone)
+    await unassign_drone(context, drone)
+
+@bot.command()
+async def rename(context, old_id, new_id):
+    await rename_drone(context, old_id, new_id)
 
 @bot.command(brief = "DroneOS")
 async def add_trusted_user(context):
@@ -153,16 +157,20 @@ async def report(context, protocol_name: str, protocol_time: str):
     if context.channel.name == ORDERS_REPORTING:
         await orders_reporting.report_order(context, protocol_name, int(protocol_time))
 
+@bot.command()
+async def ai_status(context):
+    await status.report_status(context)
+
 @bot.event
 async def on_message(message: discord.Message):
 
-    # ignore all messages by any bot (AI Mxtress and webhooks)
+    # Ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
         return
 
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
-        if await listener(message): #Return early if any listeners return true.
+        if await listener(message): # Return early if any listeners return true.
             return
     LOGGER.info("End of message listener stack.")
 
