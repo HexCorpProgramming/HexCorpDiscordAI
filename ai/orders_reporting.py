@@ -29,7 +29,7 @@ async def check_for_completed_orders(bot):
     LOGGER.info("Beginning routine check for completed orders.")
     while True:
         # Check active orders every minute.
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
         LOGGER.debug("Checking for completed orders")
         for order in fetch_all_drone_orders():
             LOGGER.info(f"Checking order of drone {order.drone_id} with protocol {order.protocol}")
