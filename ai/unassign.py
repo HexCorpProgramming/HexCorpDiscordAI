@@ -16,40 +16,21 @@ from bot_utils import get_id
 LOGGER = logging.getLogger('ai')
 
 
-class UnassignDrone():
+async def unassign_drone(context, drone_id):
+    drone = fetch_drone_with_drone_id(drone_id)
+    # check for existence
+    if drone is None:
+        await context.send(f"There is no drone with the ID {drone_id} in the DB.")
+        return
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [OFFICE]
-        self.channels_blacklist = []
-        self.roles_whitelist = [HIVE_MXTRESS]
-        self.roles_blacklist = []
-        self.on_message = [self.unassign]
-        self.on_ready = []
-        self.help_content = {'name': 'unassign',
-                             'value': 'removes your drone status'}
+    member = context.guild.get_member(drone.id)
+    await member.edit(nick=None)
+    await member.remove_roles(get(context.guild.roles, name=DRONE), get(context.guild.roles, name=ENFORCER_DRONE), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=STORED))
+    await member.add_roles(get(context.guild.roles, name=ASSOCIATE))
 
-    async def unassign(self, message: discord.Message):
-        # TODO: get a more complex messsage to avoid accidental unassignment
-        if not message.content.lower().startswith('unassign '):
-            return False
-
-        drone_id = get_id(message.content)
-        drone = fetch_drone_with_drone_id(drone_id)
-        # check for existence
-        if drone is None:
-            await message.channel.send(f"There is no drone with the ID {drone_id} in the DB.")
-            return False
-
-        member = self.bot.guilds[0].get_member(drone.id)
-        await member.edit(nick=None)
-        await member.remove_roles(get(message.guild.roles, name=DRONE), get(message.guild.roles, name=ENFORCER_DRONE), get(message.guild.roles, name=GLITCHED), get(message.guild.roles, name=STORED))
-        await member.add_roles(get(message.guild.roles, name=ASSOCIATE))
-
-        # remove from DB
-        remove_drone_from_db(drone_id)
-        await message.channel.send(f"Drone with ID {drone_id} unassigned.")
-        return True
+    # remove from DB
+    remove_drone_from_db(drone_id)
+    await context.send(f"Drone with ID {drone_id} unassigned.")
 
 
 def remove_drone_from_db(drone_id: str):

@@ -2,18 +2,26 @@ import discord
 from discord.utils import get
 from discord.ext import commands
 from roles import has_role
+from typing import List
+import logging
 
-async def toggle_role(targets: List[discord.Member], context, role_name: str):
+LOGGER = logging.getLogger("ai")
+
+async def toggle_role(context, targets: List[discord.Member], role_name: str):
 
     if (role := get(context.guild.roles, name = role_name)) is None: return
 
     for target in targets:
         if has_role(target, role_name):
-            print("Removing role.")
+            LOGGER.info(f"Removing {role_name} from {target.display_name}")
+            await target.remove_roles(role)
+            await context.send(f"{role_name} toggled off for {target.display_name}")
         else:
-            print("Adding role.")
+            LOGGER.info(f"Adding {role_name} to {target.display_name}")
+            await target.add_roles(role)
+            await context.send(f"{role_name} toggled off for {target.display_name}")
 
-    print("Hello world")
+    LOGGER.info("All roles added to all targets.")
 
 
 

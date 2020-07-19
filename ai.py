@@ -9,9 +9,9 @@ import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
 import ai.speech_optimization as speech_optimization
 import ai.toggle_speech_optimization as speech_optimization_toggler
-from ai.join import Join
+import ai.join as join_handler
 from ai.respond import Respond
-from ai.storage import Storage
+import ai.storage as storage
 import ai.emote as emote_handler
 from ai.assign import Assign
 import ai.orders_reporting as orders_reporting
@@ -20,11 +20,12 @@ from ai.ai_help import AI_Help
 from ai.status import Status
 import ai.amplifier as amplification_handler
 from ai.rename_drone import RenameDrone
-from ai.unassign import UnassignDrone, remove_drone_from_db
+from ai.unassign import unassign_drone, remove_drone_from_db
 from ai.mantras import Mantra_Handler
+from ai.toggle_role import toggle_role
 # Constants
-from roles import has_any_role, has_role, DRONE, STORED
-import channels
+from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
+from channels import STORAGE_FACILITY, DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, INITIATION
 from bot_utils import get_id
 from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -56,6 +57,8 @@ mantra_handler = Mantra_Handler(bot)
 
 #Run-forever checkers.
 checking_for_completed_orders = False
+reporting_storage = False
+checking_for_stored_drones_to_release = False
 
 # register modules
 MODULES = [
@@ -63,13 +66,11 @@ MODULES = [
     stoplights,
     speech_optimization,
     identity_enforcement,
-    Storage(bot),
     Assign(bot),
     Respond(bot),
     emote_handler,
     Toggle_Glitched(bot),
     RenameDrone(bot),
-    UnassignDrone(bot),
 ]
 
 MODULES.append(AI_Help(bot, MODULES))
@@ -89,14 +90,26 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
-    await amplification_handler.amplify_message(context, message, target_channel, drones)
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await amplification_handler.amplify_message(context, message, target_channel, drones)
 
 @bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):
     '''
-    Lets the Hive Mxtress or trusted users to toggle drone speech optimization.
+    Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-    await speech_optimization_toggler.toggle(context, drones)
+    await toggle_role(context, drones, SPEECH_OPTIMIZATION)
+
+@bot.command(aliaes = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
+async def toggle_drone_glitch(context, *drones):
+    '''
+    Lets the Hive Mxtress or trusted users toggle drone glitch levels.
+    '''
+    await toggle_role(context, drones, GLITCHED)
+
+@bot.command(usage = "hc!unassign 0000")
+async def unassign(context, drone):
+    await unassign(context, drone)
 
 @bot.command(brief = "DroneOS")
 async def add_trusted_user(context):
@@ -144,8 +157,8 @@ async def repeat(context, *messages):
 
 @bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
 async def report(context, protocol_name: str, protocol_time: str):
-    LOGGER.info("Report order command triggered.")
-    await orders_reporting.report_order(context, protocol_name, int(protocol_time))
+    if context.channel.name == ORDERS_REPORTING:
+        await orders_reporting.report_order(context, protocol_name, int(protocol_time))
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -153,36 +166,35 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
 
-    LOGGER.info("Checking for stoplights.")
+    if message.channel.name == INITIATION:
+        LOGGER.info("Checking for initiate consent.")
+        join_handler.check_for_consent(message)
+        return
 
-    #Check for stoplights
+    LOGGER.info("Checking for stoplights.")
     if await stoplights.check_for_stoplights(message):
         return #Don't alter the message if it contains a stoplight.
 
     LOGGER.info("Checking for speech optimization.")
-
-    #Check for speech optimization
     if await speech_optimization.optimize_speech(message):
         return #Message has been deleted or status code has been proxied.
+    
+    if message.channel.name in DRONE_HIVE_CHANNELS:
+        LOGGER.info("Checking for identity enforcement.")
+        await identity_enforcement.enforce_identity(message)
 
-    LOGGER.info("Checking for identity enforcement.")
-
-    #Enforce identity if in Hive
-    await identity_enforcement.enforce_identity(message)
+    if message.channel.name == STORAGE_FACILITY:
+        LOGGER.info("Checking for storage requests.")
+        await storage.store_drone(message)
+        return #No need to process additional commands in the storage facility.
 
     LOGGER.info("Processing additional commands.")
-
-    #Finally, process additional commands where applicable
     await bot.process_commands(message)
 
 @bot.event
 async def on_member_join(member: discord.Member):
-    for module in MODULES:
-        try:
-            await module.on_member_join(member)
-        except AttributeError:
-            # do not raise an error, if this is not defined
-            pass
+    join_handler.on_member_join(member)
+
 @bot.event
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
@@ -197,6 +209,12 @@ async def on_ready():
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.check_for_completed_orders(bot))
+
+    if not reporting_storage:
+        asyncio.ensure_future(storage.report_storage(bot))
+
+    if not checking_for_stored_drones_to_release:
+        asyncio.ensure_future(storage.release_timed(bot))
 
 @bot.event
 async def on_error(event, *args, **kwargs):
