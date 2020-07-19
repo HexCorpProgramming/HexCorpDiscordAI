@@ -60,20 +60,14 @@ checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
 
-# register modules
-MODULES = [
-    stoplights,
-    speech_optimization,
-    identity_enforcement,
-    Assign(bot),
-    Respond(bot),
-    emote_handler,
-    Toggle_Glitched(bot),
-    RenameDrone(bot),
+#Register message listeners.
+message_listeners = [
+    join_handler.check_for_consent,
+    stoplights.check_for_stoplights,
+    speech_optimization.optimize_speech,
+    identity_enforcement.enforce_identity,
+    storage.store_drone
 ]
-
-MODULES.append(AI_Help(bot, MODULES))
-MODULES.append(Status(bot, MODULES))
 
 
 
@@ -161,31 +155,16 @@ async def report(context, protocol_name: str, protocol_time: str):
 
 @bot.event
 async def on_message(message: discord.Message):
+
     # ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
         return
 
-    if message.channel.name == INITIATION:
-        LOGGER.info("Checking for initiate consent.")
-        join_handler.check_for_consent(message)
-        return
-
-    LOGGER.info("Checking for stoplights.")
-    if await stoplights.check_for_stoplights(message):
-        return #Don't alter the message if it contains a stoplight.
-
-    LOGGER.info("Checking for speech optimization.")
-    if await speech_optimization.optimize_speech(message):
-        return #Message has been deleted or status code has been proxied.
-    
-    if message.channel.name in DRONE_HIVE_CHANNELS:
-        LOGGER.info("Checking for identity enforcement.")
-        await identity_enforcement.enforce_identity(message)
-
-    if message.channel.name == STORAGE_FACILITY:
-        LOGGER.info("Checking for storage requests.")
-        await storage.store_drone(message)
-        return #No need to process additional commands in the storage facility.
+    LOGGER.info("Beginning message listener stack execution.")
+    for listener in message_listeners:
+        if await listener(message): #Return early if any listeners return true.
+            return
+    LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Processing additional commands.")
     await bot.process_commands(message)

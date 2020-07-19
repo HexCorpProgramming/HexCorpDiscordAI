@@ -26,6 +26,9 @@ async def on_member_join(member: discord.Member):
 
 async def check_for_consent(message: discord.Message):
     '''On consent message, remove initiate role and give associate'''
+
+    if message.channel.name != CONSENT_CHANNEL: return False
+
     if message.content == CONSENT_MESSAGE:
         initiate_role = get(message.guild.roles, name=roles.INITIATE)
         associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
@@ -38,3 +41,5 @@ async def check_for_consent(message: discord.Message):
         await messages.answer(registry_channel, message.author, CONSENT_SUCCESS)
     else:
         await messages.delete_request(message, CONSENT_REJECT)
+
+    return True
