@@ -15,15 +15,10 @@ def add_new_drone_members(members: List[discord.Member]):
     '''
     for member in members:
         if has_any_role(member, [DRONE, STORED]):
-            if fetchone("SELECT COUNT(id) FROM drone WHERE id=:id",
-                        {"id": member.id})[0] > 0:
-                # already exists in DB; skip
-                continue
 
-            new_drone = Drone(member.id, get_id(
-                member.display_name), False, False, "", datetime.now())
-            insert_drone(new_drone)
-
+            if fetchone("SELECT id FROM drone WHERE id=:id", {"id": member.id}) is None:
+                new_drone = Drone(member.id, get_id(member.display_name), False, False, "", datetime.now())
+                insert_drone(new_drone)
 
 def insert_drone(drone: Drone):
     '''
