@@ -62,7 +62,6 @@ checking_for_stored_drones_to_release = False
 
 # register modules
 MODULES = [
-    Join(bot),
     stoplights,
     speech_optimization,
     identity_enforcement,

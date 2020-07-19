@@ -4,17 +4,13 @@ import logging
 LOGGER = logging.getLogger("ai")
 
 def map_to_objects(rows, constructor):
-    return [constructor(*row) for row in rows]
+    return [constructor(**row) for row in rows]
 
 def map_to_object(row, constructor):
     if row is None:
         return None
 
-    LOGGER.info("hello world")
-    LOGGER.info(row)
-    LOGGER.info(*row)
-
-    return constructor(*row)
+    return constructor(**row)
 
 class Drone:
 
