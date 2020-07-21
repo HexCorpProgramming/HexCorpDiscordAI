@@ -8,19 +8,17 @@ from logging import handlers
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
 import ai.speech_optimization as speech_optimization
-import ai.toggle_speech_optimization as speech_optimization_toggler
-import ai.join as join_handler
-import ai.respond as ai_responder
+import ai.join as join
+import ai.respond as respond
 import ai.storage as storage
-import ai.emote as emote_handler
-import ai.assign as assignment
+import ai.emote as emote
+import ai.assign as assign
 import ai.orders_reporting as orders_reporting
-from ai.ai_help import AI_Help
 import ai.status as status
-import ai.amplifier as amplification_handler
-from ai.drone_management import unassign_drone, rename_drone, remove_drone_from_db
+import ai.amplifier as amplifier
+import ai.drone_management as drone_management
+import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
-from ai.toggle_role import toggle_role
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
 from channels import STORAGE_FACILITY, DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, INITIATION
@@ -61,11 +59,11 @@ checking_for_stored_drones_to_release = False
 
 # Register message listeners.
 message_listeners = [
-    join_handler.check_for_consent,
-    assignment.check_for_assignment_message,
+    join.check_for_consent,
+    assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
     speech_optimization.optimize_speech,
-    ai_responder.respond_to_question,
+    respond.respond_to_question,
     identity_enforcement.enforce_identity,
     storage.store_drone,
 ]
@@ -75,7 +73,7 @@ async def bigtext(context, sentence):
     '''
     Transforms small text into heckin' chonky text.
     '''
-    await emote_handler.generate_big_text(context.channel, sentence)
+    await emote.generate_big_text(context.channel, sentence)
 
 @bot.command(brief = "Hive Mxtress", usage = "hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
@@ -83,29 +81,29 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     Allows the Hive Mxtress to speak through other drones.
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await amplification_handler.amplify_message(context, message, target_channel, drones)
+        await amplifier.amplify_message(context, message, target_channel, drones)
 
 @bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-    await toggle_role(context, drones, SPEECH_OPTIMIZATION)
+    await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
 
 @bot.command(aliaes = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
-    await toggle_role(context, drones, GLITCHED)
+    await toggle_role.toggle_role(context, drones, GLITCHED)
 
 @bot.command(usage = "hc!unassign 0000")
 async def unassign(context, drone):
-    await unassign_drone(context, drone)
+    await drone_management.unassign_drone(context, drone)
 
 @bot.command()
 async def rename(context, old_id, new_id):
-    await rename_drone(context, old_id, new_id)
+    await drone_management.rename_drone(context, old_id, new_id)
 
 @bot.command(brief = "DroneOS")
 async def add_trusted_user(context):
@@ -182,14 +180,14 @@ async def on_message(message: discord.Message):
 
 @bot.event
 async def on_member_join(member: discord.Member):
-    join_handler.on_member_join(member)
+    join.on_member_join(member)
 
 @bot.event
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     if has_any_role(member, [DRONE, STORED]):
         drone_id = get_id(member.display_name)
-        remove_drone_from_db(drone_id)
+        drone_management.remove_drone_from_db(drone_id)
 
 @bot.event
 async def on_ready():
