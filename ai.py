@@ -13,9 +13,8 @@ import ai.join as join_handler
 import ai.respond as ai_responder
 import ai.storage as storage
 import ai.emote as emote_handler
-from ai.assign import Assign
+import ai.assign as assignment
 import ai.orders_reporting as orders_reporting
-from ai.toggle_glitched import Toggle_Glitched
 from ai.ai_help import AI_Help
 import ai.status as status
 import ai.amplifier as amplification_handler
@@ -63,13 +62,13 @@ checking_for_stored_drones_to_release = False
 # Register message listeners.
 message_listeners = [
     join_handler.check_for_consent,
+    assignment.check_for_assignment_message,
     stoplights.check_for_stoplights,
     speech_optimization.optimize_speech,
     ai_responder.respond_to_question,
     identity_enforcement.enforce_identity,
     storage.store_drone,
 ]
-
 
 @bot.command(aliases = ['big', 'emote'])
 async def bigtext(context, sentence):
@@ -160,6 +159,10 @@ async def report(context, protocol_name: str, protocol_time: str):
 @bot.command()
 async def ai_status(context):
     await status.report_status(context)
+
+@bot.command()
+async def release(context, drone):
+    storage.release(context, drone)
 
 @bot.event
 async def on_message(message: discord.Message):

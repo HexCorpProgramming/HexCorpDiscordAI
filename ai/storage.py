@@ -122,29 +122,26 @@ async def release_timed(bot):
             await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
             delete_storage(elapsed_storage.id)
 
-async def release(self, message: discord.Message):
+async def release(context, stored_drone):
     '''
     Relase a drone from storage on command.
     '''
-    if not message.content.lower().startswith('release'):
-        return False
 
     LOGGER.debug('Message is valid for release.')
-    if not roles.has_role(message.author, roles.HIVE_MXTRESS):
-        # TODO: maybe answer with a message
+    if not roles.has_role(context.author, roles.HIVE_MXTRESS):
         return False
 
-    stored_role = get(message.guild.roles, name=roles.STORED)
+    stored_role = get(context.guild.roles, name=roles.STORED)
     # find stored drone
-    member = message.mentions[0]
+    member = stored_drone
     to_release_id = get_id(member.display_name)
     storage_to_release = fetch_storage_by_target_id(to_release_id)
     if storage_to_release is not None:
         # TODO: does this really return None or throw an error?
         drone = fetch_drone_with_drone_id(storage_to_release.target_id)
-        member = self.bot.guilds[0].get_member(drone.id)
+        member = context.guild.get_member(drone.id)
         await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(message.guild, storage_to_release.roles.split('|')))
+        await member.add_roles(*get_roles_for_names(context.guild, storage_to_release.roles.split('|')))
         delete_storage(storage_to_release.id)
         LOGGER.debug(
             f"Drone with ID {to_release_id} released from storage.")

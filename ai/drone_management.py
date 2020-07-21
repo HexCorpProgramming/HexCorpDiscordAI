@@ -8,13 +8,13 @@ from channels import OFFICE
 from roles import HIVE_MXTRESS, DRONE, ENFORCER_DRONE, GLITCHED, STORED, ASSOCIATE, has_role
 from bot_utils import get_id
 
-from db.drone_dao import rename_drone, fetch_drone_with_drone_id, delete_drone_by_drone_id
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 
 LOGGER = logging.getLogger('ai')
 
-async def rename(context, old_id, new_id):
+async def rename_drone(context, old_id, new_id):
 
     if has_role(context.author, HIVE_MXTRESS) == False or context.channel.name != OFFICE: return
 
@@ -28,7 +28,7 @@ async def rename(context, old_id, new_id):
     if collision is None:
         drone = fetch_drone_with_drone_id(old_id)
         member = context.guild.get_member(drone.id)
-        rename_drone(old_id, new_id)
+        rename_drone_in_db(old_id, new_id)
         if has_role(member, ENFORCER_DRONE):
             await member.edit(nick=f'⬢-Drone #{new_id}')
         else:
@@ -37,7 +37,7 @@ async def rename(context, old_id, new_id):
     else:
         await context.send(f"ID {new_id} already in use.")
 
-async def unassign(context, drone_id):
+async def unassign_drone(context, drone_id):
 
     if has_role(context.author, HIVE_MXTRESS) == False or context.channel.name != OFFICE: return
 
