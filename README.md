@@ -4,7 +4,7 @@
 - Python 3.8
 - pip
 - python-setuptools
-- discord.py ~= 1.2.5
+- discord.py ~= 1.3.4
 
 To install all Python dependencies you can use pip. Just enter `pip install -r requirements.txt` in the project directory.
 
@@ -41,3 +41,4 @@ If you manage to screw up your DB you can remove it by simply deleting the file 
 We use flake8 as a linting tool. Everytime you push code, our CI-pipeline will run flake8 to find problems and will notify you if stuff should be changed. If you want to run flake8 yourself, you can use `pip install flake8` to install it and then simply call `flake8` at the project root.
 
 It is also recommended to configure flake8 as your IDE linting tool, to get your code highlighted.
+=======
