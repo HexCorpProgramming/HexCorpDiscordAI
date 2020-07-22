@@ -161,7 +161,7 @@ async def report(context, protocol_name: str, protocol_time: str):
 
 @bot.command()
 async def ai_status(context):
-    await status.report_status(context)
+    await status.report_status(context, message_listeners)
 
 @bot.command()
 async def release(context, drone):
