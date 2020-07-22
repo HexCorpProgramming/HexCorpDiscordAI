@@ -19,7 +19,5 @@ async def check_for_stoplights(message: discord.Message):
         moderator_role = get(message.guild.roles, name=MODERATION)
         await message.channel.send(f"Moderators needed {moderator_role.mention}!")
         return True
-    elif any(traffic_light in message.content for traffic_light in TRAFFIC_LIGHTS):
-        return True
     else:
-        return False
+        return any(traffic_light in message.content for traffic_light in TRAFFIC_LIGHTS)
