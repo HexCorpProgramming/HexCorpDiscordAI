@@ -91,7 +91,7 @@ async def toggle_speech_optimization(context, *drones):
     if has_role(context.author, HIVE_MXTRESS):
         await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
 
-@bot.command(aliaes = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
+@bot.command(aliases = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
