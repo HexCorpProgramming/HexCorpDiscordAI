@@ -177,6 +177,7 @@ async def on_message(message: discord.Message):
 
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
+        LOGGER.info(f"Executing: {listener}")
         if await listener(message): # Return early if any listeners return true.
             return
     LOGGER.info("End of message listener stack.")

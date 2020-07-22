@@ -137,10 +137,12 @@ async def optimize_speech(message: discord.Message):
         await message.delete()
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         return True
-    # But if the message is a status code, replace it with a status code output
-    else:
+    elif acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name):
+        LOGGER.info("Optimizing speech code for drone.")
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)
         if output:
             await send_webhook_with_specific_output(message, webhook, output)
         return True
+    else:
+        return False
