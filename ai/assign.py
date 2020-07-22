@@ -43,7 +43,7 @@ def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role
 
     return relevant_ids + RESERVED_IDS
 
-async def check_for_assignment_message(self, message: discord.Message):
+async def check_for_assignment_message(message: discord.Message):
 
     if message.channel.name != ASSIGNMENT_CHANNEL: return False
 
