@@ -40,7 +40,7 @@ async def check_for_completed_orders(bot):
                         await ORDERS_REPORTING_CHANNEL.send(f"{member.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
                         delete_drone_order(order.id)
 
-async def report_order(context, protocol_name, protocol_time):
+async def report_order(context, protocol_name, protocol_time: int):
     LOGGER.info("Order reported.")
     drone_id = get_id(context.author.display_name)
     if drone_id is None: return #No non-drones allowed.
@@ -56,7 +56,7 @@ async def report_order(context, protocol_name, protocol_time):
 
     await context.send(f"Drone {drone_id} Activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
     finish_time = str(
-        datetime.now() + timedelta(minutes=int(protocol_time)))
+        datetime.now() + timedelta(minutes=protocol_time))
     created_order = ActiveOrder(
         str(uuid4()), drone_id, protocol_name, finish_time)
     LOGGER.info("ActiveOrder object created. Inserting order.")

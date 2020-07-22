@@ -154,9 +154,12 @@ async def repeat(context, *messages):
         await mantra_handler.update_mantra(context.message, messages)
 
 @bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
-async def report(context, protocol_name: str, protocol_time: str):
+async def report(context, protocol_name: str, protocol_time: int):
+
+    LOGGER.debug("beepboop")
+
     if context.channel.name == ORDERS_REPORTING:
-        await orders_reporting.report_order(context, protocol_name, int(protocol_time))
+        await orders_reporting.report_order(context, protocol_name, protocol_time)
 
 @bot.command()
 async def ai_status(context):
