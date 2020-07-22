@@ -37,7 +37,6 @@ class Mantra_Handler():
 
             mantra_channel = get(self.bot.guilds[0].channels, name=REPETITIONS)
             await mantra_channel.edit(topic=f"Repeat :: [ID] :: {Mantra_Handler.current_mantra}") #Finally. update the channel description
-
             return
         
         with open("data/current_mantra.txt", "r") as mantra_file:
