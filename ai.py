@@ -80,8 +80,8 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
-    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await amplifier.amplify_message(context, message, target_channel, drones)
+    #if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+    await amplifier.amplify_message(context, message, target_channel, drones)
 
 @bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):

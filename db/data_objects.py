@@ -14,7 +14,7 @@ def map_to_object(row, constructor):
 
 class Drone:
 
-    def __init__(self, id: int, drone_id: str, optimized: bool, glitched: bool, trusted_users: str, last_activity: datetime):
+    def __init__(self, id: str = None, drone_id: str = None, optimized: bool = None, glitched: bool = None, trusted_users: str = None, last_activity: datetime = None):
         self.id = id
         self.drone_id = drone_id
         self.optimized = optimized
