@@ -138,7 +138,6 @@ async def help(context):
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
         if command.brief == "Hive Mxtress":
-
             Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
         elif command.brief == "DroneOS":
             droneOS_card.add_field(name=command_name, value=command_description, inline=False)
