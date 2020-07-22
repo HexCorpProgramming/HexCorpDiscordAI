@@ -4,7 +4,7 @@
 - Python 3.8
 - pip
 - python-setuptools
-- discord.py ~= 1.2.5
+- discord.py ~= 1.3.4
 
 To install all Python dependencies you can use pip. Just enter `pip install -r requirements.txt` in the project directory.
 
