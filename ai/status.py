@@ -30,7 +30,7 @@ def get_list_of_listeners(listeners):
 
 async def report_status(context, listeners):
     '''
-    Creates an embed with some debug-information about the AI.
+    Creates an embed with some debug information about the AI.
     '''
 
     embed = discord.Embed(
