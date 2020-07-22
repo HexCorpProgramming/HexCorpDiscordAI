@@ -26,9 +26,9 @@ async def amplify_message(context, amplification_message: str, target_channel: d
         if not re.match(r"\d{4}", drone): continue #Skip non-drone IDs.
 
         LOGGER.debug(f"Getting discord ID from database.")
-        if (discord_id := get_discord_id_of_drone(drone)) is None: continue #Given drone does not exist on server.
+        if (drone_from_db := get_discord_id_of_drone(drone)) is None: continue #Given drone does not exist on server.
 
-        amplifier_drone = get(context.guild.members, id=(discord_id[0])) #Unpack that darned tuple
+        amplifier_drone = get(context.guild.get_member(drone_from_db.id))
         if amplifier_drone is None: continue #If getting the member somehow failed, keep calm and carry on.
 
         webhook = await get_webhook_for_channel(target_channel)
