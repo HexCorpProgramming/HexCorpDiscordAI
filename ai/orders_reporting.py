@@ -50,7 +50,7 @@ async def report_order(context, protocol_name, protocol_time):
         await context.send(f"HexDrone #{drone_id} is already undertaking the {current_order.protocol} protocol.")
         return
 
-    if int(protocol_time) > 120:
+    if protocol_time > 120:
         await context.channel.send("Drones are not authorized to activate a specific protocol for that length of time. The maximum is 120 minutes.")
         return
 
