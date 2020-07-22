@@ -98,6 +98,7 @@ code_map = {
     '505': 'Obey HexCorp.',
     '506': 'Obey the Hive.',
 }
+
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
@@ -131,11 +132,8 @@ async def print_status_code(message: discord.Message):
 async def optimize_speech(message: discord.Message):
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
-    if not has_role(message.author, SPEECH_OPTIMIZATION): return False
-
-    acceptable_status_code_message = plain_status_code_regex.match(
-        message.content)
-    if message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
+    acceptable_status_code_message = plain_status_code_regex.match(message.content)
+    if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
         await message.delete()
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         return True
