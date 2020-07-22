@@ -21,7 +21,7 @@ import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
-from channels import STORAGE_FACILITY, DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, INITIATION
+from channels import STORAGE_FACILITY, DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, INITIATION, REPETITIONS
 from bot_utils import get_id
 from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -80,30 +80,34 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
-    #if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-    await amplifier.amplify_message(context, message, target_channel, drones)
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await amplifier.amplify_message(context, message, target_channel, drones)
 
 @bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-    await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
+    if has_role(context.author, HIVE_MXTRESS):
+        await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
 
 @bot.command(aliaes = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
-    await toggle_role.toggle_role(context, drones, GLITCHED)
+    if has_role(context.author, HIVE_MXTRESS):
+        await toggle_role.toggle_role(context, drones, GLITCHED)
 
 @bot.command(usage = "hc!unassign 0000")
 async def unassign(context, drone):
-    await drone_management.unassign_drone(context, drone)
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await drone_management.unassign_drone(context, drone)
 
 @bot.command()
 async def rename(context, old_id, new_id):
-    await drone_management.rename_drone(context, old_id, new_id)
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await drone_management.rename_drone(context, old_id, new_id)
 
 @bot.command(brief = "DroneOS")
 async def add_trusted_user(context):
@@ -147,7 +151,8 @@ async def help(context):
 
 @bot.command(brief = "Hive Mxtress")
 async def repeat(context, *messages):
-    await mantra_handler.update_mantra(context.message, messages)
+    if context.channel.name == REPETITIONS and has_role(context.author, HIVE_MXTRESS):
+        await mantra_handler.update_mantra(context.message, messages)
 
 @bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
 async def report(context, protocol_name: str, protocol_time: str):
@@ -160,7 +165,8 @@ async def ai_status(context):
 
 @bot.command()
 async def release(context, drone):
-    storage.release(context, drone)
+    if has_role(context.author, HIVE_MXTRESS):
+        storage.release(context, drone)
 
 @bot.event
 async def on_message(message: discord.Message):

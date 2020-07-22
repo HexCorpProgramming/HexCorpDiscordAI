@@ -17,8 +17,6 @@ LOGGER = logging.getLogger('ai')
 async def amplify_message(context, amplification_message: str, target_channel: discord.TextChannel, drones):
     LOGGER.info("Amplifying message.")
 
-    #if context.channel.name != OFFICE: return
-
     for drone in drones:
 
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
