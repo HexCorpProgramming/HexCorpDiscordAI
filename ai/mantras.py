@@ -45,9 +45,7 @@ class Mantra_Handler():
             self.LOGGER.info(f"Mantra successfully loaded from file: {Mantra_Handler.current_mantra}")
 
     async def update_mantra(self, context, messages):
-
-        #if not has_role(context.author, HIVE_MXTRESS) and context.channel.name == REPETITIONS: return
-
+        
         self.LOGGER.info("Updating mantra.")
 
         for message in messages:
