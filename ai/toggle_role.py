@@ -22,8 +22,3 @@ async def toggle_role(context, targets: List[discord.Member], role_name: str):
             await context.send(f"{role_name} toggled off for {target.display_name}")
 
     LOGGER.info("All roles added to all targets.")
-
-
-
-
-
