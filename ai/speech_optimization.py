@@ -1,16 +1,10 @@
 import logging
 import re
-
 import discord
-from discord.ext import commands
-from discord.utils import get
-
-import messages
 from bot_utils import get_id
-from channels import EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS, REPETITIONS
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
+from channels import REPETITIONS
+from roles import SPEECH_OPTIMIZATION, has_role
 from webhook import send_webhook_with_specific_output
-from glitch import glitch_if_applicable
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
 
@@ -102,10 +96,10 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
+
 def get_acceptable_messages(author, channel):
 
     user_id = get_id(author.display_name)
-    
     # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
     if channel == REPETITIONS:
         return [
@@ -113,8 +107,8 @@ def get_acceptable_messages(author, channel):
             f'{user_id} :: {Mantra_Handler.current_mantra}'
         ]
     else:
-	    return []
-	
+        return []
+
 
 async def print_status_code(message: discord.Message):
     informative_status_code = informative_status_code_regex.match(
@@ -128,6 +122,7 @@ async def print_status_code(message: discord.Message):
         await message.delete()
         return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
     return False
+
 
 async def optimize_speech(message: discord.Message):
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
