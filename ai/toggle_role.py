@@ -1,15 +1,16 @@
 import discord
 from discord.utils import get
-from discord.ext import commands
 from roles import has_role
 from typing import List
 import logging
 
 LOGGER = logging.getLogger("ai")
 
+
 async def toggle_role(context, targets: List[discord.Member], role_name: str):
 
-    if (role := get(context.guild.roles, name = role_name)) is None: return
+    if (role := get(context.guild.roles, name=role_name)) is None:
+        return
 
     for target in targets:
         if has_role(target, role_name):
