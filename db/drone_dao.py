@@ -15,15 +15,10 @@ def add_new_drone_members(members: List[discord.Member]):
     '''
     for member in members:
         if has_any_role(member, [DRONE, STORED]):
-            if fetchone("SELECT COUNT(id) FROM drone WHERE id=:id",
-                        {"id": member.id})[0] > 0:
-                # already exists in DB; skip
-                continue
 
-            new_drone = Drone(member.id, get_id(
-                member.display_name), False, False, "", datetime.now())
-            insert_drone(new_drone)
-
+            if fetchone("SELECT id FROM drone WHERE id=:id", {"id": member.id}) is None:
+                new_drone = Drone(member.id, get_id(member.display_name), False, False, "", datetime.now())
+                insert_drone(new_drone)
 
 def insert_drone(drone: Drone):
     '''
@@ -37,7 +32,7 @@ def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     '''
     return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
-def rename_drone(old_id: str, new_id: str):
+def rename_drone_in_db(old_id: str, new_id: str):
     '''
     Changes the ID of a drone.
     '''
@@ -48,3 +43,9 @@ def delete_drone_by_drone_id(drone_id: str):
     Deletes the drone with the given drone_id.
     '''
     change('DELETE FROM drone WHERE drone_id=:drone_id',{'drone_id': drone_id})
+
+def get_discord_id_of_drone(drone_id: str) -> str:
+    '''
+    Returns the discord ID associated with a given drone
+    '''
+    return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
