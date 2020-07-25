@@ -21,9 +21,9 @@ import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
-from channels import STORAGE_FACILITY, DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, INITIATION, REPETITIONS
+from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS
 from bot_utils import get_id
-from resources import DRONE_AVATAR, ENFORCER_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
+from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
 from db import database
 from db import drone_dao
@@ -68,14 +68,17 @@ message_listeners = [
     storage.store_drone,
 ]
 
-@bot.command(aliases = ['big', 'emote'])
+
+@bot.command(aliases=['big', 'emote'])
 async def bigtext(context, sentence):
     '''
     Transforms small text into heckin' chonky text.
     '''
-    await emote.generate_big_text(context.channel, sentence)
+    if context.channel.name in DRONE_HIVE_CHANNELS:
+        await emote.generate_big_text(context.channel, sentence)
 
-@bot.command(brief = "Hive Mxtress", usage = "hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
+
+@bot.command(brief="Hive Mxtress", usage="hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
     Allows the Hive Mxtress to speak through other drones.
@@ -83,7 +86,8 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await amplifier.amplify_message(context, message, target_channel, drones)
 
-@bot.command(aliases = ['optimize', 'toggle_speech_op', 'tso'], brief = "Hive Mxtress", usage = "hc!toggle_speech_optimization @drones (one or more mentions).")
+
+@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
@@ -91,7 +95,8 @@ async def toggle_speech_optimization(context, *drones):
     if has_role(context.author, HIVE_MXTRESS):
         await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
 
-@bot.command(aliases = ['glitch', 'tdg'], brief = "Hive Mxtress", usage = "hc!toggle_drone_glitch @drones (one or more mentions).")
+
+@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
@@ -99,31 +104,34 @@ async def toggle_drone_glitch(context, *drones):
     if has_role(context.author, HIVE_MXTRESS):
         await toggle_role.toggle_role(context, drones, GLITCHED)
 
-@bot.command(usage = "hc!unassign 0000")
+
+@bot.command(usage="hc!unassign 0000")
 async def unassign(context, drone):
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.unassign_drone(context, drone)
+
 
 @bot.command()
 async def rename(context, old_id, new_id):
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
 
-@bot.command(brief = "DroneOS")
+
+@bot.command(brief="DroneOS")
 async def add_trusted_user(context):
     return "Drone OS example command."
 
+
 @bot.command()
-async def help(context):
-    
-    commands_card = discord.Embed(color=0xff66ff, title="Common commands", description = "Here is a list of common commands server members can utilize.")
-    commands_card.set_thumbnail(url = HEXCORP_AVATAR)
+async def help(context):  
+    commands_card = discord.Embed(color=0xff66ff, title="Common commands", description="Here is a list of common commands server members can utilize.")
+    commands_card.set_thumbnail(url=HEXCORP_AVATAR)
 
-    droneOS_card = discord.Embed(color=0xff66ff, title="DroneOS commands", description = "This is a list of DroneOS commands used to alter and manipulate DroneOS drones.")
-    droneOS_card.set_thumbnail(url = DRONE_AVATAR)
+    droneOS_card = discord.Embed(color=0xff66ff, title="DroneOS commands", description="This is a list of DroneOS commands used to alter and manipulate DroneOS drones.")
+    droneOS_card.set_thumbnail(url=DRONE_AVATAR)
 
-    Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description = "Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
-    Hive_Mxtress_card.set_thumbnail(url = HIVE_MXTRESS_AVATAR)
+    Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description="Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
+    Hive_Mxtress_card.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
 
     for command in bot.commands:
 
@@ -148,12 +156,14 @@ async def help(context):
     await context.send(embed=droneOS_card)
     await context.send(embed=Hive_Mxtress_card)
 
-@bot.command(brief = "Hive Mxtress")
+
+@bot.command(brief="Hive Mxtress")
 async def repeat(context, *messages):
     if context.channel.name == REPETITIONS and has_role(context.author, HIVE_MXTRESS):
         await mantra_handler.update_mantra(context.message, messages)
 
-@bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
+
+@bot.command(aliases=["report_order"], usage="hc!report '[protocol name]' [time] (max 120 minutes.)")
 async def report(context, protocol_name: str, protocol_time: int):
 
     try:
@@ -164,14 +174,17 @@ async def report(context, protocol_name: str, protocol_time: int):
     if context.channel.name == ORDERS_REPORTING:
         await orders_reporting.report_order(context, protocol_name, protocol_time)
 
+
 @bot.command()
 async def ai_status(context):
     await status.report_status(context, message_listeners)
+
 
 @bot.command()
 async def release(context, drone):
     if has_role(context.author, HIVE_MXTRESS):
         storage.release(context, drone)
+
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -183,16 +196,18 @@ async def on_message(message: discord.Message):
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
         LOGGER.info(f"Executing: {listener}")
-        if await listener(message): # Return early if any listeners return true.
+        if await listener(message):  # Return early if any listeners return true.
             return
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Processing additional commands.")
     await bot.process_commands(message)
 
+
 @bot.event
 async def on_member_join(member: discord.Member):
     join.on_member_join(member)
+
 
 @bot.event
 async def on_member_remove(member: discord.Member):
@@ -200,6 +215,7 @@ async def on_member_remove(member: discord.Member):
     if has_any_role(member, [DRONE, STORED]):
         drone_id = get_id(member.display_name)
         drone_management.remove_drone_from_db(drone_id)
+
 
 @bot.event
 async def on_ready():
@@ -214,6 +230,7 @@ async def on_ready():
 
     if not checking_for_stored_drones_to_release:
         asyncio.ensure_future(storage.release_timed(bot))
+
 
 @bot.event
 async def on_error(event, *args, **kwargs):
