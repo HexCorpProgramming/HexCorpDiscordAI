@@ -21,7 +21,7 @@ import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
-from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS
+from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from bot_utils import get_id
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -177,7 +177,8 @@ async def report(context, protocol_name: str, protocol_time: int):
 
 @bot.command()
 async def ai_status(context):
-    await status.report_status(context, message_listeners)
+    if context.channel.name == BOT_DEV_COMMS:
+        await status.report_status(context, message_listeners)
 
 
 @bot.command()
