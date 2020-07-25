@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import List
 
 import discord
-from discord.ext import commands
 from discord.utils import get
 
 import messages
@@ -43,9 +42,11 @@ def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role
 
     return relevant_ids + RESERVED_IDS
 
+
 async def check_for_assignment_message(message: discord.Message):
 
-    if message.channel.name != ASSIGNMENT_CHANNEL: return False
+    if message.channel.name != ASSIGNMENT_CHANNEL:
+        return False
 
     # if the message is correct for being added, yay! if not, delete the message and let them know its bad
     if message.content == ASSIGNMENT_MESSAGE:
@@ -54,16 +55,16 @@ async def check_for_assignment_message(message: discord.Message):
 
         assigned_nick = ''
         used_ids = invalid_ids(message.guild.members, [drone_role])
-        assigned_id = find_id(message.author.display_name) # does user have a drone id in their display name?
-        if assigned_id is not None: 
-            if assigned_id in used_ids: # make sure display name number doesnt conflict
+        assigned_id = find_id(message.author.display_name)  # does user have a drone id in their display name?
+        if assigned_id is not None:
+            if assigned_id in used_ids:  # make sure display name number doesnt conflict
                 await message.channel.send(f'{message.author.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
                 return
         else:
             assigned_id = roll_id()
-            while assigned_id in used_ids: # loop until no conflict
+            while assigned_id in used_ids:  # loop until no conflict
                 assigned_id = roll_id()
-            
+
         assigned_nick = f'⬡-Drone #{assigned_id}'
 
         # give them the drone role
