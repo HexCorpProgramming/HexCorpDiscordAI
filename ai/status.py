@@ -1,10 +1,6 @@
 import logging
 from pathlib import Path
-
 import discord
-
-import roles
-from channels import BOT_DEV_COMMS
 from resources import DRONE_AVATAR
 
 LOGGER = logging.getLogger('ai')
@@ -16,17 +12,20 @@ def read_version() -> str:
 
     return Path('.git/HEAD').read_text()
 
+
 def get_list_of_commands(context):
     cmd_list = []
     for command in context.bot.commands:
         cmd_list.append(command.name)
     return cmd_list
 
+
 def get_list_of_listeners(listeners):
     lis_list = []
     for listener in listeners:
         lis_list.append(listener.__name__)
     return lis_list
+
 
 async def report_status(context, listeners):
     '''

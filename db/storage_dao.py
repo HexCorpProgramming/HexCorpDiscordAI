@@ -32,11 +32,13 @@ def fetch_all_elapsed_storage() -> List[Storage]:
     '''
     return map_to_objects(fetchall('SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage WHERE release_time < :now', {'now': datetime.now()}), Storage)
 
+
 def fetch_storage_by_target_id(drone_id: str) -> Storage:
     '''
     Fetch a single storage by the target_id.
     '''
     return map_to_object(fetchone('SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage WHERE target_id = :drone_id', {'drone_id': drone_id}), Storage)
+
 
 def delete_storage_by_target_id(target_id: str):
     '''

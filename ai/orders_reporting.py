@@ -1,21 +1,14 @@
 import asyncio
 import logging
 from uuid import uuid4
-import re
-import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List
-
-import discord
 from discord.utils import get
-
 from channels import ORDERS_REPORTING
-from roles import DRONE
 from bot_utils import get_id
 from db.drone_order_dao import delete_drone_order, insert_drone_order, fetch_all_drone_orders, get_order_by_drone_id
 
 LOGGER = logging.getLogger('ai')
+
 
 class ActiveOrder():
     def __init__(self, id: str, drone_id: str, protocol: str, finish_time: str):
@@ -23,6 +16,7 @@ class ActiveOrder():
         self.drone_id = drone_id
         self.protocol = protocol
         self.finish_time = finish_time
+
 
 async def check_for_completed_orders(bot):
     ORDERS_REPORTING_CHANNEL = get(bot.guilds[0].channels, name=ORDERS_REPORTING)
@@ -40,10 +34,12 @@ async def check_for_completed_orders(bot):
                         await ORDERS_REPORTING_CHANNEL.send(f"{member.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
                         delete_drone_order(order.id)
 
+
 async def report_order(context, protocol_name, protocol_time: int):
     LOGGER.info("Order reported.")
     drone_id = get_id(context.author.display_name)
-    if drone_id is None: return #No non-drones allowed.
+    if drone_id is None:
+        return  # No non-drones allowed.
     current_order = get_order_by_drone_id(drone_id)
 
     if current_order is not None:

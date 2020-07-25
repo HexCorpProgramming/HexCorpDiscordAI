@@ -1,24 +1,19 @@
 import glob
 import logging
 import sqlite3
-from datetime import datetime
 from hashlib import sha256
-
-from uuid import uuid4
-
-import discord
-
-from db.data_objects import Drone
 
 LOGGER = logging.getLogger('ai')
 
 DB_FILE = 'ai.db'
+
 
 def dictionary_row_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
 
 def prepare():
     '''
