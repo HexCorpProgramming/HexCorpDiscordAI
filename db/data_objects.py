@@ -3,14 +3,17 @@ import logging
 
 LOGGER = logging.getLogger("ai")
 
+
 def map_to_objects(rows, constructor):
     return [constructor(**row) for row in rows]
+
 
 def map_to_object(row, constructor):
     if row is None:
         return None
 
     return constructor(**row)
+
 
 class Drone:
 
@@ -41,4 +44,3 @@ class DroneOrder:
         self.drone_id = drone_id
         self.protocol = protocol
         self.finish_time = finish_time
-
