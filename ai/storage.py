@@ -1,20 +1,13 @@
 import asyncio
 import logging
 import re
-import time
 from uuid import uuid4
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import List
-
 import discord
-from discord.ext import commands
 from discord.utils import get
-
-import messages
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
-
 from db.data_objects import Storage as StorageDO
 from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
@@ -31,9 +24,11 @@ RELEASE_INTERVAL_SECONDS = 60
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
+
 async def store_drone(message: discord.Message):
 
-    if message.channel.name != STORAGE_FACILITY: return False
+    if message.channel.name != STORAGE_FACILITY:
+        return False
 
     '''
     Process posted messages.
@@ -84,6 +79,7 @@ async def store_drone(message: discord.Message):
     await message.channel.send(f'Drone with ID {target_id} could not be found.')
     return True
 
+
 async def report_storage(bot):
     '''
     Report on currently stored drones.
@@ -104,6 +100,7 @@ async def report_storage(bot):
                     datetime.fromisoformat(stored.release_time))
                 await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
+
 async def release_timed(bot):
     '''
     Relase stored drones when the timer is up.
@@ -121,6 +118,7 @@ async def release_timed(bot):
             await member.remove_roles(stored_role)
             await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
             delete_storage(elapsed_storage.id)
+
 
 async def release(context, stored_drone):
     '''
@@ -187,4 +185,3 @@ def filter_out_non_removable_roles(unfiltered_roles: List[discord.Role]) -> List
             removable_roles.append(role)
 
     return removable_roles
-
