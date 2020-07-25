@@ -18,7 +18,7 @@ async def rename_drone(context, old_id, new_id):
 
     if len(old_id) != 3 or len(new_id) != 3:
         return
-    if old_id.isnumeric() is False or new_id.isnumeric() is False:
+    if not old_id.isnumeric() or not new_id.isnumeric():
         return
 
     LOGGER.info("IDs to rename drone to and from are both valid.")
