@@ -156,7 +156,10 @@ async def repeat(context, *messages):
 @bot.command(aliases = ["report_order"], usage = "hc!report '[protocol name]' [time] (max 120 minutes.)")
 async def report(context, protocol_name: str, protocol_time: int):
 
-    LOGGER.debug("beepboop")
+    try:
+        int(protocol_time)
+    except ValueError:
+        await context.send("Your protocol time must be an integer (whole number) between 1 and 120 minutes.")
 
     if context.channel.name == ORDERS_REPORTING:
         await orders_reporting.report_order(context, protocol_name, protocol_time)
