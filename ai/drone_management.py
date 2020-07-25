@@ -1,12 +1,8 @@
 import logging
-import re
-import discord
-from discord.ext import commands
 from discord.utils import get
 
 from channels import OFFICE
 from roles import HIVE_MXTRESS, DRONE, ENFORCER_DRONE, GLITCHED, STORED, ASSOCIATE, has_role
-from bot_utils import get_id
 
 from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id
 from db.drone_order_dao import delete_drone_order_by_drone_id
@@ -14,13 +10,17 @@ from db.storage_dao import delete_storage_by_target_id
 
 LOGGER = logging.getLogger('ai')
 
+
 async def rename_drone(context, old_id, new_id):
 
-    if has_role(context.author, HIVE_MXTRESS) == False or context.channel.name != OFFICE: return
+    if has_role(context.author, HIVE_MXTRESS) is False or context.channel.name != OFFICE:
+        return
 
-    if len(old_id) != 3 or len(new_id) != 3: return
-    if old_id.isnumeric() is False or new_id.isnumeric() is False: return
-    
+    if len(old_id) != 3 or len(new_id) != 3:
+        return
+    if old_id.isnumeric() is False or new_id.isnumeric() is False:
+        return
+
     LOGGER.info("IDs to rename drone to and from are both valid.")
 
     # check for collisions
@@ -37,9 +37,11 @@ async def rename_drone(context, old_id, new_id):
     else:
         await context.send(f"ID {new_id} already in use.")
 
+
 async def unassign_drone(context, drone_id):
 
-    if has_role(context.author, HIVE_MXTRESS) == False or context.channel.name != OFFICE: return
+    if has_role(context.author, HIVE_MXTRESS) is False or context.channel.name != OFFICE:
+        return
 
     drone = fetch_drone_with_drone_id(drone_id)
     # check for existence
