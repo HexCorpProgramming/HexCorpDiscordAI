@@ -41,4 +41,3 @@ If you manage to screw up your DB you can remove it by simply deleting the file 
 We use flake8 as a linting tool. Everytime you push code, our CI-pipeline will run flake8 to find problems and will notify you if stuff should be changed. If you want to run flake8 yourself, you can use `pip install flake8` to install it and then simply call `flake8` at the project root.
 
 It is also recommended to configure flake8 as your IDE linting tool, to get your code highlighted.
-=======
