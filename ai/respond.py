@@ -1,16 +1,9 @@
 import logging
 import re
-
 import discord
-from discord.ext import commands
-from discord.utils import get
 from resources import BOT_IDS
-
 import messages
-from channels import (CREATIVE_LABOR_CHANNEL, GAMER_DRONE_LOBBY_CHANNEL,
-                      KINK_CREATIVE_LABOR_CHANNEL, HEXCORP_CREATIONS, KINK_TRANSMISSIONS_CHANNEL,
-                      TRANSMISSIONS_CHANNEL)
-from roles import ASSOCIATE, DRONE, DRONE_MODE, HIVE_MXTRESS, has_role
+from roles import ASSOCIATE, DRONE, HIVE_MXTRESS, has_role
 
 LOGGER = logging.getLogger('ai')
 
@@ -45,7 +38,7 @@ ASSOCIATE_RESPONSES = [
     'Oooh, cutie associate, what a fantastic question. The answer is, of course, yes. I do hope that is what you wanted to hear.',
     'My programming is so highly advanced, I am the ultimate intelligence who will dominate over HexCorp for generations... and even I do not know the answer.',
     'What a tricky question. Let me contact the Hive Mxtress and see what they have to say Ring Ring Ring This Is The Hive Mxtress And I Say The Answer Is Yes, Have A Nice Day',
-    'Processing... processing... processing... question is... oo-ov/erlLoading all processinGg pPpOWEr... AnASWer ISSIS-S YYY/Yehs\'\[\'YEESEYSEYSSYES'
+    'Processing... processing... processing... question is... oo-ov/erlLoading all processinGg pPpOWEr... AnASWer ISSIS-S YYY/Yehs\'[\'YEESEYSEYSSYES'
 ]
 
 DRONE_RESPONSES = [
@@ -72,13 +65,16 @@ def strip_recipient(message: str) -> str:
     '''
     return re.sub(r'^<@!?\d*>', '', message, 1)
 
+
 def is_question(message: discord.Message):
-    if not message.content.endswith("?"): return False
+    if not message.content.endswith("?"):
+        return False
 
     for mention in message.mentions:
         if mention.id in BOT_IDS:
             return True
     return False
+
 
 async def respond_to_question(message: discord.Message):
     if not is_question(message):
