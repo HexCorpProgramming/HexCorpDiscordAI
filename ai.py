@@ -4,6 +4,7 @@ import sys
 import asyncio
 import logging
 from logging import handlers
+from discord.ext.commands import Bot
 # Modules
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
@@ -46,7 +47,7 @@ LOGGER.setLevel(logging.DEBUG)
 database.prepare()
 
 # Setup bot
-bot = discord.ext.commands.Bot(command_prefix='hc!', case_insensitive=True)
+bot = Bot(command_prefix='hc!', case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
