@@ -14,7 +14,7 @@ HIVE_MXTRESS = 'Drone Hive Mxtress'
 
 GAGGED = '⬡-Gagged'
 
-DRONE_MODE = '⬡-DroneMode' #Deprecated
+DRONE_MODE = '⬡-DroneMode'  # Deprecated
 SPEECH_OPTIMIZATION = "⬡-Optimized"
 GLITCHED = "⬡-Glitched"
 
@@ -25,8 +25,10 @@ PATREON_SUPPORTER = '⬡-Patreon'
 
 EVERYONE = '@everyone'
 
+
 def has_role(member: discord.Member, role: str) -> bool:
     return get(member.roles, name=role) is not None
+
 
 def has_any_role(member: discord.Member, roles: List[str]) -> bool:
     return any([has_role(member, role) for role in roles])
