@@ -123,7 +123,7 @@ async def add_trusted_user(context):
 
 
 @bot.command()
-async def help(context):  
+async def help(context):
     commands_card = discord.Embed(color=0xff66ff, title="Common commands", description="Here is a list of common commands server members can utilize.")
     commands_card.set_thumbnail(url=HEXCORP_AVATAR)
 
