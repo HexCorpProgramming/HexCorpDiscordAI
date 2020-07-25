@@ -1,23 +1,23 @@
-#HexCorp Control Tower
+# HexCorp Control Tower
 OFFICE = 'hex-office'
 
-#HexCorp-Induction
+# HexCorp-Induction
 CONSENT_CHANNEL = 'hexcorp-submission'
 REGISTRY_CHANNEL = 'hexcorp-registry'
 
-#HexCorp-Lobby
+# HexCorp-Lobby
 TRANSMISSIONS_CHANNEL = 'hexcorp-transmissions'
 KINK_TRANSMISSIONS_CHANNEL = 'kink-transmissions'
 GAMER_DRONE_LOBBY_CHANNEL = 'gamer-drone-lobby'
 MINECRAFT_DIRECTION_CHANNEL = 'minecraft-direction'
 ELITE_DIRECTION_CHANNEL = 'elite-direction'
 
-#HexCorp-Innovation
+# HexCorp-Innovation
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
 KINK_CREATIVE_LABOR_CHANNEL = 'kink-creative-labor'
 HEXCORP_CREATIONS = 'hexcorp-creations'
 
-#HexCorp-Drone-Hive
+# HexCorp-Drone-Hive
 INITIATION = 'drone-hive-initiation'
 RULES = 'drone-hive-rules'
 ASSIGNMENT_CHANNEL = 'drone-hive-assignment'
@@ -34,7 +34,7 @@ REPETITIONS = 'hive-repetitions'
 PLAYROOM = 'hive-play-room'
 HIVE_COORDINATION = 'hive-coordination'
 
-#HexCorp-R&D-Department
+# HexCorp-R&D-Department
 GAME_DEV_GUIDE = 'game-dev-guide'
 GAME_DEV_FEATURES = 'game-dev-features'
 GAME_DEV_COMMS = 'game-dev-comms'
@@ -42,14 +42,14 @@ BOT_DEV_GUIDE = 'bot-dev-guide'
 BOT_DEV_COMMS = 'bot-dev-comms'
 GENERAL_DEV_COMMS = 'general-dev-comms'
 
-#HexCorp-Drone-Hive (Storage)
+# HexCorp-Drone-Hive (Storage)
 STORAGE_FACILITY = 'hive-storage-facility'
 STORAGE_CHAMBERS = 'hive-storage-chambers'
 
 # meta channel everywhere
 EVERYWHERE = 'everywhere'
 
-#Lists
+# Lists
 DRONE_HIVE_CHANNELS = [
     DRONETALK,
     PROGRAMMING,
