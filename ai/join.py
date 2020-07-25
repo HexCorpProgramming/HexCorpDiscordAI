@@ -1,4 +1,3 @@
-from discord.ext import commands
 from discord.utils import get
 import discord
 import messages
@@ -19,15 +18,18 @@ CONSENT_SUCCESS = [
 CONSENT_MESSAGE = 'I would like to join the HexCorp server. I can confirm I have read the rules and I have gone through the induction process. Please, HexCorp Mxtress AI, accept this submission to join HexCorp where I will become a useful asset to the company\'s development.'
 CONSENT_REJECT = 'Invalid request. Please try again.'
 
+
 async def on_member_join(member: discord.Member):
     '''On join, Give initiate role'''
     initiate_role = get(member.guild.roles, name=roles.INITIATE)
     await member.add_roles(initiate_role)
 
+
 async def check_for_consent(message: discord.Message):
     '''On consent message, remove initiate role and give associate'''
 
-    if message.channel.name != CONSENT_CHANNEL: return False
+    if message.channel.name != CONSENT_CHANNEL:
+        return False
 
     if message.content == CONSENT_MESSAGE:
         initiate_role = get(message.guild.roles, name=roles.INITIATE)
