@@ -1,0 +1,25 @@
+name: Test the AI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # get latest code
+      - uses: actions/checkout@v2
+      # get correct python version
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      # install all necessary dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          pip install -r requirements.txt
+      # static code analysis
+      - name: Lint with flake8
+        run: |
+          flake8
