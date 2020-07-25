@@ -3,7 +3,9 @@ DRONE_AVATAR = "https://images.squarespace-cdn.com/content/v1/5cd68fb28dfc8ce502
 HIVE_MXTRESS_AVATAR = "https://pbs.twimg.com/profile_images/1061373614979772416/QgZ6yI8j_400x400.jpg"
 HEXCORP_AVATAR = "https://images.squarespace-cdn.com/content/5cd68fb28dfc8ce502f14199/1557565596769-ZJ7LNOUDQH4QXFXP3JWU/993dc154bad8581f8e8f7cc73a2ad5b2.png"
 
-#Scene comfort indicators
+# Scene comfort indicators
 CLOCK = "⏰"
 TRAFFIC_LIGHTS = ["🔴", "🟡", "🟢"]
+
+# Bot IDs
 BOT_IDS = [673470104519835659, 665846816121815071]
