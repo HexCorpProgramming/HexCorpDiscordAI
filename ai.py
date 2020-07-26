@@ -208,7 +208,7 @@ async def on_message(message: discord.Message):
 
 @bot.event
 async def on_member_join(member: discord.Member):
-    join.on_member_join(member)
+    await join.on_member_join(member)
 
 
 @bot.event
