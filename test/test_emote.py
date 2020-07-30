@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch
 import discord
 from ai.emote import generate_big_text
-from channels import HIVE_COORDINATION
 
 
 class TestEmote(unittest.TestCase):
