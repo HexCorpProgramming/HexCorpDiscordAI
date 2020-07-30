@@ -18,7 +18,7 @@ def clean_sentence(sentence):
     return re.sub(r'<:.*:\d*>', '', sentence)
 
 
-async def generate_big_text(channel: discord.TextChannel, sentence):
+def generate_big_text(channel: discord.TextChannel, sentence):
 
     LOGGER.debug("In generate_big_text function.")
 
@@ -54,9 +54,10 @@ async def generate_big_text(channel: discord.TextChannel, sentence):
 
     if message_length > 0 and message_length <= 2000:
         LOGGER.info(f"Sending big-text message of length {message_length} and content '{sentence}'")
-        await channel.send(f"> {reply}")
+        return f"> {reply}"
     elif message_length > 2000:
         LOGGER.info("big-text message was too long to send.")
-        await channel.send("That message is too long to embiggen.")
+        return None
     else:
         LOGGER.debug("big-text request message contained no acceptable content.")
+        return None
