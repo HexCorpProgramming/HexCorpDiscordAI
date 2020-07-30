@@ -3,7 +3,6 @@ import re
 
 import discord
 from discord.utils import get
-from channels import DRONE_HIVE_CHANNELS
 
 LOGGER = logging.getLogger('ai')
 
@@ -14,16 +13,13 @@ exceptional_characters = {' ': 'blank', '/': 'hex_slash', '.': 'hex_dot',
 
 
 def clean_sentence(sentence):
-    # Removes custom emojis (<:name:id>)
-    return re.sub(r'<:.*:\d*>', '', sentence)
+    # Removes custom emojis (<:name:id>) and returns the lowercase version
+    return re.sub(r'<:(.*?):\d{18}>', '', sentence).lower()
 
 
 def generate_big_text(channel: discord.TextChannel, sentence):
 
     LOGGER.debug("In generate_big_text function.")
-
-    if channel.name in DRONE_HIVE_CHANNELS:
-        return  # No fun allowed.
 
     LOGGER.debug("Sanatizing sentence of custom emojis.")
 
