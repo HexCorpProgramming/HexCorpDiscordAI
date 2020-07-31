@@ -16,17 +16,14 @@ def generate_amplification_information(target_channel, drones):
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
         if not re.match(r"\d{4}", drone):
-            print("Not a drone ID.")
             yield None  # Skip any non-drone IDs.
 
         LOGGER.debug("Getting discord ID from database.")
         if (drone_from_db := get_discord_id_of_drone(drone)) is None:
-            print("Not found in DB.")
             yield None  # Given drone does not exist on server.
 
         amplifier_drone = target_channel.guild.get_member(drone_from_db.id)
         if amplifier_drone is None:
-            print("Couldn't get member from guild.")
             yield None  # If getting the member somehow failed (which it really shouldn't), keep calm and carry on.
 
         # Set the avatar URL as appropriate.
