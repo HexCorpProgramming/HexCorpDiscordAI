@@ -75,8 +75,9 @@ async def bigtext(context, sentence):
     '''
     Transforms small text into heckin' chonky text.
     '''
-    if context.channel.name in DRONE_HIVE_CHANNELS:
-        await emote.generate_big_text(context.channel, sentence)
+    if context.channel.name not in DRONE_HIVE_CHANNELS:
+        if (reply := emote.generate_big_text(context.channel, sentence)):
+            await context.send(reply)
 
 
 @bot.command(brief="Hive Mxtress", usage="hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
