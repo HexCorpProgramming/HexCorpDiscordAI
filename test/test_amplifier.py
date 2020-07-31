@@ -1,17 +1,19 @@
-import discord
 import unittest
 import ai.amplifier as amp
 from unittest.mock import patch, PropertyMock, Mock
 from channels import REPETITIONS
 from db.data_objects import Drone
-
-mocked_drone = Drone(id="5890")
-
-mocked_member = discord.Member
-mocked_member.display_name = "heck drone 5890"
+from resources import DRONE_AVATAR
 
 test_guild = Mock()
-test_guild.get_member.return_value = mocked_member
+
+mocked_drone_1 = Drone(id="0077")
+mocked_member_1 = Mock()
+mocked_member_1.display_name = "⬡-Drone #0077"
+
+mocked_drone_2 = Drone(id="5890")
+mocked_member_2 = Mock()
+mocked_member_2.display_name = "⬡-Drone #5890"
 
 test_channel = PropertyMock()
 test_channel.guild = test_guild
@@ -20,13 +22,25 @@ test_channel.name = REPETITIONS
 
 class AmplifierTest(unittest.TestCase):
 
-    @patch("ai.amplifier.get_discord_id_of_drone", return_value=mocked_drone)
+    def setUp(self):
+        # Reset the get_member return values (prevents dirtying context between tests).
+        test_guild.get_member.side_effect = [mocked_member_1, mocked_member_2]
+
+    @patch("ai.amplifier.get_discord_id_of_drone", side_effect=[mocked_drone_1, mocked_drone_2])
     @patch("ai.amplifier.has_role", return_value=False)
-    def test_amplifier_generator_returns_drones(self, mocked_dao, mocked_get):
+    def test_amplifier_generator_returns_profile_dictionaries(self, mocked_dao, mocked_role_check):
+        self.assertEqual(next(amp.generate_amplification_information(test_channel, ["0077"]))["username"], "⬡-Drone #0077")
+        self.assertEqual(next(amp.generate_amplification_information(test_channel, ["5890"]))["username"], "⬡-Drone #5890")
 
-        print("Boop beep.")
+    @patch("ai.amplifier.get_discord_id_of_drone", side_effect=[mocked_drone_1, mocked_drone_2])
+    @patch("ai.amplifier.has_role", return_value=False)
+    def test_amplifier_generator_returns_drone_icons_if_in_hive(self, mocked_dao, mocked_role_check):
 
-        for amp_drone in amp.generate_amplification_information(test_channel, ["5890"]):
-            print(amp_drone)
+        test_channel.name = "NOT A HIVE CHANNEL!!!"
+        self.assertNotEqual(next(amp.generate_amplification_information(test_channel, ["0077"]))["avatar_url"], DRONE_AVATAR)
 
-        print("Beep boop.")
+        test_channel.name = REPETITIONS
+        self.assertEqual(next(amp.generate_amplification_information(test_channel, ["0077"]))["avatar_url"], DRONE_AVATAR)
+
+    def test_amplifier_generator_yields_none_on_non_drone_ids(self):
+        self.assertIsNone(next(amp.generate_amplification_information(test_channel, ["SILLY ORGANIC HUMAN"])))

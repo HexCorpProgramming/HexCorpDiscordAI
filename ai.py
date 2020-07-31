@@ -89,7 +89,8 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         target_webhook = await webhook.get_webhook_for_channel(target_channel)
         for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
-            await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+            if amp_profile is not None:
+                await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
