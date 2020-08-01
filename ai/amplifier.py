@@ -1,27 +1,24 @@
 import logging
-import discord
 from channels import DRONE_HIVE_CHANNELS
 from roles import ENFORCER_DRONE, has_role
 from resources import DRONE_AVATAR, ENFORCER_AVATAR
-from webhook import get_webhook_for_channel
-from id_converter import convert_id_to_member
+import id_converter
 
 LOGGER = logging.getLogger('ai')
 
 
-async def amplify_message(context, amplification_message: str, target_channel: discord.TextChannel, drones):
+def generate_amplification_information(target_channel, drones):
     LOGGER.info("Amplifying message.")
 
     for drone in drones:
 
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
-        amplifier_drone = convert_id_to_member(drone)
+        amplifier_drone = id_converter.convert_id_to_member(target_channel.guild, drone)
         if amplifier_drone is None:
-            continue  # If getting the member somehow failed, keep calm and carry on.
+            yield None
 
-        webhook = await get_webhook_for_channel(target_channel)
-
+        # Set the avatar URL as appropriate.
         amplification_avatar = amplifier_drone.avatar_url
         if target_channel.name in DRONE_HIVE_CHANNELS:
             if has_role(amplifier_drone, ENFORCER_DRONE):
@@ -29,7 +26,6 @@ async def amplify_message(context, amplification_message: str, target_channel: d
             else:
                 amplification_avatar = DRONE_AVATAR
 
-        LOGGER.debug(f"Amplifying message with unit {drone}")
-        await webhook.send(content=f"{drone} :: {amplification_message}",
-                           username=amplifier_drone.display_name,
-                           avatar_url=amplification_avatar)
+        LOGGER.info(f"Valid drone ({drone}) found. Yielding amplification profile.")
+
+        yield {"username": amplifier_drone.display_name, "avatar_url": amplification_avatar}

@@ -20,6 +20,7 @@ import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
+import webhook
 # Utils
 from bot_utils import get_id
 import id_converter
@@ -88,7 +89,10 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     Allows the Hive Mxtress to speak through other drones.
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await amplifier.amplify_message(context, message, target_channel, drones)
+        target_webhook = await webhook.get_webhook_for_channel(target_channel)
+        for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
+            if amp_profile is not None:
+                await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
