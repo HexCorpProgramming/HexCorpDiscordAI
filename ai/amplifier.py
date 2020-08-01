@@ -2,7 +2,7 @@ import logging
 from channels import DRONE_HIVE_CHANNELS
 from roles import ENFORCER_DRONE, has_role
 from resources import DRONE_AVATAR, ENFORCER_AVATAR
-import id_converter
+from id_converter import convert_id_to_member
 
 LOGGER = logging.getLogger('ai')
 
@@ -14,7 +14,7 @@ def generate_amplification_information(target_channel, drones):
 
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
-        amplifier_drone = id_converter.convert_id_to_member(target_channel.guild, drone)
+        amplifier_drone = convert_id_to_member(target_channel.guild, drone)
         if amplifier_drone is None:
             yield None
 
