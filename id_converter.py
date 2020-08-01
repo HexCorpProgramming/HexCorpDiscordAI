@@ -13,8 +13,6 @@ def convert_ids_to_members(guild: discord.Guild, drone_ids) -> Set[discord.Membe
 
     for drone_id in drone_ids:
         drone_member = convert_id_to_member(guild, drone_id)
-        print("Drone member is:")
-        print(drone_member)
         if drone_member is not None:
             drone_members.add(drone_member)
 
