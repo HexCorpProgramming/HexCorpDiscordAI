@@ -5,6 +5,7 @@ import asyncio
 import logging
 from logging import handlers
 from discord.ext.commands import Bot
+import traceback
 # Modules
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
@@ -248,8 +249,19 @@ async def on_ready():
 
 
 @bot.event
+async def on_command_error(context, error):
+    LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
+    LOGGER.error(error)
+    with open("ai.log", "a") as exception_file:
+        traceback.print_exception(type(error), error, error.__traceback__, file=exception_file)
+    traceback.print_exception(type(error), error, error.__traceback__)
+
+
+@bot.event
 async def on_error(event, *args, **kwargs):
-    LOGGER.error(
-        f'Exception encountered while handling message with content [{args[0].content}] in channel [{args[0].channel.name}]', exc_info=True)
+    LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
+    with open("ai.log", "a") as exception_file:
+        traceback.print_exc(file=exception_file)
+    traceback.print_exc()
 
 bot.run(sys.argv[1])
