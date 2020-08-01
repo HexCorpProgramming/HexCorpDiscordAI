@@ -2,7 +2,6 @@ import unittest
 import ai.amplifier as amp
 from unittest.mock import patch, PropertyMock, Mock
 from channels import REPETITIONS
-from db.data_objects import Drone
 from resources import DRONE_AVATAR
 
 test_guild = Mock()
