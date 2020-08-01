@@ -1,11 +1,10 @@
 import logging
-import re
 import discord
-from db.drone_dao import get_discord_id_of_drone
 from channels import DRONE_HIVE_CHANNELS
 from roles import ENFORCER_DRONE, has_role
 from resources import DRONE_AVATAR, ENFORCER_AVATAR
 from webhook import get_webhook_for_channel
+from id_converter import convert_id_to_member
 
 LOGGER = logging.getLogger('ai')
 
@@ -17,14 +16,7 @@ async def amplify_message(context, amplification_message: str, target_channel: d
 
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
-        if not re.match(r"\d{4}", drone):
-            continue  # Skip non-drone IDs.
-
-        LOGGER.debug("Getting discord ID from database.")
-        if (drone_from_db := get_discord_id_of_drone(drone)) is None:
-            continue  # Given drone does not exist on server.
-
-        amplifier_drone = context.guild.get_member(drone_from_db.id)
+        amplifier_drone = convert_id_to_member(drone)
         if amplifier_drone is None:
             continue  # If getting the member somehow failed, keep calm and carry on.
 
