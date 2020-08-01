@@ -21,16 +21,18 @@ import ai.drone_management as drone_management
 import ai.toggle_role as toggle_role
 from ai.mantras import Mantra_Handler
 import webhook
+# Utils
+from bot_utils import get_id
+import id_converter
+# Database
+from db import database
+from db import drone_dao
 # Constants
 from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
-from bot_utils import get_id
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
-from db import database
-from db import drone_dao
-
-# set up logging
+# Logging setup
 log_file_handler = handlers.TimedRotatingFileHandler(
     filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
 log_file_handler.setFormatter(logging.Formatter(
@@ -44,7 +46,7 @@ root_logger.addHandler(log_file_handler)
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
 
-# prepare database
+# Prepare database
 database.prepare()
 
 # Setup bot
@@ -98,8 +100,11 @@ async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
+
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
+
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, drones, SPEECH_OPTIMIZATION)
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION)
 
 
 @bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
@@ -107,8 +112,11 @@ async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
+
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
+
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, drones, GLITCHED)
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED)
 
 
 @bot.command(usage="hc!unassign 0000")

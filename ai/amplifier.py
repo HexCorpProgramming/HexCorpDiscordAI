@@ -1,9 +1,8 @@
 import logging
-import re
-from db.drone_dao import get_discord_id_of_drone
 from channels import DRONE_HIVE_CHANNELS
 from roles import ENFORCER_DRONE, has_role
 from resources import DRONE_AVATAR, ENFORCER_AVATAR
+from id_converter import convert_id_to_member
 
 LOGGER = logging.getLogger('ai')
 
@@ -15,16 +14,9 @@ def generate_amplification_information(target_channel, drones):
 
         LOGGER.debug(f"Preparing drone {drone} for amplification.")
 
-        if not re.match(r"\d{4}", drone):
-            yield None  # Skip any non-drone IDs.
-
-        LOGGER.debug("Getting discord ID from database.")
-        if (drone_from_db := get_discord_id_of_drone(drone)) is None:
-            yield None  # Given drone does not exist on server.
-
-        amplifier_drone = target_channel.guild.get_member(drone_from_db.id)
+        amplifier_drone = convert_id_to_member(target_channel.guild, drone)
         if amplifier_drone is None:
-            yield None  # If getting the member somehow failed (which it really shouldn't), keep calm and carry on.
+            yield None
 
         # Set the avatar URL as appropriate.
         amplification_avatar = amplifier_drone.avatar_url
@@ -33,5 +25,7 @@ def generate_amplification_information(target_channel, drones):
                 amplification_avatar = ENFORCER_AVATAR
             else:
                 amplification_avatar = DRONE_AVATAR
+
+        LOGGER.info(f"Valid drone ({drone}) found. Yielding amplification profile.")
 
         yield {"username": amplifier_drone.display_name, "avatar_url": amplification_avatar}
