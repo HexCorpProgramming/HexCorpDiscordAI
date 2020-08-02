@@ -5,6 +5,8 @@ import asyncio
 import logging
 from logging import handlers
 from discord.ext.commands import Bot
+from traceback import TracebackException
+
 # Modules
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
@@ -33,13 +35,13 @@ from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS,
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
 # Logging setup
+formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s', datefmt='%Y-%m-%d :: %H:%M:%S')
+
 log_file_handler = handlers.TimedRotatingFileHandler(
     filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
-log_file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+log_file_handler.setFormatter(formatter)
 
-logging.basicConfig(
-    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s', level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING)
 root_logger = logging.getLogger()
 root_logger.addHandler(log_file_handler)
 
@@ -248,8 +250,15 @@ async def on_ready():
 
 
 @bot.event
+async def on_command_error(context, error):
+    LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
+    LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
+
+
+@bot.event
 async def on_error(event, *args, **kwargs):
-    LOGGER.error(
-        f'Exception encountered while handling message with content [{args[0].content}] in channel [{args[0].channel.name}]', exc_info=True)
+    LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
+    error, value, tb = sys.exc_info()
+    LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
 
 bot.run(sys.argv[1])
