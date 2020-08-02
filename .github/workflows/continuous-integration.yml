@@ -31,3 +31,16 @@ jobs:
       - name: Assess test coverage (60% to pass).
         run: |
           python -m coverage report --fail-under=60
+      # Confirm good drone-ness
+      - name: Confirm that 5890 is a good drone.
+        run: |
+          echo "5890 is a very good drone."
+      - name: Confirm that 9813 is a good drone.
+        run: |
+          echo "9813 is a very good drone."
+      - name: Confirm that 3287 is a good drone.
+        run: |
+          echo "3287 is a very good drone."
+      - name: Pat development drones on head.
+        run: |
+          echo "*pats all the development drones on their respective heads. good drones.*"
