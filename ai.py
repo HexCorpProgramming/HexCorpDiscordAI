@@ -251,10 +251,7 @@ async def on_ready():
 @bot.event
 async def on_command_error(context, error):
     LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
-    LOGGER.error(error)
-    with open("ai.log", "a") as exception_file:
-        traceback.print_exception(type(error), error, error.__traceback__, file=exception_file)
-    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+    LOGGER.error(error, exc_info=True, stack_info=True)
 
 
 @bot.event
