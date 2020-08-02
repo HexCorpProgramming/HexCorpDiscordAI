@@ -260,8 +260,6 @@ async def on_command_error(context, error):
 @bot.event
 async def on_error(event, *args, **kwargs):
     LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
-    with open("ai.log", "a") as exception_file:
-        traceback.print_exc(file=exception_file)
-    traceback.print_exc(file=sys.stderr)
+    LOGGER.error(sys.exc_info(), exc_info=True, stack_info=True)
 
 bot.run(sys.argv[1])
