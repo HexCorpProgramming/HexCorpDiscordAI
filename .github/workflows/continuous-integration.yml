@@ -43,4 +43,4 @@ jobs:
           echo "3287 is a very good drone."
       - name: Pat development drones on head.
         run: |
-          echo "*pats all the development drones on their respective heads. good drones.*"
+          echo "Every development drone involved with this commit is a good drone, and an adorable, valuable asset to HexCorp. *headpats*"
