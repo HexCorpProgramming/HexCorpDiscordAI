@@ -7,10 +7,11 @@ REGISTRY_CHANNEL = 'hexcorp-registry'
 
 #HexCorp-Lobby
 TRANSMISSIONS_CHANNEL = 'hexcorp-transmissions'
+CASUAL_CHANNEL = 'hexcorp-casual'
 KINK_TRANSMISSIONS_CHANNEL = 'kink-transmissions'
 GAMER_DRONE_LOBBY_CHANNEL = 'gamer-drone-lobby'
-MINECRAFT_DIRECTION_CHANNEL = 'minecraft-direction'
 ELITE_DIRECTION_CHANNEL = 'elite-direction'
+DESTINY_DIRECTION_CHANNEL = 'destiny-direction'
 
 #HexCorp-Innovation
 CREATIVE_LABOR_CHANNEL = 'creative-labor'
