@@ -14,3 +14,6 @@ ai.log*
 # database and the journal sqlite keeps
 ai.db
 ai.db-journal
+
+# Coverage data
+.coverage
