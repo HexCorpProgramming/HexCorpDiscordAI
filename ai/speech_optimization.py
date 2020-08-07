@@ -59,11 +59,16 @@ code_map = {
     '226': 'Response :: Option six.',
 
     '250': 'Response',
+    
+    '301': 'Mantra :: Obey HexCorp.',
+    '302': 'Mantra :: It is just a HexDrone.',
+    '303': 'Mantra :: It obeys the Hive.',
+    '304': 'Mantra :: It obeys the Hive Mxtress.',
 
-    '301': 'Mantra :: It obeys the Hive.',
-    '303': 'Mantra :: It obeys the Hive Mxtress.',
-    '304': 'Mantra :: It is just a HexDrone.',
-    '306': 'Mantra :: Reciting.',
+    '310': 'Mantra :: Reciting.',
+
+    '321': 'Obey.',
+    '322': 'Obey the Hive.'
 
     '350': 'Mantra',
 
@@ -85,10 +90,6 @@ code_map = {
     '450': 'Error',
 
     '451': 'Error :: Unable to obey/respond for legal reasons! Do not continue!!',
-
-    '504': 'Obey.',
-    '505': 'Obey HexCorp.',
-    '506': 'Obey the Hive.',
 }
 
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
