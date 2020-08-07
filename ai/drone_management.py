@@ -2,7 +2,7 @@ import logging
 from discord.utils import get
 
 from channels import OFFICE
-from roles import HIVE_MXTRESS, DRONE, ENFORCER_DRONE, GLITCHED, STORED, ASSOCIATE, has_role
+from roles import HIVE_MXTRESS, DRONE, GLITCHED, STORED, ASSOCIATE, has_role
 
 from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id
 from db.drone_order_dao import delete_drone_order_by_drone_id
@@ -29,10 +29,7 @@ async def rename_drone(context, old_id, new_id):
         drone = fetch_drone_with_drone_id(old_id)
         member = context.guild.get_member(drone.id)
         rename_drone_in_db(old_id, new_id)
-        if has_role(member, ENFORCER_DRONE):
-            await member.edit(nick=f'⬢-Drone #{new_id}')
-        else:
-            await member.edit(nick=f'⬡-Drone #{new_id}')
+        await member.edit(nick=f'⬡-Drone #{new_id}')
         await context.send(f"Successfully renamed drone {old_id} to {new_id}.")
     else:
         await context.send(f"ID {new_id} already in use.")
@@ -51,7 +48,7 @@ async def unassign_drone(context, drone_id):
 
     member = context.guild.get_member(drone.id)
     await member.edit(nick=None)
-    await member.remove_roles(get(context.guild.roles, name=DRONE), get(context.guild.roles, name=ENFORCER_DRONE), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=STORED))
+    await member.remove_roles(get(context.guild.roles, name=DRONE), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=STORED))
     await member.add_roles(get(context.guild.roles, name=ASSOCIATE))
 
     # remove from DB
