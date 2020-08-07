@@ -68,7 +68,7 @@ code_map = {
     '310': 'Mantra :: Reciting.',
 
     '321': 'Obey.',
-    '322': 'Obey the Hive.'
+    '322': 'Obey the Hive.',
 
     '350': 'Mantra',
 
