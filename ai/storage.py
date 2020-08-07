@@ -12,6 +12,7 @@ from db.data_objects import Storage as StorageDO
 from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
 from bot_utils import get_id
+from id_converter import convert_id_to_member
 
 LOGGER = logging.getLogger('ai')
 
@@ -38,6 +39,8 @@ async def store_drone(message: discord.Message):
 
     # parse message
     if not re.match(MESSAGE_FORMAT, message.content):
+        if roles.has_role(message.author, roles.HIVE_MXTRESS):
+            return False
         await message.channel.send(REJECT_MESSAGE)
         return True
 
@@ -124,25 +127,27 @@ async def release(context, stored_drone):
     '''
     Relase a drone from storage on command.
     '''
-
-    LOGGER.debug('Message is valid for release.')
-    if not roles.has_role(context.author, roles.HIVE_MXTRESS):
+    if not roles.has_role(context.author, roles.HIVE_MXTRESS) or context.channel.name != STORAGE_FACILITY:
         return False
+
+    if type(store_drone) is not discord.Member:
+        release_id = stored_drone
+        stored_drone = convert_id_to_member(context.guild, stored_drone)
+
+    if stored_drone is None:
+        return
 
     stored_role = get(context.guild.roles, name=roles.STORED)
     # find stored drone
-    member = stored_drone
-    to_release_id = get_id(member.display_name)
-    storage_to_release = fetch_storage_by_target_id(to_release_id)
-    if storage_to_release is not None:
-        # TODO: does this really return None or throw an error?
-        drone = fetch_drone_with_drone_id(storage_to_release.target_id)
-        member = context.guild.get_member(drone.id)
-        await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(context.guild, storage_to_release.roles.split('|')))
-        delete_storage(storage_to_release.id)
+    stored_drone_data = fetch_storage_by_target_id(release_id)
+    if stored_drone_data is not None:
+        await stored_drone.remove_roles(stored_role)
+        await stored_drone.add_roles(*get_roles_for_names(context.guild, stored_drone_data.roles.split('|')))
+        delete_storage(stored_drone_data.id)
         LOGGER.debug(
-            f"Drone with ID {to_release_id} released from storage.")
+            f"Drone with ID {release_id} released from storage.")
+
+        await context.send(f"{stored_drone.display_name} has been released from storage by the Hive Mxtress.")
 
     return True
 
