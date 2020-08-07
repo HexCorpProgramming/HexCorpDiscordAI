@@ -139,7 +139,6 @@ async def release(context, stored_drone):
 
     stored_role = get(context.guild.roles, name=roles.STORED)
     # find stored drone
-    
     stored_drone_data = fetch_storage_by_target_id(release_id)
     if stored_drone_data is not None:
         await stored_drone.remove_roles(stored_role)
