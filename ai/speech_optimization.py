@@ -59,7 +59,7 @@ code_map = {
     '226': 'Response :: Option six.',
 
     '250': 'Response',
-    
+
     '301': 'Mantra :: Obey HexCorp.',
     '302': 'Mantra :: It is just a HexDrone.',
     '303': 'Mantra :: It obeys the Hive.',
@@ -68,7 +68,7 @@ code_map = {
     '310': 'Mantra :: Reciting.',
 
     '321': 'Obey.',
-    '322': 'Obey the Hive.'
+    '322': 'Obey the Hive.',
 
     '350': 'Mantra',
 

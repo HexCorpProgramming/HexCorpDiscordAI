@@ -146,9 +146,7 @@ async def release(context, stored_drone):
         delete_storage(stored_drone_data.id)
         LOGGER.debug(
             f"Drone with ID {release_id} released from storage.")
-
         await context.send(f"{stored_drone.display_name} has been released from storage by the Hive Mxtress.")
-
     return True
 
 
