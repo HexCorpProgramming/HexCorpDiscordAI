@@ -5,7 +5,6 @@ from typing import List
 INITIATE = 'Initiate'
 ASSOCIATE = 'Associate'
 DRONE = '⬡-Drone'
-ENFORCER_DRONE = '⬢-Drone'
 STORED = '⬡-Stored'
 DEVELOPMENT = '⬡-Development'
 ADMIN = 'admin'
@@ -14,7 +13,6 @@ HIVE_MXTRESS = 'Drone Hive Mxtress'
 
 GAGGED = '⬡-Gagged'
 
-DRONE_MODE = '⬡-DroneMode'  # Deprecated
 SPEECH_OPTIMIZATION = "⬡-Optimized"
 GLITCHED = "⬡-Glitched"
 
