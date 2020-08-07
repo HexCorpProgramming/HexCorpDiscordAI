@@ -106,7 +106,7 @@ async def toggle_speech_optimization(context, *drones):
     member_drones = id_converter.convert_ids_to_members(context.guild, drones)
 
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization")
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
 
 
 @bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
@@ -118,7 +118,7 @@ async def toggle_drone_glitch(context, *drones):
     member_drones = id_converter.convert_ids_to_members(context.guild, drones)
 
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Glitched speech")
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
 
 
 @bot.command(usage="hc!unassign 0000")
