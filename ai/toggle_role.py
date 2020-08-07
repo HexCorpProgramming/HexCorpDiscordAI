@@ -9,7 +9,7 @@ from bot_utils import get_id
 LOGGER = logging.getLogger("ai")
 
 
-async def toggle_role(context, targets: List[discord.Member], role_name: str, toggle_on: str, toggle_off: str):
+async def toggle_role(context, targets: List[discord.Member], role_name: str, toggle_on_message: str, toggle_off_message: str):
 
     if (role := get(context.guild.roles, name=role_name)) is None:
         return
@@ -23,10 +23,10 @@ async def toggle_role(context, targets: List[discord.Member], role_name: str, to
         if has_role(target, role_name):
             LOGGER.info(f"Removing {role_name} from {target.display_name}")
             await target.remove_roles(role)
-            await webhook.send(f"{target_drone_id} :: {toggle_off}", username=target.display_name, avatar_url=target.avatar_url)
+            await webhook.send(f"{target_drone_id} :: {toggle_off_message}", username=target.display_name, avatar_url=target.avatar_url)
         else:
             LOGGER.info(f"Adding {role_name} to {target.display_name}")
             await target.add_roles(role)
-            await webhook.send(f"{target_drone_id} :: {toggle_on}", username=target.display_name, avatar_url=target.avatar_url)
+            await webhook.send(f"{target_drone_id} :: {toggle_on_message}", username=target.display_name, avatar_url=target.avatar_url)
 
     LOGGER.info("All roles updated for all targets.")
