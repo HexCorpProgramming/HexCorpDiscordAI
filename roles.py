@@ -11,8 +11,6 @@ ADMIN = 'admin'
 MODERATION = '⬡-Moderation'
 HIVE_MXTRESS = 'Drone Hive Mxtress'
 
-GAGGED = '⬡-Gagged'
-
 SPEECH_OPTIMIZATION = "⬡-Optimized"
 GLITCHED = "⬡-Glitched"
 
