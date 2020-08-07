@@ -200,7 +200,7 @@ async def ai_status(context):
 @bot.command()
 async def release(context, drone):
     if has_role(context.author, HIVE_MXTRESS):
-        storage.release(context, drone)
+        await storage.release(context, drone)
 
 
 @bot.event
