@@ -5,7 +5,7 @@ from channels import DRONE_HIVE_CHANNELS
 
 from glitch import glitch_if_applicable
 
-from resources import ENFORCER_AVATAR, DRONE_AVATAR
+from resources import DRONE_AVATAR
 
 
 async def send_webhook_with_specific_output(message: discord.Message, webhook: discord.Webhook, output):
