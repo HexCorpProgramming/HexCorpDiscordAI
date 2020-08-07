@@ -28,9 +28,7 @@ code_map = {
     '109': 'Error :: Keysmash, drone flustered.',
 
     '110': 'Statement :: Addressing: Drone.',
-    '111': 'Statement :: Addressing: Enforcer.',
     '112': 'Statement :: Addressing: Hive Mxtress.',
-    '113': 'Statement :: Addressing: Operator.',
     '114': 'Statement :: Addressing: Associate.',
 
     '120': 'Statement :: This drone volunteers.',
