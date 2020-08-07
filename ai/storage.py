@@ -143,7 +143,6 @@ async def release(context, stored_drone):
         delete_storage(storage_to_release.id)
         LOGGER.debug(
             f"Drone with ID {to_release_id} released from storage.")
-
     return True
 
 
