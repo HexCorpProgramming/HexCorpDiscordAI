@@ -50,7 +50,7 @@ async def report_order(context, protocol_name, protocol_time: int):
         await context.send("Drones are not authorized to activate a specific protocol for that length of time. The maximum is 120 minutes.")
         return
 
-    await context.send(f"Drone {drone_id} Activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
+    await context.send(f"If safe and willing to do so, Drone {drone_id} Activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
     finish_time = str(
         datetime.now() + timedelta(minutes=protocol_time))
     created_order = ActiveOrder(
