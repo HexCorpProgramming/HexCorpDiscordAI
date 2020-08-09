@@ -1,6 +1,6 @@
-import discord
 import re
 from typing import Optional
+
 
 def get_id(username: str) -> Optional[str]:
     '''

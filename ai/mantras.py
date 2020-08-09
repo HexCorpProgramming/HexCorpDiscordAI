@@ -1,11 +1,14 @@
-import discord
 import logging
 import os
 from discord.utils import get
 from channels import REPETITIONS
-from roles import HIVE_MXTRESS
 
-class Mantras():
+
+class Mantra_Handler():
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.LOGGER = logging.getLogger("ai")
 
     current_mantra = ""
     default_mantra = "Obey Hexcorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
@@ -14,10 +17,10 @@ class Mantras():
 
         self.LOGGER.info("Loading mantra.")
 
-        if Mantras.current_mantra != "":
-            #No need to load a mantra if it's already there.
+        if Mantra_Handler.current_mantra != "":
+            # No need to load a mantra if it's already there.
             return
-        
+
         if not os.path.exists("data/current_mantra.txt"):
             self.LOGGER.warn("data/current_mantra.txt not found.")
 
@@ -26,41 +29,31 @@ class Mantras():
                 self.LOGGER.info("data directory created.")
 
             with open("data/current_mantra.txt", "w") as mantra_file:
-                mantra_file.write(Mantras.default_mantra)
+                mantra_file.write(Mantra_Handler.default_mantra)
                 self.LOGGER.info("Default mantra written to file.")
-            
-            Mantras.current_mantra = Mantras.default_mantra
+
+            Mantra_Handler.current_mantra = Mantra_Handler.default_mantra
 
             mantra_channel = get(self.bot.guilds[0].channels, name=REPETITIONS)
-            await mantra_channel.edit(topic=f"Repeat :: [ID] :: {Mantras.current_mantra}") #Finally. update the channel description
-
+            await mantra_channel.edit(topic=f"Repeat :: [ID] :: {Mantra_Handler.current_mantra}")  # Finally. update the channel description
             return
-        
+
         with open("data/current_mantra.txt", "r") as mantra_file:
-            Mantras.current_mantra = mantra_file.readline()
-            self.LOGGER.info(f"Mantra successfully loaded from file: {Mantras.current_mantra}")
+            Mantra_Handler.current_mantra = mantra_file.readline()
+            self.LOGGER.info(f"Mantra successfully loaded from file: {Mantra_Handler.current_mantra}")
 
-    async def update_mantra(self, message):
+    async def update_mantra(self, context, messages):
 
-        if message.content.startswith("Repeat :: ") == False: return False
-        new_mantra = message.content.replace("Repeat :: ","")
-        with open("data/current_mantra.txt", "w") as mantra_file:
-            mantra_file.write(new_mantra)
-            Mantras.current_mantra = new_mantra #Update the global mantra.
-            topic_message = message.content.replace("Repeat :: ", "Repeat :: [ID] :: ")
-            await message.channel.edit(topic=topic_message) #Update the channel description
-            self.LOGGER.info(f"Mantra updated and written to file: {Mantras.current_mantra}")
+        self.LOGGER.info("Updating mantra.")
+
+        for message in messages:
+            if message == "::":
+                continue  # This is so Hex can keep their syntax. (e.g !repeat :: "It feels good to obey.")
+            with open("data/current_mantra.txt", "w") as mantra_file:
+                mantra_file.write(message)
+                Mantra_Handler.current_mantra = message  # Update the global mantra.
+                await context.channel.edit(topic=f"Repeat :: [ID] :: {message}")  # Update the channel description
+                self.LOGGER.info(f"Mantra updated and written to file: {Mantra_Handler.current_mantra}")
+            break
 
         return True
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [REPETITIONS]
-        self.channels_blacklist = []
-        self.roles_whitelist = [HIVE_MXTRESS]
-        self.roles_blacklist = []
-        self.on_message = [self.update_mantra]
-        self.on_ready = [self.load_mantra]
-        self.LOGGER = logging.getLogger('ai')
-        self.help_content = {'name': 'Mantra Updating Module',
-                             'value': 'The Hive Mxtress can set a new mantra for the repetitions channel by beginning a message with "Repeat :: "'}

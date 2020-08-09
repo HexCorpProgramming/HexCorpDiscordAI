@@ -1,4 +1,3 @@
-from discord.ext import commands
 from discord.utils import get
 import discord
 import messages
@@ -20,36 +19,29 @@ CONSENT_MESSAGE = 'I would like to join the HexCorp server. I can confirm I have
 CONSENT_REJECT = 'Invalid request. Please try again.'
 
 
-class Join():
-    ''' This Cog listens for a new member joining the channel and assigns them the role Initiate. '''
+async def on_member_join(member: discord.Member):
+    '''On join, Give initiate role'''
+    initiate_role = get(member.guild.roles, name=roles.INITIATE)
+    await member.add_roles(initiate_role)
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [CONSENT_CHANNEL]
-        self.channels_blacklist = []
-        self.roles_whitelist = [roles.INITIATE]
-        self.roles_blacklist = []
-        self.on_message = [self.consent]
-        self.on_ready = []
 
-    async def on_member_join(self, member: discord.Member):
-        '''On join, Give initiate role'''
-        initiate_role = get(member.guild.roles, name=roles.INITIATE)
-        await member.add_roles(initiate_role)
+async def check_for_consent(message: discord.Message):
+    '''On consent message, remove initiate role and give associate'''
 
-    async def consent(self, message: discord.Message) -> bool:
-        '''On consent message, remove initiate role and give associate'''
-        if message.content == CONSENT_MESSAGE:
-            initiate_role = get(message.guild.roles, name=roles.INITIATE)
-            associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
+    if message.channel.name != CONSENT_CHANNEL:
+        return False
 
-            await message.author.remove_roles(initiate_role)
-            await message.author.add_roles(associate_role)
+    if message.content == CONSENT_MESSAGE:
+        initiate_role = get(message.guild.roles, name=roles.INITIATE)
+        associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
 
-            registry_channel = get(
-                message.guild.text_channels, name=REGISTRY_CHANNEL)
-            await messages.answer(registry_channel, message.author, CONSENT_SUCCESS)
-        else:
-            await messages.delete_request(message, CONSENT_REJECT)
+        await message.author.remove_roles(initiate_role)
+        await message.author.add_roles(associate_role)
 
-        return True
+        registry_channel = get(
+            message.guild.text_channels, name=REGISTRY_CHANNEL)
+        await messages.answer(registry_channel, message.author, CONSENT_SUCCESS)
+    else:
+        await messages.delete_request(message, CONSENT_REJECT)
+
+    return True

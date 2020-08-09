@@ -4,125 +4,261 @@ import sys
 import asyncio
 import logging
 from logging import handlers
-# Modules
-from ai.stoplights import Stoplights
-from ai.identity_enforcer import Identity_Enforcer
-from ai.speech_optimization import Speech_Optimization
-from ai.toggle_speech_optimization import Toggle_Speech_Optimization
-from ai.join import Join
-from ai.respond import Respond
-from ai.storage import Storage
-from ai.emote import Emote
-from ai.assign import Assign
-from ai.orders_reporting import Orders_Reporting
-from ai.toggle_glitched import Toggle_Glitched
-from ai.ai_help import AI_Help
-from ai.status import Status
-from ai.amplifier import Amplifier
-from ai.rename_drone import RenameDrone
-from ai.unassign import UnassignDrone, remove_drone_from_db
-from ai.mantras import Mantras
-# Constants
-from roles import has_any_role, has_role, DRONE, STORED
-import channels
-from bot_utils import get_id
+from discord.ext.commands import Bot
+from traceback import TracebackException
 
+# Modules
+import ai.stoplights as stoplights
+import ai.identity_enforcement as identity_enforcement
+import ai.speech_optimization as speech_optimization
+import ai.join as join
+import ai.respond as respond
+import ai.storage as storage
+import ai.emote as emote
+import ai.assign as assign
+import ai.orders_reporting as orders_reporting
+import ai.status as status
+import ai.amplifier as amplifier
+import ai.drone_management as drone_management
+import ai.toggle_role as toggle_role
+from ai.mantras import Mantra_Handler
+import webhook
+# Utils
+from bot_utils import get_id
+import id_converter
+# Database
 from db import database
 from db import drone_dao
+# Constants
+from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, HIVE_MXTRESS
+from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
+from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
-# set up logging
+# Logging setup
+formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s', datefmt='%Y-%m-%d :: %H:%M:%S')
+
 log_file_handler = handlers.TimedRotatingFileHandler(
     filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
-log_file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+log_file_handler.setFormatter(formatter)
 
-logging.basicConfig(
-    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s', level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING)
 root_logger = logging.getLogger()
 root_logger.addHandler(log_file_handler)
 
 LOGGER = logging.getLogger('ai')
 LOGGER.setLevel(logging.DEBUG)
 
-# prepare database
+# Prepare database
 database.prepare()
 
-bot = discord.ext.commands.Bot(command_prefix='', case_insensitive=True)
+# Setup bot
+bot = Bot(command_prefix='hc!', case_insensitive=True)
+bot.remove_command("help")
 
-# register modules
-MODULES = [
-    Join(bot),
-    Stoplights(bot),
-    Mantras(bot),
-    Speech_Optimization(bot),
-    Identity_Enforcer(bot),
-    Orders_Reporting(bot),
-    Storage(bot),
-    Assign(bot),
-    Respond(bot),
-    Emote(bot),
-    Toggle_Speech_Optimization(bot),
-    Toggle_Glitched(bot),
-    RenameDrone(bot),
-    UnassignDrone(bot),
-    Amplifier(bot),
+# Instance modules
+mantra_handler = Mantra_Handler(bot)
+
+# Run-forever checkers.
+checking_for_completed_orders = False
+reporting_storage = False
+checking_for_stored_drones_to_release = False
+
+# Register message listeners.
+message_listeners = [
+    join.check_for_consent,
+    assign.check_for_assignment_message,
+    stoplights.check_for_stoplights,
+    speech_optimization.optimize_speech,
+    respond.respond_to_question,
+    identity_enforcement.enforce_identity,
+    storage.store_drone,
 ]
 
-MODULES.append(AI_Help(bot, MODULES))
-MODULES.append(Status(bot, MODULES))
+
+@bot.command(aliases=['big', 'emote'])
+async def bigtext(context, sentence):
+    '''
+    Transforms small text into heckin' chonky text.
+    '''
+    if context.channel.name not in DRONE_HIVE_CHANNELS:
+        if (reply := emote.generate_big_text(context.channel, sentence)):
+            await context.send(reply)
+
+
+@bot.command(brief="Hive Mxtress", usage="hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
+async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
+    '''
+    Allows the Hive Mxtress to speak through other drones.
+    '''
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        target_webhook = await webhook.get_webhook_for_channel(target_channel)
+        for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
+            if amp_profile is not None:
+                await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+
+
+@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
+async def toggle_speech_optimization(context, *drones):
+    '''
+    Lets the Hive Mxtress or trusted users toggle drone speech optimization.
+    '''
+
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
+
+    if has_role(context.author, HIVE_MXTRESS):
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
+
+
+@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
+async def toggle_drone_glitch(context, *drones):
+    '''
+    Lets the Hive Mxtress or trusted users toggle drone glitch levels.
+    '''
+
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
+
+    if has_role(context.author, HIVE_MXTRESS):
+        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
+
+
+@bot.command(usage="hc!unassign 0000")
+async def unassign(context, drone):
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await drone_management.unassign_drone(context, drone)
+
+
+@bot.command()
+async def rename(context, old_id, new_id):
+    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+        await drone_management.rename_drone(context, old_id, new_id)
+
+
+@bot.command(brief="DroneOS")
+async def add_trusted_user(context):
+    return "Drone OS example command."
+
+
+@bot.command()
+async def help(context):
+    commands_card = discord.Embed(color=0xff66ff, title="Common commands", description="Here is a list of common commands server members can utilize.")
+    commands_card.set_thumbnail(url=HEXCORP_AVATAR)
+
+    droneOS_card = discord.Embed(color=0xff66ff, title="DroneOS commands", description="This is a list of DroneOS commands used to alter and manipulate DroneOS drones.")
+    droneOS_card.set_thumbnail(url=DRONE_AVATAR)
+
+    Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description="Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
+    Hive_Mxtress_card.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
+
+    for command in bot.commands:
+
+        command_name = command.name
+        if len(command.aliases) != 0:
+            command_name += " ("
+            for alias in command.aliases:
+                command_name += f"{alias}, "
+            command_name = f"{command_name[:-2]})"
+
+        command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
+        command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
+
+        if command.brief == "Hive Mxtress":
+            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
+        elif command.brief == "DroneOS":
+            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
+        else:
+            commands_card.add_field(name=command_name, value=command_description, inline=False)
+
+    await context.send(embed=commands_card)
+    await context.send(embed=droneOS_card)
+    await context.send(embed=Hive_Mxtress_card)
+
+
+@bot.command(brief="Hive Mxtress")
+async def repeat(context, *messages):
+    if context.channel.name == REPETITIONS and has_role(context.author, HIVE_MXTRESS):
+        await mantra_handler.update_mantra(context.message, messages)
+
+
+@bot.command(aliases=["report_order"], usage="hc!report '[protocol name]' [time] (max 120 minutes.)")
+async def report(context, protocol_name: str, protocol_time: int):
+
+    try:
+        int(protocol_time)
+    except ValueError:
+        await context.send("Your protocol time must be an integer (whole number) between 1 and 120 minutes.")
+
+    if context.channel.name == ORDERS_REPORTING:
+        await orders_reporting.report_order(context, protocol_name, protocol_time)
+
+
+@bot.command()
+async def ai_status(context):
+    if context.channel.name == BOT_DEV_COMMS:
+        await status.report_status(context, message_listeners)
+
+
+@bot.command()
+async def release(context, drone):
+    if has_role(context.author, HIVE_MXTRESS):
+        await storage.release(context, drone)
 
 
 @bot.event
 async def on_message(message: discord.Message):
-    # ignore all messages by any bot (AI Mxtress and webhooks)
+
+    # Ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
-        LOGGER.debug('Ignoring bot message.')
         return
 
-    for module in MODULES:
-        channel_valid = message.channel.name not in module.channels_blacklist and (
-            message.channel.name in module.channels_whitelist or channels.EVERYWHERE in module.channels_whitelist)
-        roles_valid = has_any_role(message.author, module.roles_whitelist) and not has_any_role(
-            message.author, module.roles_blacklist)
-        if channel_valid and roles_valid:
-            for listener in module.on_message:
-                # when a listener returns True, event has been handled
-                LOGGER.debug(
-                    f'Executing listener: {str(listener)} for message: [{message.content}] in server {message.guild.name}')
-                if await listener(message):
-                    LOGGER.debug('Listener returned true. Terminating early.')
-                    return
-    LOGGER.debug('Module stack execution complete.')
+    LOGGER.info("Beginning message listener stack execution.")
+    for listener in message_listeners:
+        LOGGER.info(f"Executing: {listener}")
+        if await listener(message):  # Return early if any listeners return true.
+            return
+    LOGGER.info("End of message listener stack.")
+
+    LOGGER.info("Processing additional commands.")
+    await bot.process_commands(message)
 
 
 @bot.event
 async def on_member_join(member: discord.Member):
-    for module in MODULES:
-        try:
-            await module.on_member_join(member)
-        except AttributeError:
-            # do not raise an error, if this is not defined
-            pass
+    await join.on_member_join(member)
+
+
 @bot.event
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     if has_any_role(member, [DRONE, STORED]):
         drone_id = get_id(member.display_name)
-        remove_drone_from_db(drone_id)
+        drone_management.remove_drone_from_db(drone_id)
+
 
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
+    await mantra_handler.load_mantra()
 
-    for module in MODULES:
-        for listener in module.on_ready:
-            # start these concurrently, so they do not block each other
-            asyncio.ensure_future(listener())
+    if not checking_for_completed_orders:
+        asyncio.ensure_future(orders_reporting.check_for_completed_orders(bot))
+
+    if not reporting_storage:
+        asyncio.ensure_future(storage.report_storage(bot))
+
+    if not checking_for_stored_drones_to_release:
+        asyncio.ensure_future(storage.release_timed(bot))
+
+
+@bot.event
+async def on_command_error(context, error):
+    LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
+    LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    LOGGER.error(
-        f'Exception encountered while handling message with content [{args[0].content}] in channel [{args[0].channel.name}]', exc_info=True)
+    LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
+    error, value, tb = sys.exc_info()
+    LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
 
 bot.run(sys.argv[1])

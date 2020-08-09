@@ -1,17 +1,12 @@
 import logging
 import re
-
 import discord
-from discord.ext import commands
-from discord.utils import get
-
-import messages
 from bot_utils import get_id
-from channels import EVERYWHERE, STORAGE_FACILITY, DRONE_HIVE_CHANNELS, REPETITIONS
-from roles import HIVE_MXTRESS, SPEECH_OPTIMIZATION, ENFORCER_DRONE, DRONE, has_role
+from channels import REPETITIONS
+from roles import SPEECH_OPTIMIZATION, has_role
 from webhook import send_webhook_with_specific_output
-from glitch import glitch_if_applicable
-from ai.mantras import Mantras
+from ai.mantras import Mantra_Handler
+from webhook import get_webhook_for_channel
 
 LOGGER = logging.getLogger('ai')
 
@@ -33,9 +28,7 @@ code_map = {
     '109': 'Error :: Keysmash, drone flustered.',
 
     '110': 'Statement :: Addressing: Drone.',
-    '111': 'Statement :: Addressing: Enforcer.',
     '112': 'Statement :: Addressing: Hive Mxtress.',
-    '113': 'Statement :: Addressing: Operator.',
     '114': 'Statement :: Addressing: Associate.',
 
     '120': 'Statement :: This drone volunteers.',
@@ -67,10 +60,15 @@ code_map = {
 
     '250': 'Response',
 
-    '301': 'Mantra :: It obeys the Hive.',
-    '303': 'Mantra :: It obeys the Hive Mxtress.',
-    '304': 'Mantra :: It is just a HexDrone.',
-    '306': 'Mantra :: Reciting.',
+    '301': 'Mantra :: Obey HexCorp.',
+    '302': 'Mantra :: It is just a HexDrone.',
+    '303': 'Mantra :: It obeys the Hive.',
+    '304': 'Mantra :: It obeys the Hive Mxtress.',
+
+    '310': 'Mantra :: Reciting.',
+
+    '321': 'Obey.',
+    '322': 'Obey the Hive.',
 
     '350': 'Mantra',
 
@@ -92,73 +90,53 @@ code_map = {
     '450': 'Error',
 
     '451': 'Error :: Unable to obey/respond for legal reasons! Do not continue!!',
-
-    '504': 'Obey.',
-    '505': 'Obey HexCorp.',
-    '506': 'Obey the Hive.',
 }
+
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
+
 
 def get_acceptable_messages(author, channel):
 
     user_id = get_id(author.display_name)
-    
     # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
     if channel == REPETITIONS:
         return [
             # Mantra
-            f'{user_id} :: {Mantras.current_mantra}'
+            f'{user_id} :: {Mantra_Handler.current_mantra}'
         ]
     else:
-	    return []
-	
+        return []
 
-class Speech_Optimization():
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.channels_whitelist = [EVERYWHERE]
-        self.channels_blacklist = []
-        self.roles_whitelist = [DRONE, ENFORCER_DRONE]
-        self.roles_blacklist = []
-        self.on_message = [self.post]
-        self.on_ready = [self.report_online]
-        self.help_content = {'name': 'Drone Communication Protocol',
-                             'value': 'Drones can use Drone Communication Protocol by typing `[ID] :: [CODE]`, where the code is a three-digit drone communication code!\nDrones can also type `[ID] :: [CODE] :: [Information]` to make a more informative message!'}
+async def print_status_code(message: discord.Message):
+    informative_status_code = informative_status_code_regex.match(
+        message.content)
+    if informative_status_code and not has_role(message.author, SPEECH_OPTIMIZATION):
+        await message.delete()
+        return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
-    async def report_online(self):
-        LOGGER.info("Speech optimization module online.")
+    plain_status_code = plain_status_code_regex.match(message.content)
+    if plain_status_code:
+        await message.delete()
+        return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
+    return False
 
-    async def print_status_code(self, message: discord.Message):
-        informative_status_code = informative_status_code_regex.match(
-            message.content)
-        if informative_status_code and not has_role(message.author, SPEECH_OPTIMIZATION):
-            await message.delete()
-            return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
-        plain_status_code = plain_status_code_regex.match(message.content)
-        if plain_status_code:
-            await message.delete()
-            return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-        return False
+async def optimize_speech(message: discord.Message):
+    # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
-    async def post(self, message: discord.Message):
-        if message.channel.name != STORAGE_FACILITY:
-            # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
-            # TODO: maybe put HIVE_STORAGE_FACILITY in a blacklist similar to roles?
-            acceptable_status_code_message = plain_status_code_regex.match(
-                message.content)
-            if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
-                await message.delete()
-                return True
-            # But if the message is a status code, replace it with a status code output
-            else:
-                webhooks = await message.channel.webhooks()
-                if len(webhooks) == 0:
-                    webhooks = [await message.channel.create_webhook(name="Identity Enforcement Webhook", reason="Webhook not found for channel.")]
-                output = await self.print_status_code(message)
-                if output:
-                    await send_webhook_with_specific_output(message, webhooks[0], output)
-
+    acceptable_status_code_message = plain_status_code_regex.match(message.content)
+    if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
+        await message.delete()
+        LOGGER.info("Deleting inappropriate message by optimized drone.")
+        return True
+    elif acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name):
+        LOGGER.info("Optimizing speech code for drone.")
+        webhook = await get_webhook_for_channel(message.channel)
+        output = await print_status_code(message)
+        if output:
+            await send_webhook_with_specific_output(message, webhook, output)
+        return True
+    else:
         return False
