@@ -9,7 +9,7 @@ from discord.utils import get
 import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
-from db.drone_dao import insert_drone
+from db.drone_dao import insert_drone, get_used_drone_ids
 from db.data_objects import Drone
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
@@ -32,13 +32,8 @@ def roll_id() -> str:
     return f'{id:04}'
 
 
-def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role]) -> List[str]:
-    relevant_ids = []
-    for member in members:
-        is_relevant_role = [(role in relevant_roles) for role in member.roles]
-        member_id = find_id(member.display_name)
-        if any(is_relevant_role) and member_id is not None:
-            relevant_ids.append(member_id)
+def invalid_ids() -> List[str]:
+    relevant_ids = get_used_drone_ids()
 
     return relevant_ids + RESERVED_IDS
 
@@ -54,7 +49,7 @@ async def check_for_assignment_message(message: discord.Message):
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
         assigned_nick = ''
-        used_ids = invalid_ids(message.guild.members, [drone_role])
+        used_ids = invalid_ids()
         assigned_id = find_id(message.author.display_name)  # does user have a drone id in their display name?
         if assigned_id is not None:
             if assigned_id in used_ids:  # make sure display name number doesnt conflict

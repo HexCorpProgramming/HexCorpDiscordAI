@@ -1,7 +1,7 @@
 import discord
 from typing import List
 
-from db.database import fetchone, change
+from db.database import fetchone, change, fetchall
 
 from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
@@ -54,3 +54,11 @@ def get_discord_id_of_drone(drone_id: str) -> str:
     Returns the discord ID associated with a given drone
     '''
     return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+
+
+def get_used_drone_ids() -> List[str]:
+    '''
+    Returns all IDs currently used by drones.
+    '''
+    # TODO: unpacking a single column could be extracted into a function
+    return [row['drone_id'] for row in fetchall('SELECT drone_id from drone', {})]
