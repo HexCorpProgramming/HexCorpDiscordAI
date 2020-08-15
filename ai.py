@@ -75,7 +75,7 @@ message_listeners = [
 ]
 
 
-@bot.command(usage=f'{bot.command_prefix}emote [any text you want]', aliases=['big', 'emote'])
+@bot.command(usage=f'{bot.command_prefix}emote "beep boop"', aliases=['big', 'emote'])
 async def bigtext(context, sentence):
     '''
     Let the AI say things using emotes.
@@ -85,7 +85,7 @@ async def bigtext(context, sentence):
             await context.send(reply)
 
 
-@bot.command(brief="Hive Mxtress", usage="hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
+@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
     Allows the Hive Mxtress to speak through other drones.
@@ -97,7 +97,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
                 await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
-@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
+@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
@@ -109,7 +109,7 @@ async def toggle_speech_optimization(context, *drones):
         await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
 
 
-@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
+@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
@@ -121,7 +121,7 @@ async def toggle_drone_glitch(context, *drones):
         await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
 
 
-@bot.command(usage=f"{bot.command_prefix}unassign [drone_id]")
+@bot.command(usage=f"{bot.command_prefix}unassign 1234")
 async def unassign(context, drone):
     '''
     Allows the Hive Mxtress to return a drone back to the status of an Associate.
@@ -130,7 +130,7 @@ async def unassign(context, drone):
         await drone_management.unassign_drone(context, drone)
 
 
-@bot.command(usage=f'{bot.command_prefix}rename [old_id] [new_id]')
+@bot.command(usage=f'{bot.command_prefix}rename 1234 3412')
 async def rename(context, old_id, new_id):
     '''
     Allows the Hive Mxtress to change the ID of a drone.
@@ -178,7 +178,7 @@ async def help(context):
     await context.send(embed=Hive_Mxtress_card)
 
 
-@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}repeat [new_mantra]')
+@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}repeat "Obey HexCorp."')
 async def repeat(context, *messages):
     '''
     Allows the Hive Mxtress to set a new mantra for drones to repeat.
@@ -187,10 +187,10 @@ async def repeat(context, *messages):
         await mantra_handler.update_mantra(context.message, messages)
 
 
-@bot.command(aliases=["report_order"], usage="hc!report '[protocol name]' [time] (max 120 minutes.)")
+@bot.command(aliases=["report_order"], usage=f'{bot.command_prefix}report maid 35')
 async def report(context, protocol_name: str, protocol_time: int):
     '''
-    Report your orders in the appropriate channel to serve the Hive.
+    Report your orders in the appropriate channel to serve the Hive. The duration can be a maximum of 120 minutes.
     '''
     try:
         int(protocol_time)
@@ -210,7 +210,7 @@ async def ai_status(context):
         await status.report_status(context, message_listeners)
 
 
-@bot.command(usage=f'{bot.command_prefix}release [drone_id]')
+@bot.command(usage=f'{bot.command_prefix}release 9813')
 async def release(context, drone):
     '''
     Allows the Hive Mxtress to release a drone from storage.
