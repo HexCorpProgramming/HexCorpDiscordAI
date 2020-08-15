@@ -1,5 +1,4 @@
 import random
-import re
 from datetime import datetime
 from typing import List
 
@@ -11,20 +10,13 @@ import roles
 from channels import ASSIGNMENT_CHANNEL
 from db.drone_dao import insert_drone, get_used_drone_ids
 from db.data_objects import Drone
+from bot_utils import get_id
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
 ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 
 RESERVED_IDS = ['0006', '0000', '0001', '0002', '0003', '0004', '0005', '6969', '0420', '4200', '3141', '0710', '7100', '1488']
-
-
-def find_id(text: str) -> str:
-    match = re.search(r'\d{4}', text)
-    if match is not None:
-        return match.group(0)
-    else:
-        return None
 
 
 def roll_id() -> str:
@@ -50,7 +42,7 @@ async def check_for_assignment_message(message: discord.Message):
 
         assigned_nick = ''
         used_ids = invalid_ids()
-        assigned_id = find_id(message.author.display_name)  # does user have a drone id in their display name?
+        assigned_id = get_id(message.author.display_name)  # does user have a drone id in their display name?
         if assigned_id is not None:
             if assigned_id in used_ids:  # make sure display name number doesnt conflict
                 await message.channel.send(f'{message.author.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
