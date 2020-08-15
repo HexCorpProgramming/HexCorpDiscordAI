@@ -1,6 +1,5 @@
 import random
 from datetime import datetime
-from typing import List
 
 import discord
 from discord.utils import get
@@ -24,12 +23,6 @@ def roll_id() -> str:
     return f'{id:04}'
 
 
-def invalid_ids() -> List[str]:
-    relevant_ids = get_used_drone_ids()
-
-    return relevant_ids + RESERVED_IDS
-
-
 async def check_for_assignment_message(message: discord.Message):
 
     if message.channel.name != ASSIGNMENT_CHANNEL:
@@ -41,12 +34,12 @@ async def check_for_assignment_message(message: discord.Message):
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
         assigned_nick = ''
-        used_ids = invalid_ids()
+        used_ids = get_used_drone_ids() + RESERVED_IDS
         assigned_id = get_id(message.author.display_name)  # does user have a drone id in their display name?
         if assigned_id is not None:
             if assigned_id in used_ids:  # make sure display name number doesnt conflict
                 await message.channel.send(f'{message.author.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
-                return
+                return True
         else:
             assigned_id = roll_id()
             while assigned_id in used_ids:  # loop until no conflict
