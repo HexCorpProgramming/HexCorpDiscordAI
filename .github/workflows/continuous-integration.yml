@@ -29,7 +29,7 @@ jobs:
       # assess test coverage
       - name: Assess test coverage (60% to pass).
         run: |
-          python -m coverage report --fail-under=60
+          python -m coverage report --fail-under=60 -m
       # Confirm good drone-ness
       - name: Confirm that 5890 is a good drone.
         run: |
