@@ -1,10 +1,16 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, Mock
 
+import roles
 import ai.assign as assign
 from channels import ASSIGNMENT_CHANNEL
 
 test_message = AsyncMock()
+
+associate_role = Mock()
+associate_role.name = roles.ASSOCIATE
+drone_role = Mock()
+drone_role.name = roles.DRONE
 
 
 class AssignmentTest(unittest.IsolatedAsyncioTestCase):
@@ -15,6 +21,7 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         test_message.channel.name = ASSIGNMENT_CHANNEL
         test_message.author.display_name = "Future Drone 1234"
         test_message.author.mention = "<mention_placeholder>"
+        test_message.guild.roles = [associate_role, drone_role]
 
     async def test_request_reject(self):
         test_message.content = "Beep Boop want to be drone!"
@@ -34,6 +41,9 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await assign.check_for_assignment_message(test_message))
         insert_drone.assert_called_once()
         self.assertEqual(insert_drone.call_args.args[0].drone_id, "1234")
+        test_message.author.remove_roles.assert_called_once_with(associate_role)
+        test_message.author.add_roles.assert_called_once_with(drone_role)
+        test_message.author.edit.assert_called_once_with(nick="⬡-Drone #1234")
 
     @patch("ai.assign.get_used_drone_ids", return_value=["1234"])
     async def test_id_already_used(self, get_used_drone_ids):
