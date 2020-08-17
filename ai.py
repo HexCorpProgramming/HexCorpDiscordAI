@@ -243,7 +243,7 @@ async def on_ready():
         asyncio.ensure_future(orders_reporting.check_for_completed_orders(bot))
 
     if not reporting_storage:
-        asyncio.ensure_future(storage.report_storage(bot))
+        asyncio.ensure_future(storage.start_storage_reporting(bot))
 
     if not checking_for_stored_drones_to_release:
         asyncio.ensure_future(storage.release_timed(bot))

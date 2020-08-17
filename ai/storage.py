@@ -27,13 +27,12 @@ MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
 
 async def store_drone(message: discord.Message):
-
-    if message.channel.name != STORAGE_FACILITY:
-        return False
-
     '''
     Process posted messages.
     '''
+    if message.channel.name != STORAGE_FACILITY:
+        return False
+
     stored_role = get(message.guild.roles, name=roles.STORED)
     drone_role = get(message.guild.roles, name=roles.DRONE)
 
@@ -83,7 +82,7 @@ async def store_drone(message: discord.Message):
     return True
 
 
-async def report_storage(bot):
+async def start_report_storage(bot):
     '''
     Report on currently stored drones.
     '''
@@ -92,19 +91,22 @@ async def report_storage(bot):
     while True:
         # use async sleep to avoid the bot locking up
         await asyncio.sleep(REPORT_INTERVAL_SECONDS)
-
-        stored_drones = fetch_all_storage()
-        if len(stored_drones) == 0:
-            await storage_channel.send('No drones in storage.')
-        else:
-            for stored in stored_drones:
-                # calculate remaining hours
-                remaining_hours = hours_from_now(
-                    datetime.fromisoformat(stored.release_time))
-                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+        report_storage(storage_channel)
 
 
-async def release_timed(bot):
+async def report_storage(storage_channel: discord.TextChannel):
+    stored_drones = fetch_all_storage()
+    if len(stored_drones) == 0:
+        await storage_channel.send('No drones in storage.')
+    else:
+        for stored in stored_drones:
+            # calculate remaining hours
+            remaining_hours = hours_from_now(
+                datetime.fromisoformat(stored.release_time))
+            await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+
+
+async def start_release_timed(bot):
     '''
     Relase stored drones when the timer is up.
     '''
@@ -112,15 +114,18 @@ async def release_timed(bot):
     while True:
         # use async sleep to avoid the bot locking up
         await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
+        release_timed(stored_role)
 
-        for elapsed_storage in fetch_all_elapsed_storage():
-            drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
-            member = bot.guilds[0].get_member(drone.id)
 
-            # restore roles to release from storage
-            await member.remove_roles(stored_role)
-            await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
-            delete_storage(elapsed_storage.id)
+async def release_timed(bot, stored_role):
+    for elapsed_storage in fetch_all_elapsed_storage():
+        drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
+        member = bot.guilds[0].get_member(drone.id)
+
+        # restore roles to release from storage
+        await member.remove_roles(stored_role)
+        await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
+        delete_storage(elapsed_storage.id)
 
 
 async def release(context, stored_drone):
@@ -135,7 +140,7 @@ async def release(context, stored_drone):
         stored_drone = convert_id_to_member(context.guild, stored_drone)
 
     if stored_drone is None:
-        return
+        return True
 
     stored_role = get(context.guild.roles, name=roles.STORED)
     # find stored drone
