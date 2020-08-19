@@ -91,7 +91,7 @@ async def start_report_storage(bot):
     while True:
         # use async sleep to avoid the bot locking up
         await asyncio.sleep(REPORT_INTERVAL_SECONDS)
-        report_storage(storage_channel)
+        await report_storage(storage_channel)
 
 
 async def report_storage(storage_channel: discord.TextChannel):
@@ -114,7 +114,7 @@ async def start_release_timed(bot):
     while True:
         # use async sleep to avoid the bot locking up
         await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
-        release_timed(stored_role)
+        await release_timed(bot, stored_role)
 
 
 async def release_timed(bot, stored_role):
