@@ -1,7 +1,5 @@
 import random
-import re
 from datetime import datetime
-from typing import List
 
 import discord
 from discord.utils import get
@@ -9,8 +7,9 @@ from discord.utils import get
 import messages
 import roles
 from channels import ASSIGNMENT_CHANNEL
-from db.drone_dao import insert_drone
+from db.drone_dao import insert_drone, get_used_drone_ids
 from db.data_objects import Drone
+from bot_utils import get_id
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -19,28 +18,9 @@ ASSIGNMENT_REJECT = 'Invalid request. Please try again.'
 RESERVED_IDS = ['0006', '0000', '0001', '0002', '0003', '0004', '0005', '6969', '0420', '4200', '3141', '0710', '7100', '1488']
 
 
-def find_id(text: str) -> str:
-    match = re.search(r'\d{4}', text)
-    if match is not None:
-        return match.group(0)
-    else:
-        return None
-
-
 def roll_id() -> str:
     id = random.randint(0, 9999)
     return f'{id:04}'
-
-
-def invalid_ids(members: List[discord.Member], relevant_roles: List[discord.Role]) -> List[str]:
-    relevant_ids = []
-    for member in members:
-        is_relevant_role = [(role in relevant_roles) for role in member.roles]
-        member_id = find_id(member.display_name)
-        if any(is_relevant_role) and member_id is not None:
-            relevant_ids.append(member_id)
-
-    return relevant_ids + RESERVED_IDS
 
 
 async def check_for_assignment_message(message: discord.Message):
@@ -54,12 +34,12 @@ async def check_for_assignment_message(message: discord.Message):
         drone_role = get(message.guild.roles, name=roles.DRONE)
 
         assigned_nick = ''
-        used_ids = invalid_ids(message.guild.members, [drone_role])
-        assigned_id = find_id(message.author.display_name)  # does user have a drone id in their display name?
+        used_ids = get_used_drone_ids() + RESERVED_IDS
+        assigned_id = get_id(message.author.display_name)  # does user have a drone id in their display name?
         if assigned_id is not None:
             if assigned_id in used_ids:  # make sure display name number doesnt conflict
                 await message.channel.send(f'{message.author.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
-                return
+                return True
         else:
             assigned_id = roll_id()
             while assigned_id in used_ids:  # loop until no conflict
