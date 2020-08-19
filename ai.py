@@ -75,17 +75,17 @@ message_listeners = [
 ]
 
 
-@bot.command(aliases=['big', 'emote'])
+@bot.command(usage=f'{bot.command_prefix}emote "beep boop"', aliases=['big', 'emote'])
 async def bigtext(context, sentence):
     '''
-    Transforms small text into heckin' chonky text.
+    Let the AI say things using emotes.
     '''
     if context.channel.name not in DRONE_HIVE_CHANNELS:
         if (reply := emote.generate_big_text(context.channel, sentence)):
             await context.send(reply)
 
 
-@bot.command(brief="Hive Mxtress", usage="hc!amplify '[message]', #target-channel-as-mention, drones (one or more IDs).")
+@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
     Allows the Hive Mxtress to speak through other drones.
@@ -97,7 +97,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
                 await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
-@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage="hc!toggle_speech_optimization @drones (one or more mentions).")
+@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
@@ -109,7 +109,7 @@ async def toggle_speech_optimization(context, *drones):
         await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
 
 
-@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage="hc!toggle_drone_glitch @drones (one or more mentions).")
+@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
@@ -121,25 +121,29 @@ async def toggle_drone_glitch(context, *drones):
         await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
 
 
-@bot.command(usage="hc!unassign 0000")
+@bot.command(usage=f"{bot.command_prefix}unassign 1234")
 async def unassign(context, drone):
+    '''
+    Allows the Hive Mxtress to return a drone back to the status of an Associate.
+    '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.unassign_drone(context, drone)
 
 
-@bot.command()
+@bot.command(usage=f'{bot.command_prefix}rename 1234 3412')
 async def rename(context, old_id, new_id):
+    '''
+    Allows the Hive Mxtress to change the ID of a drone.
+    '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
 
 
-@bot.command(brief="DroneOS")
-async def add_trusted_user(context):
-    return "Drone OS example command."
-
-
-@bot.command()
+@bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
+    '''
+    Displays this help.
+    '''
     commands_card = discord.Embed(color=0xff66ff, title="Common commands", description="Here is a list of common commands server members can utilize.")
     commands_card.set_thumbnail(url=HEXCORP_AVATAR)
 
@@ -169,19 +173,25 @@ async def help(context):
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     await context.send(embed=commands_card)
-    await context.send(embed=droneOS_card)
+    # TODO: hidden until DroneOS is officially released
+    # await context.send(embed=droneOS_card)
     await context.send(embed=Hive_Mxtress_card)
 
 
-@bot.command(brief="Hive Mxtress")
+@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}repeat "Obey HexCorp."')
 async def repeat(context, *messages):
+    '''
+    Allows the Hive Mxtress to set a new mantra for drones to repeat.
+    '''
     if context.channel.name == REPETITIONS and has_role(context.author, HIVE_MXTRESS):
         await mantra_handler.update_mantra(context.message, messages)
 
 
-@bot.command(aliases=["report_order"], usage="hc!report '[protocol name]' [time] (max 120 minutes.)")
+@bot.command(aliases=["report_order"], usage=f'{bot.command_prefix}report maid 35')
 async def report(context, protocol_name: str, protocol_time: int):
-
+    '''
+    Report your orders in the appropriate channel to serve the Hive. The duration can be a maximum of 120 minutes.
+    '''
     try:
         int(protocol_time)
     except ValueError:
@@ -191,14 +201,20 @@ async def report(context, protocol_name: str, protocol_time: int):
         await orders_reporting.report_order(context, protocol_name, protocol_time)
 
 
-@bot.command()
+@bot.command(usage=f'{bot.command_prefix}ai_status')
 async def ai_status(context):
+    '''
+    A debug command, that displays information about the AI.
+    '''
     if context.channel.name == BOT_DEV_COMMS:
         await status.report_status(context, message_listeners)
 
 
-@bot.command()
+@bot.command(usage=f'{bot.command_prefix}release 9813')
 async def release(context, drone):
+    '''
+    Allows the Hive Mxtress to release a drone from storage.
+    '''
     if has_role(context.author, HIVE_MXTRESS):
         await storage.release(context, drone)
 
