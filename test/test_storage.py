@@ -22,6 +22,9 @@ development_role.name = roles.DEVELOPMENT
 hive_mxtress_role = Mock()
 hive_mxtress_role.name = roles.HIVE_MXTRESS
 
+storage_chambers = AsyncMock()
+storage_chambers.name = channels.STORAGE_CHAMBERS
+
 bot = AsyncMock()
 bot.guilds[0].roles = [stored_role, drone_role, development_role]
 
@@ -30,7 +33,92 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         storage_channel.reset_mock()
+        storage_chambers.reset_mock()
         bot.reset_mock()
+
+    async def test_storage_message_wrong_channel(self):
+        # setup
+        channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
+        channels_to_test.remove(channels.STORAGE_FACILITY)
+        for channel in channels_to_test:
+            message = Mock()
+            message.channel.name = channel
+
+            # run & assert
+            self.assertFalse(await storage.store_drone(message))
+
+    async def test_storage_message_invalid(self):
+        # setup
+        message = AsyncMock()
+        message.channel.name = channels.STORAGE_FACILITY
+        message.content = "beep boop wants to recharge"
+        message.author.roles = [drone_role]
+
+        # run & assert
+        self.assertTrue(await storage.store_drone(message))
+
+        message.channel.send.assert_called_once_with(storage.REJECT_MESSAGE)
+
+    @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
+    async def test_storage_message_already_in_storage(self, fetch_storage_by_target_id):
+        # setup
+        message = AsyncMock()
+        message.channel.name = channels.STORAGE_FACILITY
+        message.content = "9813 :: 3287 :: 6 :: recharge"
+        message.author.roles = [drone_role]
+
+        # run & assert
+        self.assertTrue(await storage.store_drone(message))
+
+        fetch_storage_by_target_id.assert_called_once_with('3287')
+        message.channel.send.assert_called_once_with("3287 is already in storage.")
+
+    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    async def test_storage_message_duration_too_long(self, fetch_storage_by_target_id):
+        # setup
+        message = AsyncMock()
+        message.channel.name = channels.STORAGE_FACILITY
+        message.content = "9813 :: 3287 :: 25 :: recharge"
+        message.author.roles = [drone_role]
+
+        # run & assert
+        self.assertTrue(await storage.store_drone(message))
+        fetch_storage_by_target_id.assert_called_once_with('3287')
+        message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
+
+    @patch("ai.storage.datetime")
+    @patch("ai.storage.insert_storage")
+    @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    async def test_store_drone(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
+        # setup
+        message = AsyncMock()
+        message.channel.name = channels.STORAGE_FACILITY
+        message.content = "9813 :: 3287 :: 8 :: recharge"
+        message.author.roles = [drone_role]
+        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
+        message.guild.channels = [storage_chambers]
+
+        drone_member = AsyncMock()
+        drone_member.roles = [drone_role, development_role]
+        drone_member.mention = "<3287mention>"
+        message.guild.get_member = Mock(return_value=drone_member)
+
+        fixed_now = datetime.now()
+        mocked_datetime.now.return_value = fixed_now
+
+        # run & assert
+        self.assertFalse(await storage.store_drone(message))
+
+        message.guild.get_member.assert_called_once_with('3287snowflake')
+        drone_member.remove_roles.assert_called_once_with(drone_role, development_role)
+        drone_member.add_roles.assert_called_once_with(stored_role)
+        self.assertEqual(insert_storage.call_args.args[0].stored_by, "9813")
+        self.assertEqual(insert_storage.call_args.args[0].target_id, "3287")
+        self.assertEqual(insert_storage.call_args.args[0].purpose, "recharge")
+        self.assertEqual(insert_storage.call_args.args[0].roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
+        self.assertEqual(insert_storage.call_args.args[0].release_time, str(fixed_now + timedelta(hours=8)))
+        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
 
     @patch("ai.storage.fetch_all_storage", return_value=[])
     async def test_storage_report_empty(self, fetch_all_storage):
@@ -72,13 +160,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(await storage.release(context, None))
 
     async def test_release_wrong_channel(self):
+        # setup
         channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
         channels_to_test.remove(channels.STORAGE_FACILITY)
         for channel in channels_to_test:
-            # setup
-            channel_mock = Mock()
-            channel_mock.name = channel
-
             context = Mock()
             context.channel.name = channel
             context.author.roles = [hive_mxtress_role]

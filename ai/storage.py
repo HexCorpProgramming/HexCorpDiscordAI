@@ -11,7 +11,6 @@ from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from db.data_objects import Storage as StorageDO
 from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
-from bot_utils import get_id
 from id_converter import convert_id_to_member
 
 LOGGER = logging.getLogger('ai')
@@ -32,9 +31,6 @@ async def store_drone(message: discord.Message):
     '''
     if message.channel.name != STORAGE_FACILITY:
         return False
-
-    stored_role = get(message.guild.roles, name=roles.STORED)
-    drone_role = get(message.guild.roles, name=roles.DRONE)
 
     # parse message
     if not re.match(MESSAGE_FORMAT, message.content):
@@ -57,29 +53,33 @@ async def store_drone(message: discord.Message):
         await message.channel.send(f'{time} is not between 0 and 24.')
         return True
 
-    # find target drone and store it
-    for member in message.guild.members:
-        if get_id(member.display_name) == target_id and drone_role in member.roles:
-            former_roles = filter_out_non_removable_roles(member.roles)
-            await member.remove_roles(*former_roles)
-            await member.add_roles(stored_role)
-            stored_until = str(datetime.now() + timedelta(hours=int(time)))
-            stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(
-                get_names_for_roles(former_roles)), stored_until)
-            insert_storage(stored_drone)
-
-            # Inform the drone that they have been stored.
-            storage_chambers = get(
-                message.guild.channels, name=STORAGE_CHAMBERS)
-            plural = "hour" if int(time) == 1 else "hours"
-            if drone_id == target_id:
-                drone_id = "yourself"
-            await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
-            return False
+    # find target drone
+    drone_to_store = fetch_drone_with_drone_id(target_id)
 
     # if no drone was stored answer with error
-    await message.channel.send(f'Drone with ID {target_id} could not be found.')
-    return True
+    if drone_to_store is None:
+        await message.channel.send(f'Drone with ID {target_id} could not be found.')
+        return True
+
+    # store it
+    stored_role = get(message.guild.roles, name=roles.STORED)
+    member = message.guild.get_member(drone_to_store.id)
+    former_roles = filter_out_non_removable_roles(member.roles)
+    await member.remove_roles(*former_roles)
+    await member.add_roles(stored_role)
+    stored_until = str(datetime.now() + timedelta(hours=int(time)))
+    stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(
+        get_names_for_roles(former_roles)), stored_until)
+    insert_storage(stored_drone)
+
+    # Inform the drone that they have been stored.
+    storage_chambers = get(
+        message.guild.channels, name=STORAGE_CHAMBERS)
+    plural = "hour" if int(time) == 1 else "hours"
+    if drone_id == target_id:
+        drone_id = "yourself"
+    await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
+    return False
 
 
 async def start_report_storage(bot):
