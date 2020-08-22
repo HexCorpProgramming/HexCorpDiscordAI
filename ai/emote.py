@@ -36,7 +36,7 @@ def generate_big_text(channel: discord.TextChannel, sentence):
         if character in valid_characters:
             emoji_name = f"hex_{character}"
         elif character in exceptional_characters:
-            emoji_name = f"hex_{exceptional_characters[character]}"
+            emoji_name = f"{exceptional_characters[character]}"
         if character == ':' and colon_before:
             emoji_name = "hex_dc"
 
