@@ -256,7 +256,7 @@ async def on_ready():
     await mantra_handler.load_mantra()
 
     if not checking_for_completed_orders:
-        asyncio.ensure_future(orders_reporting.check_for_completed_orders(bot))
+        asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
 
     if not reporting_storage:
         asyncio.ensure_future(storage.start_report_storage(bot))
