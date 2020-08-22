@@ -8,6 +8,7 @@ from bot_utils import get_id
 from db.drone_order_dao import delete_drone_order, insert_drone_order, fetch_all_drone_orders, get_order_by_drone_id
 from db.data_objects import DroneOrder
 from id_converter import convert_id_to_member
+from roles import DRONE, has_role
 
 LOGGER = logging.getLogger('ai')
 
@@ -35,7 +36,7 @@ async def check_for_completed_orders(bot, orders_reporting_channel):
 async def report_order(context, protocol_name, protocol_time: int):
     LOGGER.info("Order reported.")
     drone_id = get_id(context.author.display_name)
-    if drone_id is None:
+    if not has_role(context.author, DRONE):
         return  # No non-drones allowed.
     current_order = get_order_by_drone_id(drone_id)
 

@@ -65,6 +65,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         context = AsyncMock()
         context.channel.name = channels.STORAGE_FACILITY
         context.author.display_name = '⬡-Drone #5890'
+        context.author.roles = [drone_role]
         context.guild = bot.guilds[0]
 
         fixed_now = datetime.now()
