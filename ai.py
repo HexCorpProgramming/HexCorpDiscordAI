@@ -4,7 +4,7 @@ import sys
 import asyncio
 import logging
 from logging import handlers
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, MissingRequiredArgument
 from traceback import TracebackException
 
 # Modules
@@ -267,8 +267,13 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(context, error):
-    LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
-    LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
+    if isinstance(error, MissingRequiredArgument):
+        # missing arguments should not be that noisy and can be reported to the user
+        LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
+        await context.send(f"{error.param.name} is a required argument that is missing.")
+    else:
+        LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
+        LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 
 
 @bot.event
