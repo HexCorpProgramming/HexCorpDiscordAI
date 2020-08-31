@@ -4,7 +4,7 @@ import sys
 import asyncio
 import logging
 from logging import handlers
-from discord.ext.commands import Bot, MissingRequiredArgument, guild_only
+from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
 
 # Modules
@@ -21,6 +21,7 @@ import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.toggle_role as toggle_role
+import ai.add_voice as add_voice
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -219,6 +220,7 @@ async def ai_status(context):
         await status.report_status(context, message_listeners)
 
 
+@guild_only()
 @bot.command(usage=f'{bot.command_prefix}release 9813')
 async def release(context, drone):
     '''
@@ -226,6 +228,15 @@ async def release(context, drone):
     '''
     if has_role(context.author, HIVE_MXTRESS):
         await storage.release(context, drone)
+
+
+@dm_only()
+@bot.command(usage=f'{bot.command_prefix}request_voice_role')
+async def request_voice_role(context):
+    '''
+    Gives you the Voice role and thus access to voice channels if you have been on the server for more than 2 weeks.
+    '''
+    await add_voice.add_voice(context, bot.guilds[0])
 
 
 @bot.event
