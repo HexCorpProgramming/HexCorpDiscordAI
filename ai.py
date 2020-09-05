@@ -4,6 +4,7 @@ import sys
 import asyncio
 import logging
 import random
+import re
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
 from traceback import TracebackException
@@ -97,14 +98,16 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
             if amp_profile is not None:
                 await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
-@bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}tip 5890 9813')
+
+@bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}tip 5890 9813')
 async def toggle_id_prepending(context, *drones):
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones)
-
     if has_role(context.author, HIVE_MXTRESS):
-        toggled_value = await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
-        
+        for drone in member_drones:
+            toggled_value = await toggle_role.toggle_role_of_one(context, drone, ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "id_prepending", toggled_value)
+
 
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):
