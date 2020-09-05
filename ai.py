@@ -5,7 +5,7 @@ import asyncio
 import logging
 import random
 from logging import handlers
-from discord.ext.commands import Bot, MissingRequiredArgument
+from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
 
 # Modules
@@ -23,6 +23,7 @@ import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.toggle_role as toggle_role
+import ai.add_voice as add_voice
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -78,6 +79,7 @@ message_listeners = [
 ]
 
 
+@guild_only()
 @bot.command(usage=f'{bot.command_prefix}emote "beep boop"', aliases=['big', 'emote'])
 async def bigtext(context, sentence):
     '''
@@ -88,6 +90,7 @@ async def bigtext(context, sentence):
             await context.send(reply)
 
 
+@guild_only()
 @bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
 async def amplify(context, message: str, target_channel: discord.TextChannel, *drones):
     '''
@@ -110,6 +113,7 @@ async def toggle_id_prepending(context, *drones):
             drone_dao.update_droneOS_parameter(get_id(drone.display_name), "id_prepending", toggled_value)
 
 
+@guild_only()
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):
     '''
@@ -122,6 +126,7 @@ async def toggle_speech_optimization(context, *drones):
             drone_dao.update_droneOS_parameter(get_id(drone.display_name), "optimized", toggled_value)
 
 
+@guild_only()
 @bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
 async def toggle_drone_glitch(context, *drones):
     '''
@@ -135,6 +140,7 @@ async def toggle_drone_glitch(context, *drones):
             drone_dao.update_droneOS_parameter(get_id(drone.display_name), "glitched", toggled_value)
 
 
+@guild_only()
 @bot.command(usage=f"{bot.command_prefix}unassign 1234")
 async def unassign(context, drone):
     '''
@@ -144,6 +150,7 @@ async def unassign(context, drone):
         await drone_management.unassign_drone(context, drone)
 
 
+@guild_only()
 @bot.command(usage=f'{bot.command_prefix}rename 1234 3412')
 async def rename(context, old_id, new_id):
     '''
@@ -192,6 +199,7 @@ async def help(context):
     await context.send(embed=Hive_Mxtress_card)
 
 
+@guild_only()
 @bot.command(brief="Hive Mxtress", usage=f'{bot.command_prefix}repeat "Obey HexCorp."')
 async def repeat(context, *messages):
     '''
@@ -201,6 +209,7 @@ async def repeat(context, *messages):
         await mantra_handler.update_mantra(context.message, messages)
 
 
+@guild_only()
 @bot.command(aliases=["report_order"], usage=f'{bot.command_prefix}report maid 35')
 async def report(context, protocol_name: str, protocol_time: int):
     '''
@@ -215,6 +224,7 @@ async def report(context, protocol_name: str, protocol_time: int):
         await orders_reporting.report_order(context, protocol_name, protocol_time)
 
 
+@guild_only()
 @bot.command(usage=f'{bot.command_prefix}ai_status')
 async def ai_status(context):
     '''
@@ -224,6 +234,7 @@ async def ai_status(context):
         await status.report_status(context, message_listeners)
 
 
+@guild_only()
 @bot.command(usage=f'{bot.command_prefix}release 9813')
 async def release(context, drone):
     '''
@@ -233,11 +244,24 @@ async def release(context, drone):
         await storage.release(context, drone)
 
 
+@dm_only()
+@bot.command(usage=f'{bot.command_prefix}request_voice_role')
+async def request_voice_role(context):
+    '''
+    Gives you the Voice role and thus access to voice channels if you have been on the server for more than 2 weeks.
+    '''
+    await add_voice.add_voice(context, bot.guilds[0])
+
+
 @bot.event
 async def on_message(message: discord.Message):
-
     # Ignore all messages by any bot (AI Mxtress and webhooks)
     if message.author.bot:
+        return
+
+    # handle DMs
+    if isinstance(message.channel, discord.DMChannel):
+        await bot.process_commands(message)
         return
 
     LOGGER.info("Beginning message listener stack execution.")
