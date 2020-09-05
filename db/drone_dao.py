@@ -72,3 +72,11 @@ def update_droneOS_parameter(drone_id: str, column: str, value: str):
 
 def is_optimized(drone: discord.Member):
     return bool(fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})['optimized'])
+
+
+def is_glitched(drone: discord.Member):
+    return bool(fetchone('SELECT glitched FROM drone WHERE id = :discord', {'discord': drone.id})['glitched'])
+
+
+def is_prepending_id(drone: discord.Member):
+    return bool(fetchone('SELECT id_prepending FROM drone WHERE id = :discord', {'discord': drone.id})['id_prepending'])
