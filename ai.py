@@ -103,7 +103,8 @@ async def toggle_id_prepending(context, *drones):
     member_drones = id_converter.convert_ids_to_members(context.guild, drones)
 
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+        toggled_value = await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+        
 
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):

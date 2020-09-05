@@ -62,3 +62,9 @@ def get_used_drone_ids() -> List[str]:
     '''
     # TODO: unpacking a single column could be extracted into a function
     return [row['drone_id'] for row in fetchall('SELECT drone_id from drone', {})]
+
+
+def update_droneOS_parameter(drone_id: str, column: str, value: str):
+    change(f'UPDATE drone SET {column} = :value WHERE drone_id = :drone_id', {'value': value, 'drone_id': drone_id})
+    # Hive Mxtress forgive me for I hath concatenated in an SQL query.
+    # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
