@@ -68,3 +68,7 @@ def update_droneOS_parameter(drone_id: str, column: str, value: str):
     change(f'UPDATE drone SET {column} = :value WHERE drone_id = :drone_id', {'value': value, 'drone_id': drone_id})
     # Hive Mxtress forgive me for I hath concatenated in an SQL query.
     # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
+
+
+def is_optimized(drone: discord.Member):
+    return bool(fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})['optimized'])
