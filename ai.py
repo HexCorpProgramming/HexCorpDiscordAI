@@ -1,5 +1,7 @@
 # Core
 import discord
+from discord.utils import get
+
 import sys
 import asyncio
 import logging
@@ -22,7 +24,6 @@ import ai.orders_reporting as orders_reporting
 import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
-import ai.toggle_role as toggle_role
 import ai.add_voice as add_voice
 from ai.mantras import Mantra_Handler
 import webhook
@@ -109,9 +110,27 @@ async def toggle_id_prepending(context, *drones):
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
+
+        role = get(context.guild.roles, name=ID_PREPENDING)
+        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+
         for drone in member_drones:
-            toggled_value = await toggle_role.toggle_role_of_one(context, drone, ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
-            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "id_prepending", toggled_value)
+            if drone_dao.is_prepending_id(drone):
+                drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
+                await drone.remove_roles(role)
+                await channel_webhook.send(
+                    "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
+            else:
+                drone_dao.update_droneOS_parameter(drone, "id_prepending", True)
+                await drone.add_roles(role)
+                await channel_webhook.send(
+                    "ID prepending is now mandatory.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
 
 
 @guild_only()
@@ -122,9 +141,27 @@ async def toggle_speech_optimization(context, *drones):
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
+
+        role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
+        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+
         for drone in member_drones:
-            toggled_value = await toggle_role.toggle_role_of_one(context, drone, SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
-            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "optimized", toggled_value)
+            if drone_dao.is_prepending_id(drone):
+                drone_dao.update_droneOS_parameter(drone, "optimized", False)
+                await drone.remove_roles(role)
+                await channel_webhook.send(
+                    "Speech optimization disengaged.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
+            else:
+                drone_dao.update_droneOS_parameter(drone, "optimized", True)
+                await drone.add_roles(role)
+                await channel_webhook.send(
+                    "Speech optimization is now active.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
 
 
 @guild_only()
@@ -136,9 +173,27 @@ async def toggle_drone_glitch(context, *drones):
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
+
+        role = get(context.guild.roles, name=GLITCHED)
+        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+
         for drone in member_drones:
-            toggled_value = await toggle_role.toggle_role_of_one(context, drone, GLITCHED, "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
-            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "glitched", toggled_value)
+            if drone_dao.is_prepending_id(drone):
+                drone_dao.update_droneOS_parameter(drone, "glitched", False)
+                await drone.remove_roles(role)
+                await channel_webhook.send(
+                    "Drone corruption at acceptable levels.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
+            else:
+                drone_dao.update_droneOS_parameter(drone, "glitched", True)
+                await drone.add_roles(role)
+                await channel_webhook.send(
+                    "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
+                    username=drone.display_name,
+                    avatar_url=drone.avatar_url
+                )
 
 
 @guild_only()
