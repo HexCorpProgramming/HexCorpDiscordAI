@@ -25,7 +25,7 @@ def insert_drone(drone: Drone):
     '''
     Inserts the given drone into the table drone.
     '''
-    change('INSERT INTO drone VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity)', vars(drone))
+    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity)', vars(drone))
 
 
 def fetch_drone_with_drone_id(drone_id: str) -> Drone:
