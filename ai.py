@@ -105,8 +105,11 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
 
 
 @guild_only()
-@bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}tip 5890 9813')
+@bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
 async def toggle_id_prepending(context, *drones):
+    '''
+    Allows the Hive Mxtress to enforce mandatory ID prepending upon specified drones.
+    '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
