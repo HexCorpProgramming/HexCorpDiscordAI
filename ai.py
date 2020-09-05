@@ -12,6 +12,7 @@ from traceback import TracebackException
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
 import ai.speech_optimization as speech_optimization
+import ai.id_prepending as id_prepending
 import ai.join as join
 import ai.respond as respond
 import ai.storage as storage
@@ -69,6 +70,7 @@ message_listeners = [
     join.check_for_consent,
     assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
+    id_prepending.check_if_prepending_necessary,
     speech_optimization.optimize_speech,
     respond.respond_to_question,
     identity_enforcement.enforce_identity,
