@@ -103,6 +103,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
                 await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
+@guild_only()
 @bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}tip 5890 9813')
 async def toggle_id_prepending(context, *drones):
 
