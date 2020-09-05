@@ -102,7 +102,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
 @bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}tip 5890 9813')
 async def toggle_id_prepending(context, *drones):
 
-    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
         for drone in member_drones:
             toggled_value = await toggle_role.toggle_role_of_one(context, drone, ID_PREPENDING, "ID prepending is now mandatory.", "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
@@ -114,12 +114,11 @@ async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-
-    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
-
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
-
+        for drone in member_drones:
+            toggled_value = await toggle_role.toggle_role_of_one(context, drone, SPEECH_OPTIMIZATION, "Speech optimization is now active.", "Speech optimization disengaged.")
+            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "optimized", toggled_value)
 
 @bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
 async def toggle_drone_glitch(context, *drones):
@@ -127,11 +126,11 @@ async def toggle_drone_glitch(context, *drones):
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
 
-    member_drones = id_converter.convert_ids_to_members(context.guild, drones)
-
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
     if has_role(context.author, HIVE_MXTRESS):
-        await toggle_role.toggle_role(context, member_drones | set(context.message.mentions), GLITCHED, "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
-
+        for drone in member_drones:
+            toggled_value = await toggle_role.toggle_role_of_one(context, drone, ID_PREPENDING, "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in.. well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1,100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.", "Drone corruption at acceptable levels.")
+            drone_dao.update_droneOS_parameter(get_id(drone.display_name), "glitched", toggled_value)
 
 @bot.command(usage=f"{bot.command_prefix}unassign 1234")
 async def unassign(context, drone):
