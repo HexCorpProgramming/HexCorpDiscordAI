@@ -17,13 +17,23 @@ def map_to_object(row, constructor):
 
 class Drone:
 
-    def __init__(self, id: str = None, drone_id: str = None, optimized: bool = None, glitched: bool = None, trusted_users: str = None, last_activity: datetime = None):
+    def __init__(
+        self,
+        id: str = None,
+        drone_id: str = None,
+        optimized: bool = None,
+        glitched: bool = None,
+        trusted_users: str = None,
+        last_activity: datetime = None,
+        id_prepending: bool = None
+    ):
         self.id = id
         self.drone_id = drone_id
         self.optimized = optimized
         self.glitched = glitched
         self.trusted_users = trusted_users
         self.last_activity = last_activity
+        self.id_prepending = id_prepending
 
 
 class Storage:
