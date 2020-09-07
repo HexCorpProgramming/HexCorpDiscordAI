@@ -79,6 +79,19 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
 
+    async def test_optimize_speech_code_and_clarification(self):
+        # setup
+        message = AsyncMock()
+        message.content = "3287 :: 050 :: All drones are cute~"
+        message.author.display_name = "⬡-Drone #3287"
+        message.author.roles = [optimized_role]
+
+        # run
+        await speech_optimization.optimize_speech(message)
+
+        # assert
+        message.delete.assert_called_once()
+
     async def test_optimize_speech_ignore_non_optimized(self):
         # setup
         message = AsyncMock()
