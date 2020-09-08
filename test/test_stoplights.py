@@ -8,6 +8,9 @@ class StoplightsTest(unittest.IsolatedAsyncioTestCase):
     mocked_mod_role = AsyncMock()
     mocked_mod_role.mention = "<!@666666>"
 
+    def setUp(self):
+        StoplightsTest.mocked_mod_role.reset_mock()
+
     @patch("ai.stoplights.get", return_value=mocked_mod_role)
     async def test_alert_mods_and_return_true_if_clock_in_message(self, mocked_get):
 
