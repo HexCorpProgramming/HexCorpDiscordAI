@@ -127,11 +127,12 @@ async def optimize_speech(message: discord.Message):
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
     acceptable_status_code_message = plain_status_code_regex.match(message.content)
+    informative_status_code_message = informative_status_code_regex.match(message.content)
     if has_role(message.author, SPEECH_OPTIMIZATION) and message.content not in get_acceptable_messages(message.author, message.channel.name) and (not acceptable_status_code_message or acceptable_status_code_message.group(1) != get_id(message.author.display_name)):
         await message.delete()
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         return True
-    elif acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name):
+    elif informative_status_code_message or acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name):
         LOGGER.info("Optimizing speech code for drone.")
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)
