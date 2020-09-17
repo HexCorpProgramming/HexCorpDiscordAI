@@ -11,12 +11,8 @@ from db.storage_dao import delete_storage_by_target_id
 LOGGER = logging.getLogger('ai')
 
 
-async def rename_drone(context, old_id, new_id):
-
-    if has_role(context.author, HIVE_MXTRESS) is False or context.channel.name != OFFICE:
-        return
-
-    if len(old_id) != 3 or len(new_id) != 3:
+async def rename_drone(context, old_id: str, new_id: str):
+    if len(old_id) != 4 or len(new_id) != 4:
         return
     if not old_id.isnumeric() or not new_id.isnumeric():
         return

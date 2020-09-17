@@ -1,5 +1,5 @@
 #add nice alias for sourcing
-echo 'alias src="source env/bin/activate"' > ~/.profile 
+echo 'alias src="source env/bin/activate"' >> ~/.profile 
 source ~/.profile 
 
 #install venv and requirements

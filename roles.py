@@ -16,6 +16,8 @@ GLITCHED = "⬡-Glitched"
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
+VOICE = '⬡-Voice'
+
 NITRO_BOOSTER = '⬡-Battery'
 PATREON_SUPPORTER = '⬡-Patreon'
 
