@@ -101,7 +101,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
         target_webhook = await webhook.get_webhook_for_channel(target_channel)
         for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
             if amp_profile is not None:
-                await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+                await target_webhook.send(f'{amp_profile["id"]} :: {message}', username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
 @guild_only()

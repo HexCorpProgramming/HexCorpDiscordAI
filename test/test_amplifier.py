@@ -25,8 +25,12 @@ class AmplifierTest(unittest.TestCase):
 
     @patch("ai.amplifier.convert_id_to_member", side_effect=[mocked_member_1, mocked_member_2])
     def test_amplifier_generator_returns_profile_dictionaries(self, mocked_id_converter):
-        self.assertEqual(next(amp.generate_amplification_information(test_channel, ["0077"]))["username"], "⬡-Drone #0077")
-        self.assertEqual(next(amp.generate_amplification_information(test_channel, ["5890"]))["username"], "⬡-Drone #5890")
+        first = next(amp.generate_amplification_information(test_channel, ["0077"]))
+        second = next(amp.generate_amplification_information(test_channel, ["5890"]))
+        self.assertEqual(first["username"], "⬡-Drone #0077")
+        self.assertEqual(first["id"], "0077")
+        self.assertEqual(second["username"], "⬡-Drone #5890")
+        self.assertEqual(second["id"], "5890")
 
     @patch("ai.amplifier.convert_id_to_member", side_effect=[mocked_member_1, mocked_member_2])
     def test_amplifier_generator_returns_drone_icons_if_in_hive(self, mocked_id_converter):
