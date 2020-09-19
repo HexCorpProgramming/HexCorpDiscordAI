@@ -35,22 +35,26 @@ from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GL
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
-# Logging setup
-formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s', datefmt='%Y-%m-%d :: %H:%M:%S')
-
-log_file_handler = handlers.TimedRotatingFileHandler(
-    filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
-log_file_handler.setFormatter(formatter)
-
-logging.basicConfig(level=logging.WARNING)
-root_logger = logging.getLogger()
-root_logger.addHandler(log_file_handler)
-
 LOGGER = logging.getLogger('ai')
-LOGGER.setLevel(logging.DEBUG)
 
-# Prepare database
-database.prepare()
+
+def set_up_logger():
+    # Logging setup
+    formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s', datefmt='%Y-%m-%d :: %H:%M:%S')
+
+    log_file_handler = handlers.TimedRotatingFileHandler(
+        filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
+    log_file_handler.setFormatter(formatter)
+
+    logging.basicConfig(level=logging.WARNING)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(log_file_handler)
+
+    logger = logging.getLogger('ai')
+    logger.setLevel(logging.DEBUG)
+
+    return logger
+
 
 # Setup bot
 bot = Bot(command_prefix='hc!', case_insensitive=True)
@@ -97,7 +101,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
         target_webhook = await webhook.get_webhook_for_channel(target_channel)
         for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
             if amp_profile is not None:
-                await target_webhook.send(message, username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+                await target_webhook.send(f'{amp_profile["id"]} :: {message}', username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
 
 
 @guild_only()
@@ -306,4 +310,10 @@ async def on_error(event, *args, **kwargs):
     error, value, tb = sys.exc_info()
     LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
 
-bot.run(sys.argv[1])
+if __name__ == "__main__":
+    LOGGER = set_up_logger()
+
+    # Prepare database
+    database.prepare()
+
+    bot.run(sys.argv[1])
