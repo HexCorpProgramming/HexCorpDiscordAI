@@ -24,4 +24,4 @@ def generate_amplification_information(target_channel, drones):
 
         LOGGER.info(f"Valid drone ({drone}) found. Yielding amplification profile.")
 
-        yield {"username": amplifier_drone.display_name, "avatar_url": amplification_avatar}
+        yield {"username": amplifier_drone.display_name, "avatar_url": amplification_avatar, "id": drone}
