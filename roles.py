@@ -13,6 +13,7 @@ HIVE_MXTRESS = 'Drone Hive Mxtress'
 
 SPEECH_OPTIMIZATION = "⬡-Optimized"
 GLITCHED = "⬡-Glitched"
+ID_PREPENDING = "⬡-Prepending"
 
 MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
