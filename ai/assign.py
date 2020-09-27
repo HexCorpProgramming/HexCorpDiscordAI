@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 from discord.utils import get
@@ -26,6 +26,11 @@ def roll_id() -> str:
 async def check_for_assignment_message(message: discord.Message):
 
     if message.channel.name != ASSIGNMENT_CHANNEL:
+        return False
+
+    # member has not been on the server for the required period
+    if message.author.joined_at > datetime.now() - timedelta(hours=24):
+        await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
         return False
 
     # if the message is correct for being added, yay! if not, delete the message and let them know its bad

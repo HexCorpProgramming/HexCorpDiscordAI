@@ -46,14 +46,17 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.delete.assert_not_called()
         self.assertFalse(response)
 
+    @patch("ai.speech_optimization.is_optimized")
     @patch("ai.speech_optimization.send_webhook_with_specific_output")
     @patch("ai.speech_optimization.get_webhook_for_channel")
-    async def test_optimize_speech(self, get_webhook_for_channel, send_webhook_with_specific_output):
+    async def test_optimize_speech(self, get_webhook_for_channel, send_webhook_with_specific_output, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "3287 :: 122"
         message.author.display_name = "⬡-Drone #3287"
         message.author.roles = [optimized_role]
+
+        is_optimized.return_value = True
 
         webhook = AsyncMock()
         get_webhook_for_channel.return_value = webhook
@@ -66,12 +69,15 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         get_webhook_for_channel.assert_called_once_with(message.channel)
         send_webhook_with_specific_output.assert_called_once_with(message, webhook, "3287 :: Code `122` :: Statement :: You are cute.")
 
-    async def test_optimize_speech_invalid(self):
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_invalid(self, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "It is a cute beep boop"
         message.author.display_name = "⬡-Drone #3287"
         message.author.roles = [optimized_role]
+
+        is_optimized.return_value = True
 
         # run
         await speech_optimization.optimize_speech(message)
@@ -79,25 +85,31 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
 
-    async def test_optimize_speech_code_and_clarification(self):
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_code_and_clarification(self, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "3287 :: 050 :: All drones are cute~"
         message.author.display_name = "⬡-Drone #3287"
         message.author.roles = [optimized_role]
 
+        is_optimized.return_value = True
+
         # run
         await speech_optimization.optimize_speech(message)
 
         # assert
         message.delete.assert_called_once()
 
-    async def test_optimize_speech_ignore_non_optimized(self):
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_ignore_non_optimized(self, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "It is a cute beep boop"
         message.author.display_name = "⬡-Drone #3287"
         message.author.roles = []
+
+        is_optimized.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)

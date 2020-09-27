@@ -1,0 +1,1 @@
+ALTER TABLE drone ADD id_prepending BOOL DEFAULT 0;

@@ -25,7 +25,7 @@ def insert_drone(drone: Drone):
     '''
     Inserts the given drone into the table drone.
     '''
-    change('INSERT INTO drone VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity)', vars(drone))
+    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity)', vars(drone))
 
 
 def fetch_drone_with_drone_id(drone_id: str) -> Drone:
@@ -62,3 +62,21 @@ def get_used_drone_ids() -> List[str]:
     '''
     # TODO: unpacking a single column could be extracted into a function
     return [row['drone_id'] for row in fetchall('SELECT drone_id from drone', {})]
+
+
+def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
+    change(f'UPDATE drone SET {column} = :value WHERE id = :discord', {'value': value, 'discord': drone.id})
+    # Hive Mxtress forgive me for I hath concatenated in an SQL query.
+    # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
+
+
+def is_optimized(drone: discord.Member):
+    return bool(fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})['optimized'])
+
+
+def is_glitched(drone: discord.Member):
+    return bool(fetchone('SELECT glitched FROM drone WHERE id = :discord', {'discord': drone.id})['glitched'])
+
+
+def is_prepending_id(drone: discord.Member):
+    return bool(fetchone('SELECT id_prepending FROM drone WHERE id = :discord', {'discord': drone.id})['id_prepending'])

@@ -32,7 +32,7 @@ def prepare():
         c.execute("SELECT * from schema_version")
         LOGGER.info(f'DB schema before migration {c.fetchall()}')
 
-        for script_file in glob.glob("res/db/migrate/*.sql"):
+        for script_file in sorted(glob.glob("res/db/migrate/*.sql")):
             with open(script_file) as script:
                 script_hash = sha256(script.read().encode()).hexdigest()
                 c.execute("SELECT hash FROM schema_version WHERE version=:script_file", {

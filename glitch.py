@@ -1,6 +1,6 @@
 import discord
 import random
-from roles import GLITCHED, has_role
+from db.drone_dao import is_glitched
 import re
 
 combining_characters = list(range(0x0300, 0x036F))
@@ -21,7 +21,7 @@ glitch_template = re.compile(r'(\d{4} :: )(.*)')
 
 
 def glitch_if_applicable(text: str, author: discord.Member):
-    if has_role(author, GLITCHED):
+    if is_glitched(author):
         template_match = glitch_template.match(text)
         if template_match:
             return template_match.group(1) + glitch(template_match.group(2))
