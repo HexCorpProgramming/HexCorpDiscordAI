@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
 
+from datetime import datetime, timedelta
+
 import roles
 import ai.assign as assign
 from channels import ASSIGNMENT_CHANNEL
@@ -21,6 +23,7 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         test_message.channel.name = ASSIGNMENT_CHANNEL
         test_message.author.display_name = "Future Drone 1234"
         test_message.author.mention = "<mention_placeholder>"
+        test_message.author.joined_at = datetime.now() - timedelta(weeks=2)
         test_message.guild.roles = [associate_role, drone_role]
 
     async def test_request_reject(self):
@@ -49,3 +52,8 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
     async def test_id_already_used(self, get_used_drone_ids):
         self.assertTrue(await assign.check_for_assignment_message(test_message))
         test_message.channel.send.assert_called_once_with(f'{test_message.author.mention}: ID 1234 present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
+
+    async def test_too_early(self):
+        test_message.author.joined_at = datetime.now() - timedelta(hours=20)
+        self.assertFalse(await assign.check_for_assignment_message(test_message))
+        test_message.channel.send.assert_called_once_with("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
