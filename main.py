@@ -355,15 +355,19 @@ async def on_member_remove(member: discord.Member):
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
     await mantra_handler.load_mantra()
+    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
+        checking_for_completed_orders = True
 
     if not reporting_storage:
         asyncio.ensure_future(storage.start_report_storage(bot))
+        reporting_storage = True
 
     if not checking_for_stored_drones_to_release:
         asyncio.ensure_future(storage.start_release_timed(bot))
+        checking_for_stored_drones_to_release = True
 
 
 @bot.event
