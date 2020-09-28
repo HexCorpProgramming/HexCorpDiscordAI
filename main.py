@@ -153,7 +153,7 @@ async def toggle_speech_optimization(context, *drones):
         channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
         for drone in member_drones:
-            if drone_dao.is_prepending_id(drone):
+            if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
                 await channel_webhook.send(
@@ -185,7 +185,7 @@ async def toggle_drone_glitch(context, *drones):
         channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
         for drone in member_drones:
-            if drone_dao.is_prepending_id(drone):
+            if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
                 await channel_webhook.send(
