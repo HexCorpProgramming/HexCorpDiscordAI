@@ -6,6 +6,7 @@ import sys
 import asyncio
 import logging
 import random
+import re
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
@@ -317,6 +318,9 @@ async def on_message(message: discord.Message):
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Processing additional commands.")
+
+    # filter out potential drone IDs so they can use commands as well
+    message.content = re.match(r"(?:\d{4} :: )?(.*)", message.content).group(1)
     await bot.process_commands(message)
 
 
