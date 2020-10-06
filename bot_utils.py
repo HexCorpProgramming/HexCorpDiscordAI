@@ -1,6 +1,8 @@
 import re
 from typing import Optional
 
+COMMAND_PREFIX = 'hc!'
+
 
 def get_id(username: str) -> Optional[str]:
     '''

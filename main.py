@@ -6,7 +6,6 @@ import sys
 import asyncio
 import logging
 import random
-import re
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
@@ -29,7 +28,7 @@ import ai.add_voice as add_voice
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
-from bot_utils import get_id
+from bot_utils import get_id, COMMAND_PREFIX
 import id_converter
 # Database
 from db import database
@@ -61,7 +60,7 @@ def set_up_logger():
 
 
 # Setup bot
-bot = Bot(command_prefix='hc!', case_insensitive=True)
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
@@ -319,8 +318,6 @@ async def on_message(message: discord.Message):
 
     LOGGER.info("Processing additional commands.")
 
-    # filter out potential drone IDs so they can use commands as well
-    message.content = re.match(r"(?:\d{4} :: )?(.*)", message.content).group(1)
     await bot.process_commands(message)
 
 
