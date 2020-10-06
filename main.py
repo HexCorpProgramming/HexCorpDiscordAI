@@ -125,19 +125,13 @@ async def toggle_id_prepending(context, *drones):
             if drone_dao.is_prepending_id(drone):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "ID prepending is now mandatory.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "ID prepending is now mandatory."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
@@ -156,19 +150,13 @@ async def toggle_speech_optimization(context, *drones):
             if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Speech optimization disengaged.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Speech optimization disengaged."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "optimized", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "Speech optimization is now active.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Speech optimization is now active."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
@@ -188,19 +176,13 @@ async def toggle_drone_glitch(context, *drones):
             if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Drone corruption at acceptable levels.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Drone corruption at acceptable levels."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "glitched", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
