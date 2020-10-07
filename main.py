@@ -28,7 +28,7 @@ import ai.add_voice as add_voice
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
-from bot_utils import get_id
+from bot_utils import get_id, COMMAND_PREFIX
 import id_converter
 # Database
 from db import database
@@ -60,7 +60,7 @@ def set_up_logger():
 
 
 # Setup bot
-bot = Bot(command_prefix='hc!', case_insensitive=True)
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
@@ -317,6 +317,7 @@ async def on_message(message: discord.Message):
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Processing additional commands.")
+
     await bot.process_commands(message)
 
 
