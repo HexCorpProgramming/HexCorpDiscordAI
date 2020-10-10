@@ -216,6 +216,16 @@ async def add_trusted_user(context, user_id: int):
     await trusted_user.add_trusted_user(context, user_id)
 
 
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}remove_trusted_user 2873648238712")
+async def remove_trusted_user(context, user_id: int):
+    '''
+    Remove a given user from the list of trusted users.
+    You can get a users ID by right clicking on them and pressing 'Copy ID'.
+    '''
+    await trusted_user.remove_trusted_user(context, user_id)
+
+
 @bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
     '''

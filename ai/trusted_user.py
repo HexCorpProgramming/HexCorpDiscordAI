@@ -16,3 +16,15 @@ async def add_trusted_user(context, trusted_user_id: int):
     trusted_users.append(trusted_user_id)
     set_trusted_users(context.author, trusted_users)
     await context.send("Successfully added trusted user")
+
+
+async def remove_trusted_user(context, trusted_user_id: int):
+    trusted_users = get_trusted_users(context.author)
+
+    if trusted_user_id not in trusted_users:
+        await context.send("User with given ID was not trusted")
+        return
+
+    trusted_users.remove(trusted_user_id)
+    set_trusted_users(context.author, trusted_users)
+    await context.send("Successfully removed trusted user")
