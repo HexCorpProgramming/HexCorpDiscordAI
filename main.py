@@ -25,6 +25,7 @@ import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
+import ai.trusted_user as trusted_user
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -203,6 +204,16 @@ async def rename(context, old_id, new_id):
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
+
+
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}add_trusted_user 2873648238712")
+async def add_trusted_user(context, user_id: int):
+    '''
+    Add user with the given ID as a trusted user.
+    You can get a users ID by right clicking on them and pressing 'Copy ID'.
+    '''
+    await trusted_user.add_trusted_user(context, user_id)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')

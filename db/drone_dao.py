@@ -70,16 +70,29 @@ def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
     # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
 
 
-def is_optimized(drone: discord.Member):
+def is_optimized(drone: discord.Member) -> bool:
     optimized_drone = fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})
     return optimized_drone is not None and bool(optimized_drone['optimized'])
 
 
-def is_glitched(drone: discord.Member):
+def is_glitched(drone: discord.Member) -> bool:
     glitched_drone = fetchone('SELECT glitched FROM drone WHERE id = :discord', {'discord': drone.id})
     return glitched_drone is not None and bool(glitched_drone['glitched'])
 
 
-def is_prepending_id(drone: discord.Member):
+def is_prepending_id(drone: discord.Member) -> bool:
     prepending_drone = fetchone('SELECT id_prepending FROM drone WHERE id = :discord', {'discord': drone.id})
     return prepending_drone is not None and bool(prepending_drone['id_prepending'])
+
+
+def get_trusted_users(drone: discord.User) -> List[int]:
+    trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': drone.id})['trusted_users']
+    if not trusted_users_text:
+        return []
+    else:
+        return [int(user) for user in trusted_users_text.split("|")]
+
+
+def set_trusted_users(drone: discord.Member, trusted_users: List[int]):
+    trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
+    change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': drone.id})
