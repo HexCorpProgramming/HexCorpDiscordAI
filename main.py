@@ -117,12 +117,13 @@ async def toggle_id_prepending(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=ID_PREPENDING)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=ID_PREPENDING)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_prepending_id(drone):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
                 await drone.remove_roles(role)
@@ -142,12 +143,13 @@ async def toggle_speech_optimization(context, *drones):
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
@@ -168,12 +170,13 @@ async def toggle_drone_glitch(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=GLITCHED)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=GLITCHED)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
