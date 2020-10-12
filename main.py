@@ -210,23 +210,25 @@ async def rename(context, old_id, new_id):
 
 
 @dm_only()
-@bot.command(usage=f"{bot.command_prefix}add_trusted_user 2873648238712")
-async def add_trusted_user(context, user_id: int):
+@bot.command(usage=f"{bot.command_prefix}add_trusted_user \"A trusted user\"")
+async def add_trusted_user(context, user_name: str):
     '''
-    Add user with the given ID as a trusted user.
-    You can get a users ID by right clicking on them and pressing 'Copy ID'.
+    Add user with the given nickname as a trusted user.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
     '''
-    await trusted_user.add_trusted_user(context, user_id)
+    await trusted_user.add_trusted_user(context, user_name)
 
 
 @dm_only()
-@bot.command(usage=f"{bot.command_prefix}remove_trusted_user 2873648238712")
-async def remove_trusted_user(context, user_id: int):
+@bot.command(usage=f"{bot.command_prefix}remove_trusted_user \"The untrusted user\"")
+async def remove_trusted_user(context, user_name: str):
     '''
     Remove a given user from the list of trusted users.
-    You can get a users ID by right clicking on them and pressing 'Copy ID'.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
     '''
-    await trusted_user.remove_trusted_user(context, user_id)
+    await trusted_user.remove_trusted_user(context, user_name)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
