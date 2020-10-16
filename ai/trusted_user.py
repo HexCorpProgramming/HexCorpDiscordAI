@@ -31,8 +31,7 @@ async def add_trusted_user(context, trusted_user_name: str):
 
     # notify trusted user
     drone_name = context.bot.guilds[0].get_member(context.author.id).display_name
-    trusted_user_dm = await trusted_user.create_dm()
-    await trusted_user_dm.send(f"You were added as a trusted user by \"{drone_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
+    await trusted_user.send(f"You were added as a trusted user by \"{drone_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
 
 
 async def remove_trusted_user(context, trusted_user_name: str):

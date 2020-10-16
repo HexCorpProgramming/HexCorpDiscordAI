@@ -14,9 +14,6 @@ class TrustedUserTes(unittest.IsolatedAsyncioTestCase):
         self.trusted_user_member.id = 872635821
         self.trusted_user_member.display_name = "⬡-Drone #9813"
 
-        self.trusted_user_dm = AsyncMock()
-        self.trusted_user_member.create_dm = AsyncMock(return_value=self.trusted_user_dm)
-
         self.context = AsyncMock()
         self.context.bot.guilds[0].members = [self.drone_member, self.trusted_user_member]
         self.context.author.id = self.drone_member.id
@@ -35,7 +32,7 @@ class TrustedUserTes(unittest.IsolatedAsyncioTestCase):
         set_trusted_users.assert_called_once_with(self.context.author, [self.trusted_user_member.id])
         self.context.send.assert_called_once_with(f"Successfully added trusted user \"{self.trusted_user_member.display_name}\"")
         self.context.bot.guilds[0].get_member.assert_called_once_with(self.drone_member.id)
-        self.trusted_user_dm.send.assert_called_once_with(f"You were added as a trusted user by \"{self.drone_member.display_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
+        self.trusted_user_member.send.assert_called_once_with(f"You were added as a trusted user by \"{self.drone_member.display_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
 
     @patch("ai.trusted_user.get_trusted_users")
     @patch("ai.trusted_user.set_trusted_users")
