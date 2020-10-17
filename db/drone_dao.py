@@ -53,6 +53,7 @@ def get_discord_id_of_drone(drone_id: str) -> str:
     '''
     Returns the discord ID associated with a given drone
     '''
+    # TODO: needs to be reworked; does not do what it says on the tin
     return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 

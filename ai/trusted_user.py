@@ -1,14 +1,15 @@
 import logging
 
 from discord.utils import get
+import discord
 
-from db.drone_dao import get_trusted_users, set_trusted_users
+from db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone
 
 LOGGER = logging.getLogger('ai')
 
 
 async def add_trusted_user(context, trusted_user_name: str):
-    trusted_user = get(context.bot.guilds[0].members, display_name=trusted_user_name)
+    trusted_user = find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
 
     if trusted_user is None:
         await context.send(f"No user with name \"{trusted_user_name}\" found")
@@ -35,7 +36,7 @@ async def add_trusted_user(context, trusted_user_name: str):
 
 
 async def remove_trusted_user(context, trusted_user_name: str):
-    trusted_user = get(context.bot.guilds[0].members, display_name=trusted_user_name)
+    trusted_user = find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
 
     if trusted_user is None:
         await context.send(f"No user with name \"{trusted_user_name}\" found")
@@ -50,3 +51,16 @@ async def remove_trusted_user(context, trusted_user_name: str):
     trusted_users.remove(trusted_user.id)
     set_trusted_users(context.author, trusted_users)
     await context.send(f"Successfully removed trusted user \"{trusted_user_name}\"")
+
+
+def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> discord.Member:
+    user = get(guild.members, display_name=id)
+
+    if user is not None:
+        return user
+
+    drone = get_discord_id_of_drone(id)
+    if drone is not None:
+        return guild.get_member(drone.id)
+
+    return None
