@@ -26,6 +26,7 @@ import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
+import ai.drone_os_status as drone_os_status
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -122,7 +123,7 @@ async def toggle_id_prepending(context, *drones):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in member_drones:
-        trusted_users = drone_dao.get_trusted_users(drone)
+        trusted_users = drone_dao.get_trusted_users(drone.id)
         if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_prepending_id(drone):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
@@ -148,7 +149,7 @@ async def toggle_speech_optimization(context, *drones):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in member_drones:
-        trusted_users = drone_dao.get_trusted_users(drone)
+        trusted_users = drone_dao.get_trusted_users(drone.id)
         if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
@@ -175,7 +176,7 @@ async def toggle_drone_glitch(context, *drones):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in member_drones:
-        trusted_users = drone_dao.get_trusted_users(drone)
+        trusted_users = drone_dao.get_trusted_users(drone.id)
         if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
@@ -207,6 +208,19 @@ async def rename(context, old_id, new_id):
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
+
+
+@dm_only()
+@bot.command(usage=f'{bot.command_prefix}drone_status 9813')
+async def drone_status(context, drone_id: str):
+    '''
+    Displays all the DroneOS information you have access to about a drone.
+    '''
+    response = drone_os_status.get_status(drone_id, context.author.id)
+    if response is None:
+        await context.send(f"No drone with ID {drone_id} found.")
+    if response is not None:
+        await context.send(embed=response)
 
 
 @dm_only()
