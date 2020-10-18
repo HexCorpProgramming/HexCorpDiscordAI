@@ -7,6 +7,7 @@ from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
 from db.data_objects import Drone, map_to_object
+from resources import HIVE_MXTRESS_USER_ID
 
 
 def add_new_drone_members(members: List[discord.Member]):
@@ -17,7 +18,7 @@ def add_new_drone_members(members: List[discord.Member]):
         if has_any_role(member, [DRONE, STORED]):
 
             if fetchone("SELECT id FROM drone WHERE id=:id", {"id": member.id}) is None:
-                new_drone = Drone(member.id, get_id(member.display_name), False, False, "", datetime.now())
+                new_drone = Drone(member.id, get_id(member.display_name), False, False, HIVE_MXTRESS_USER_ID, datetime.now())
                 insert_drone(new_drone)
 
 
