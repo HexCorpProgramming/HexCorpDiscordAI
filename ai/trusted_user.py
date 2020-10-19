@@ -4,6 +4,7 @@ from discord.utils import get
 import discord
 
 from db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone
+from resources import HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
 
@@ -43,6 +44,10 @@ async def remove_trusted_user(context, trusted_user_name: str):
         return
 
     trusted_users = get_trusted_users(context.author)
+
+    if trusted_user.id == HIVE_MXTRESS_USER_ID:
+        await context.send("Can not remove the Hive Mxtress as a trusted user")
+        return
 
     if trusted_user.id not in trusted_users:
         await context.send(f"User with name \"{trusted_user_name}\" was not trusted")
