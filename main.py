@@ -280,7 +280,7 @@ async def ai_status(context):
 
 
 @guild_only()
-@bot.command(usage=f'{bot.command_prefix}release 9813')
+@bot.command(usage=f'{bot.command_prefix}release 9813', brief="Hive Mxtress")
 async def release(context, drone):
     '''
     Allows the Hive Mxtress to release a drone from storage.
