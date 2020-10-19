@@ -238,10 +238,10 @@ async def help(context):
         else:
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
-    await context.send(embed=commands_card)
     # TODO: hidden until DroneOS is officially released
-    # await context.send(embed=droneOS_card)
-    await context.send(embed=Hive_Mxtress_card)
+    # await context.author.send(embed=droneOS_card)
+    await context.author.send(embed=commands_card)
+    await context.author.send(embed=Hive_Mxtress_card)
 
 
 @guild_only()
