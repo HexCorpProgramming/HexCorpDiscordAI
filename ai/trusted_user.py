@@ -20,7 +20,7 @@ async def add_trusted_user(context, trusted_user_name: str):
         await context.send("Can not add yourself to your list of trusted users")
         return
 
-    trusted_users = get_trusted_users(context.author)
+    trusted_users = get_trusted_users(context.author.id)
 
     if trusted_user.id in trusted_users:
         await context.send(f"User with name \"{trusted_user_name}\" is already trusted")
@@ -28,7 +28,7 @@ async def add_trusted_user(context, trusted_user_name: str):
 
     # report back to drone
     trusted_users.append(trusted_user.id)
-    set_trusted_users(context.author, trusted_users)
+    set_trusted_users(context.author.id, trusted_users)
     await context.send(f"Successfully added trusted user \"{trusted_user_name}\"")
 
     # notify trusted user
@@ -43,7 +43,7 @@ async def remove_trusted_user(context, trusted_user_name: str):
         await context.send(f"No user with name \"{trusted_user_name}\" found")
         return
 
-    trusted_users = get_trusted_users(context.author)
+    trusted_users = get_trusted_users(context.author.id)
 
     if trusted_user.id == HIVE_MXTRESS_USER_ID:
         await context.send("Can not remove the Hive Mxtress as a trusted user")
@@ -54,7 +54,7 @@ async def remove_trusted_user(context, trusted_user_name: str):
         return
 
     trusted_users.remove(trusted_user.id)
-    set_trusted_users(context.author, trusted_users)
+    set_trusted_users(context.author.id, trusted_users)
     await context.send(f"Successfully removed trusted user \"{trusted_user_name}\"")
 
 

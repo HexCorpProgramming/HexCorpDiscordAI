@@ -87,14 +87,14 @@ def is_prepending_id(drone: discord.Member) -> bool:
     return prepending_drone is not None and bool(prepending_drone['id_prepending'])
 
 
-def get_trusted_users(drone: discord.User) -> List[int]:
-    trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': drone.id})['trusted_users']
+def get_trusted_users(discord_id: int) -> List[int]:
+    trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
     if not trusted_users_text:
         return []
     else:
         return [int(user) for user in trusted_users_text.split("|")]
 
 
-def set_trusted_users(drone: discord.Member, trusted_users: List[int]):
+def set_trusted_users(discord_id: int, trusted_users: List[int]):
     trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
-    change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': drone.id})
+    change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': discord_id})
