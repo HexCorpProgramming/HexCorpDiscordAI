@@ -35,6 +35,13 @@ def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
+def fetch_drone_with_id(discord_id: int) -> Drone:
+    '''
+    Finds a drone with the given discord_id.
+    '''
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
+
+
 def rename_drone_in_db(old_id: str, new_id: str):
     '''
     Changes the ID of a drone.

@@ -34,7 +34,7 @@ import id_converter
 from db import database
 from db import drone_dao
 # Constants
-from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
+from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -329,9 +329,9 @@ async def on_member_join(member: discord.Member):
 @bot.event
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    if has_any_role(member, [DRONE, STORED]):
-        drone_id = get_id(member.display_name)
-        drone_management.remove_drone_from_db(drone_id)
+    drone = drone_dao.fetch_drone_with_id(member.id)
+    if drone:
+        drone_management.remove_drone_from_db(drone.drone_id)
 
 
 @bot.event
