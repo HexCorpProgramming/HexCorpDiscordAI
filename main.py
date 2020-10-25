@@ -111,10 +111,10 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
 
 
 @guild_only()
-@bot.command(aliases=['tid'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
+@bot.command(aliases=['tid'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
 async def toggle_id_prepending(context, *drones):
     '''
-    Allows the Hive Mxtress to enforce mandatory ID prepending upon specified drones.
+    Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
@@ -138,7 +138,7 @@ async def toggle_id_prepending(context, *drones):
 
 
 @guild_only()
-@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
+@bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
 async def toggle_speech_optimization(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
@@ -164,7 +164,7 @@ async def toggle_speech_optimization(context, *drones):
 
 
 @guild_only()
-@bot.command(aliases=['glitch', 'tdg'], brief="Hive Mxtress", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
+@bot.command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
 async def toggle_drone_glitch(context, *drones):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
@@ -191,7 +191,7 @@ async def toggle_drone_glitch(context, *drones):
 
 
 @guild_only()
-@bot.command(usage=f"{bot.command_prefix}unassign 1234")
+@bot.command(usage=f"{bot.command_prefix}unassign 1234", brief="Hive Mxtress")
 async def unassign(context, drone):
     '''
     Allows the Hive Mxtress to return a drone back to the status of an Associate.
@@ -201,7 +201,7 @@ async def unassign(context, drone):
 
 
 @guild_only()
-@bot.command(usage=f'{bot.command_prefix}rename 1234 3412')
+@bot.command(usage=f'{bot.command_prefix}rename 1234 3412', brief="Hive Mxtress")
 async def rename(context, old_id, new_id):
     '''
     Allows the Hive Mxtress to change the ID of a drone.
@@ -211,7 +211,7 @@ async def rename(context, old_id, new_id):
 
 
 @dm_only()
-@bot.command(usage=f'{bot.command_prefix}drone_status 9813')
+@bot.command(usage=f'{bot.command_prefix}drone_status 9813', brief="DroneOS")
 async def drone_status(context, drone_id: str):
     '''
     Displays all the DroneOS information you have access to about a drone.
@@ -224,7 +224,7 @@ async def drone_status(context, drone_id: str):
 
 
 @dm_only()
-@bot.command(usage=f"{bot.command_prefix}add_trusted_user \"A trusted user\"")
+@bot.command(usage=f"{bot.command_prefix}add_trusted_user \"A trusted user\"", brief="DroneOS")
 async def add_trusted_user(context, user_name: str):
     '''
     Add user with the given nickname as a trusted user.
@@ -235,7 +235,7 @@ async def add_trusted_user(context, user_name: str):
 
 
 @dm_only()
-@bot.command(usage=f"{bot.command_prefix}remove_trusted_user \"The untrusted user\"")
+@bot.command(usage=f"{bot.command_prefix}remove_trusted_user \"The untrusted user\"", brief="DroneOS")
 async def remove_trusted_user(context, user_name: str):
     '''
     Remove a given user from the list of trusted users.
@@ -279,8 +279,8 @@ async def help(context):
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     # TODO: hidden until DroneOS is officially released
-    # await context.author.send(embed=droneOS_card)
     await context.author.send(embed=commands_card)
+    await context.author.send(embed=droneOS_card)
     await context.author.send(embed=Hive_Mxtress_card)
 
 
