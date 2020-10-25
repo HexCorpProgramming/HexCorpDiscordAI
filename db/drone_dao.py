@@ -7,6 +7,7 @@ from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
 from db.data_objects import Drone, map_to_object
+from resources import HIVE_MXTRESS_USER_ID
 
 
 def add_new_drone_members(members: List[discord.Member]):
@@ -17,7 +18,7 @@ def add_new_drone_members(members: List[discord.Member]):
         if has_any_role(member, [DRONE, STORED]):
 
             if fetchone("SELECT id FROM drone WHERE id=:id", {"id": member.id}) is None:
-                new_drone = Drone(member.id, get_id(member.display_name), False, False, "", datetime.now())
+                new_drone = Drone(member.id, get_id(member.display_name), False, False, HIVE_MXTRESS_USER_ID, datetime.now())
                 insert_drone(new_drone)
 
 
@@ -33,6 +34,13 @@ def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     Finds a drone with the given drone_id.
     '''
     return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+
+
+def fetch_drone_with_id(discord_id: int) -> Drone:
+    '''
+    Finds a drone with the given discord_id.
+    '''
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
 
 
 def rename_drone_in_db(old_id: str, new_id: str):
@@ -53,6 +61,7 @@ def get_discord_id_of_drone(drone_id: str) -> str:
     '''
     Returns the discord ID associated with a given drone
     '''
+    # TODO: needs to be reworked; does not do what it says on the tin
     return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
@@ -70,16 +79,29 @@ def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
     # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
 
 
-def is_optimized(drone: discord.Member):
+def is_optimized(drone: discord.Member) -> bool:
     optimized_drone = fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})
     return optimized_drone is not None and bool(optimized_drone['optimized'])
 
 
-def is_glitched(drone: discord.Member):
+def is_glitched(drone: discord.Member) -> bool:
     glitched_drone = fetchone('SELECT glitched FROM drone WHERE id = :discord', {'discord': drone.id})
     return glitched_drone is not None and bool(glitched_drone['glitched'])
 
 
-def is_prepending_id(drone: discord.Member):
+def is_prepending_id(drone: discord.Member) -> bool:
     prepending_drone = fetchone('SELECT id_prepending FROM drone WHERE id = :discord', {'discord': drone.id})
     return prepending_drone is not None and bool(prepending_drone['id_prepending'])
+
+
+def get_trusted_users(discord_id: int) -> List[int]:
+    trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
+    if not trusted_users_text:
+        return []
+    else:
+        return [int(user) for user in trusted_users_text.split("|")]
+
+
+def set_trusted_users(discord_id: int, trusted_users: List[int]):
+    trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
+    change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': discord_id})

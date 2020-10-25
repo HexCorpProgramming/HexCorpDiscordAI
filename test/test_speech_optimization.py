@@ -67,7 +67,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
         get_webhook_for_channel.assert_called_once_with(message.channel)
-        send_webhook_with_specific_output.assert_called_once_with(message, webhook, "3287 :: Code `122` :: Statement :: You are cute.")
+        send_webhook_with_specific_output.assert_called_once_with(message.channel, message.author, webhook, "3287 :: Code `122` :: Statement :: You are cute.")
 
     @patch("ai.speech_optimization.is_optimized")
     async def test_optimize_speech_invalid(self, is_optimized):

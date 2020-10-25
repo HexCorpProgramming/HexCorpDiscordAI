@@ -25,16 +25,18 @@ import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
+import ai.trusted_user as trusted_user
+import ai.drone_os_status as drone_os_status
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
-from bot_utils import get_id
+from bot_utils import get_id, COMMAND_PREFIX
 import id_converter
 # Database
 from db import database
 from db import drone_dao
 # Constants
-from roles import has_any_role, has_role, DRONE, STORED, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
+from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -60,7 +62,7 @@ def set_up_logger():
 
 
 # Setup bot
-bot = Bot(command_prefix='hc!', case_insensitive=True)
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True)
 bot.remove_command("help")
 
 # Instance modules
@@ -116,28 +118,23 @@ async def toggle_id_prepending(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=ID_PREPENDING)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=ID_PREPENDING)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_prepending_id(drone):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "ID prepending is now mandatory.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "ID prepending is now mandatory."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
@@ -147,28 +144,23 @@ async def toggle_speech_optimization(context, *drones):
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Speech optimization disengaged.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Speech optimization disengaged."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "optimized", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "Speech optimization is now active.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Speech optimization is now active."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
@@ -179,28 +171,23 @@ async def toggle_drone_glitch(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=GLITCHED)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=GLITCHED)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
-                await channel_webhook.send(
-                    "Drone corruption at acceptable levels.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Drone corruption at acceptable levels."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "glitched", True)
                 await drone.add_roles(role)
-                await channel_webhook.send(
-                    "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                    username=drone.display_name,
-                    avatar_url=drone.avatar_url
-                )
+                message = "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels."
+                await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
 @guild_only()
@@ -221,6 +208,41 @@ async def rename(context, old_id, new_id):
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
+
+
+@dm_only()
+@bot.command(usage=f'{bot.command_prefix}drone_status 9813')
+async def drone_status(context, drone_id: str):
+    '''
+    Displays all the DroneOS information you have access to about a drone.
+    '''
+    response = drone_os_status.get_status(drone_id, context.author.id)
+    if response is None:
+        await context.send(f"No drone with ID {drone_id} found.")
+    if response is not None:
+        await context.send(embed=response)
+
+
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}add_trusted_user \"A trusted user\"")
+async def add_trusted_user(context, user_name: str):
+    '''
+    Add user with the given nickname as a trusted user.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
+    '''
+    await trusted_user.add_trusted_user(context, user_name)
+
+
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}remove_trusted_user \"The untrusted user\"")
+async def remove_trusted_user(context, user_name: str):
+    '''
+    Remove a given user from the list of trusted users.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
+    '''
+    await trusted_user.remove_trusted_user(context, user_name)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
@@ -256,10 +278,10 @@ async def help(context):
         else:
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
-    await context.send(embed=commands_card)
     # TODO: hidden until DroneOS is officially released
-    # await context.send(embed=droneOS_card)
-    await context.send(embed=Hive_Mxtress_card)
+    # await context.author.send(embed=droneOS_card)
+    await context.author.send(embed=commands_card)
+    await context.author.send(embed=Hive_Mxtress_card)
 
 
 @guild_only()
@@ -298,7 +320,7 @@ async def ai_status(context):
 
 
 @guild_only()
-@bot.command(usage=f'{bot.command_prefix}release 9813')
+@bot.command(usage=f'{bot.command_prefix}release 9813', brief="Hive Mxtress")
 async def release(context, drone):
     '''
     Allows the Hive Mxtress to release a drone from storage.
@@ -335,6 +357,7 @@ async def on_message(message: discord.Message):
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Processing additional commands.")
+
     await bot.process_commands(message)
 
 
@@ -346,9 +369,9 @@ async def on_member_join(member: discord.Member):
 @bot.event
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    if has_any_role(member, [DRONE, STORED]):
-        drone_id = get_id(member.display_name)
-        drone_management.remove_drone_from_db(drone_id)
+    drone = drone_dao.fetch_drone_with_id(member.id)
+    if drone:
+        drone_management.remove_drone_from_db(drone.drone_id)
 
 
 @bot.event

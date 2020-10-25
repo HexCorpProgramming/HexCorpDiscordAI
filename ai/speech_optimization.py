@@ -138,7 +138,7 @@ async def optimize_speech(message: discord.Message):
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)
         if output:
-            await send_webhook_with_specific_output(message, webhook, output)
+            await send_webhook_with_specific_output(message.channel, message.author, webhook, output)
         return True
     else:
         return False
