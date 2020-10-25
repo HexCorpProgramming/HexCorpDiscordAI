@@ -45,7 +45,7 @@ async def remove_trusted_user(context, trusted_user_name: str):
 
     trusted_users = get_trusted_users(context.author.id)
 
-    if trusted_user.id == HIVE_MXTRESS_USER_ID:
+    if str(trusted_user.id) == HIVE_MXTRESS_USER_ID:
         await context.send("Can not remove the Hive Mxtress as a trusted user")
         return
 
