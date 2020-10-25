@@ -25,6 +25,8 @@ import ai.status as status
 import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
+import ai.trusted_user as trusted_user
+import ai.drone_os_status as drone_os_status
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -116,12 +118,13 @@ async def toggle_id_prepending(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=ID_PREPENDING)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=ID_PREPENDING)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_prepending_id(drone):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
                 await drone.remove_roles(role)
@@ -141,12 +144,13 @@ async def toggle_speech_optimization(context, *drones):
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=SPEECH_OPTIMIZATION)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_optimized(drone):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
@@ -167,12 +171,13 @@ async def toggle_drone_glitch(context, *drones):
     '''
 
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-    if has_role(context.author, HIVE_MXTRESS):
 
-        role = get(context.guild.roles, name=GLITCHED)
-        channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+    role = get(context.guild.roles, name=GLITCHED)
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-        for drone in member_drones:
+    for drone in member_drones:
+        trusted_users = drone_dao.get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             if drone_dao.is_glitched(drone):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
@@ -203,6 +208,41 @@ async def rename(context, old_id, new_id):
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
         await drone_management.rename_drone(context, old_id, new_id)
+
+
+@dm_only()
+@bot.command(usage=f'{bot.command_prefix}drone_status 9813')
+async def drone_status(context, drone_id: str):
+    '''
+    Displays all the DroneOS information you have access to about a drone.
+    '''
+    response = drone_os_status.get_status(drone_id, context.author.id)
+    if response is None:
+        await context.send(f"No drone with ID {drone_id} found.")
+    if response is not None:
+        await context.send(embed=response)
+
+
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}add_trusted_user \"A trusted user\"")
+async def add_trusted_user(context, user_name: str):
+    '''
+    Add user with the given nickname as a trusted user.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
+    '''
+    await trusted_user.add_trusted_user(context, user_name)
+
+
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}remove_trusted_user \"The untrusted user\"")
+async def remove_trusted_user(context, user_name: str):
+    '''
+    Remove a given user from the list of trusted users.
+    Use quotation marks if the username contains spaces.
+    This command is used in DMs with the AI.
+    '''
+    await trusted_user.remove_trusted_user(context, user_name)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')

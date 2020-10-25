@@ -10,6 +10,7 @@ from channels import ASSIGNMENT_CHANNEL
 from db.drone_dao import insert_drone, get_used_drone_ids
 from db.data_objects import Drone
 from bot_utils import get_id
+from resources import HIVE_MXTRESS_USER_ID
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -58,7 +59,7 @@ async def check_for_assignment_message(message: discord.Message):
         await message.author.edit(nick=assigned_nick)
 
         # add new drone to DB
-        new_drone = Drone(message.author.id, assigned_id, False, False, "", datetime.now())
+        new_drone = Drone(message.author.id, assigned_id, False, False, HIVE_MXTRESS_USER_ID, datetime.now())
         insert_drone(new_drone)
 
         await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
