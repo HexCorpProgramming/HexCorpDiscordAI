@@ -27,6 +27,7 @@ import ai.drone_management as drone_management
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
+import ai.status_message as status_messages
 from ai.mantras import Mantra_Handler
 import webhook
 # Utils
@@ -72,6 +73,7 @@ mantra_handler = Mantra_Handler(bot)
 checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
+updating_status_message = False
 
 # Register message listeners.
 message_listeners = [
@@ -378,7 +380,7 @@ async def on_member_remove(member: discord.Member):
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
     await mantra_handler.load_mantra()
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release
+    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
@@ -391,6 +393,10 @@ async def on_ready():
     if not checking_for_stored_drones_to_release:
         asyncio.ensure_future(storage.start_release_timed(bot))
         checking_for_stored_drones_to_release = True
+
+    if not updating_status_message:
+        asyncio.ensure_future(status_messages.start_change_status(bot))
+        updating_status_message = True
 
 
 @bot.event
