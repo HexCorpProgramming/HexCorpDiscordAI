@@ -33,7 +33,7 @@ def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     '''
     Finds a drone with the given drone_id.
     '''
-    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, id_prepending, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
 def fetch_drone_with_id(discord_id: int) -> Drone:
