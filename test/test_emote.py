@@ -1,12 +1,12 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 import discord
 from ai.emote import generate_big_text
 
 
 class TestEmote(unittest.TestCase):
 
-    mock_guild = discord.Guild(data={"id": 5890}, state=None)
+    mock_guild = AsyncMock(data={"id": 5890}, state=None)
 
     normal_mock_emoji = discord.Emoji(guild=mock_guild, state=None, data={"name": "hex_h", "id": 589098133287000006, "require_colons": True, "managed": False})
     extra_custom_emoji = discord.Emoji(guild=mock_guild, state=None, data={"name": "unnecessary_noise", "id": 216154654256398347, "require_colons": True, "managed": False})
