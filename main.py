@@ -62,7 +62,10 @@ def set_up_logger():
 
 
 # Setup bot
-bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True)
+intents = discord.Intents.default()
+intents.members = True
+
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents)
 bot.remove_command("help")
 
 # Instance modules
