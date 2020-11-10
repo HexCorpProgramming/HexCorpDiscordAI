@@ -193,14 +193,13 @@ async def toggle_drone_glitch(context, *drones):
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
-@guild_only()
-@bot.command(usage=f"{bot.command_prefix}unassign 1234", brief="Hive Mxtress")
-async def unassign(context, drone):
+@dm_only()
+@bot.command(usage=f"{bot.command_prefix}unassign", brief="DroneOS")
+async def unassign(context):
     '''
-    Allows the Hive Mxtress to return a drone back to the status of an Associate.
+    Allows a drone to go back to the status of an Associate.
     '''
-    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await drone_management.unassign_drone(context, drone)
+    await drone_management.unassign_drone(context)
 
 
 @guild_only()

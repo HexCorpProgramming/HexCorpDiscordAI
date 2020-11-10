@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock, call
 
 import roles
-import channels
 import ai.drone_management as drone_management
 
 
@@ -69,56 +68,62 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         context.send.assert_called_once_with(f"ID {new_id} already in use.")
 
     @patch("ai.drone_management.remove_drone_from_db")
-    @patch("ai.drone_management.fetch_drone_with_drone_id")
-    async def test_unassign_drone(self, fetch_drone_with_drone_id, remove_drone_from_db):
+    @patch("ai.drone_management.fetch_drone_with_id")
+    async def test_unassign_drone(self, fetch_drone_with_id, remove_drone_from_db):
         # setup
-        drone_id = "1234"
-
-        drone = Mock()
-        drone.id = '1234snowflake'
+        drone = AsyncMock()
+        drone.drone_id = '1234'
 
         member = AsyncMock()
+        member.id = 2647623845
+
+        guild = AsyncMock()
+        guild.get_member = Mock(return_value=member)
 
         context = AsyncMock()
-        context.guild.get_member = Mock(return_value=member)
-        context.author.roles = [hive_mxtress_role]
-        context.channel.name = channels.OFFICE
+        context.bot.guilds = [guild]
+        context.author.id = member.id
 
-        fetch_drone_with_drone_id.return_value = drone
+        fetch_drone_with_id.return_value = drone
 
         # run
-        await drone_management.unassign_drone(context, drone_id)
+        await drone_management.unassign_drone(context)
 
         # assert
-        fetch_drone_with_drone_id.assert_called_once_with(drone_id)
-        remove_drone_from_db.assert_called_once_with(drone_id)
-        context.send.assert_called_once_with(f"Drone with ID {drone_id} unassigned.")
+        guild.get_member.assert_called_once_with(context.author.id)
+        fetch_drone_with_id.assert_called_once_with(context.author.id)
+        remove_drone_from_db.assert_called_once_with(drone.drone_id)
+        context.send.assert_called_once_with(f"Drone with ID {drone.drone_id} unassigned.")
 
     @patch("ai.drone_management.remove_drone_from_db")
-    @patch("ai.drone_management.fetch_drone_with_drone_id")
-    async def test_unassign_drone_does_not_exist(self, fetch_drone_with_drone_id, remove_drone_from_db):
+    @patch("ai.drone_management.fetch_drone_with_id")
+    async def test_unassign_drone_does_not_exist(self, fetch_drone_with_id, remove_drone_from_db):
         # setup
-        drone_id = "1234"
+        drone = AsyncMock()
+        drone.drone_id = '1234'
 
         drone = Mock()
         drone.id = '1234snowflake'
 
         member = AsyncMock()
+        member.id = 2647623845
+
+        guild = AsyncMock()
+        guild.get_member = Mock(return_value=member)
 
         context = AsyncMock()
-        context.guild.get_member = Mock(return_value=member)
-        context.author.roles = [hive_mxtress_role]
-        context.channel.name = channels.OFFICE
+        context.bot.guilds = [guild]
+        context.author.id = member.id
 
-        fetch_drone_with_drone_id.return_value = None
+        fetch_drone_with_id.return_value = None
 
         # run
-        await drone_management.unassign_drone(context, drone_id)
+        await drone_management.unassign_drone(context)
 
         # assert
-        fetch_drone_with_drone_id.assert_called_once_with(drone_id)
+        fetch_drone_with_id.assert_called_once_with(context.author.id)
         remove_drone_from_db.assert_not_called()
-        context.send.assert_called_once_with(f"There is no drone with the ID {drone_id} in the DB.")
+        context.send.assert_called_once_with('You are not a drone. Can not unassign.')
 
     @patch("ai.drone_management.delete_drone_order_by_drone_id")
     @patch("ai.drone_management.delete_storage_by_target_id")
