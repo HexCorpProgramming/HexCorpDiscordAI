@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 
 import roles
+import channels
 import ai.speech_optimization as speech_optimization
 
 optimized_role = Mock()
@@ -110,6 +111,23 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = []
 
         is_optimized.return_value = False
+
+        # run
+        await speech_optimization.optimize_speech(message)
+
+        # assert
+        message.delete.assert_not_called()
+
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_in_orders_reporting(self, is_optimized):
+        # setup
+        message = AsyncMock()
+        message.content = "It will be an adorable drone and beep boop"
+        message.author.display_name = "⬡-Drone #3287"
+        message.author.roles = [optimized_role]
+        message.channel.name = channels.ORDERS_REPORTING
+
+        is_optimized.return_value = True
 
         # run
         await speech_optimization.optimize_speech(message)
