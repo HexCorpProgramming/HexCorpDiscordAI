@@ -32,6 +32,7 @@ from ai.mantras import Mantra_Handler
 import webhook
 # Utils
 from bot_utils import get_id, COMMAND_PREFIX
+from display_names import update_display_name
 import id_converter
 # Database
 from db import database
@@ -134,11 +135,17 @@ async def toggle_id_prepending(context, *drones):
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", False)
                 await drone.remove_roles(role)
                 message = "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "id_prepending", True)
                 await drone.add_roles(role)
                 message = "ID prepending is now mandatory."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
@@ -160,11 +167,17 @@ async def toggle_speech_optimization(context, *drones):
                 drone_dao.update_droneOS_parameter(drone, "optimized", False)
                 await drone.remove_roles(role)
                 message = "Speech optimization disengaged."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "optimized", True)
                 await drone.add_roles(role)
                 message = "Speech optimization is now active."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
@@ -187,11 +200,17 @@ async def toggle_drone_glitch(context, *drones):
                 drone_dao.update_droneOS_parameter(drone, "glitched", False)
                 await drone.remove_roles(role)
                 message = "Drone corruption at acceptable levels."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
             else:
                 drone_dao.update_droneOS_parameter(drone, "glitched", True)
                 await drone.add_roles(role)
                 message = "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels."
+                if await update_display_name(drone):
+                    # Display name has been updated, get the new drone object
+                    drone = context.guild.get_member(drone.id)
                 await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
 
 
