@@ -11,10 +11,13 @@ optimized_role.name = roles.SPEECH_OPTIMIZATION
 
 class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
-    async def test_print_status_code(self):
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_print_status_code(self, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "9813 :: 050 :: beep boop"
+
+        is_optimized.return_value = False
 
         # run
         response = await speech_optimization.print_status_code(message)
