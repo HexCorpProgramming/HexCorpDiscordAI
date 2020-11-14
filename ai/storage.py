@@ -24,6 +24,8 @@ RELEASE_INTERVAL_SECONDS = 60
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
+NON_REMOVABLE_ROLES = [roles.MODERATION_ROLES, roles.EVERYONE, roles.NITRO_BOOSTER, roles.PATREON_SUPPORTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING]
+
 
 async def store_drone(message: discord.Message):
     '''
@@ -189,7 +191,7 @@ def filter_out_non_removable_roles(unfiltered_roles: List[discord.Role]) -> List
     '''
     removable_roles = []
     for role in unfiltered_roles:
-        if role.name not in roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.PATREON_SUPPORTER]:
+        if role.name not in NON_REMOVABLE_ROLES:
             removable_roles.append(role)
 
     return removable_roles
