@@ -63,7 +63,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
         message.content = "5890 :: 0006 :: 1 :: cheeky shenanigans"
-        nessage.author.roles = [drone_role]
+        message.author.roles = [drone_role]
 
         # run & assert
         self.assertTrue(await storage.store_drone(message))
