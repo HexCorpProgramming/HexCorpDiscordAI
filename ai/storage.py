@@ -53,6 +53,11 @@ async def store_drone(message: discord.Message):
         await message.channel.send(f'{time} is not between 0 and 24.')
         return True
 
+    # check if target is the Hive Mxtress
+    if target_id == '0006':
+        await message.channel.send('You cannot store the Hive Mxtress, silly drone.')
+        return True
+
     # find target drone
     drone_to_store = fetch_drone_with_drone_id(target_id)
 
@@ -78,6 +83,8 @@ async def store_drone(message: discord.Message):
     plural = "hour" if int(time) == 1 else "hours"
     if drone_id == target_id:
         drone_id = "yourself"
+    elif drone_id == '0006':
+        drone_id = "the Hive Mxtress"
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
     return False
 
@@ -103,7 +110,10 @@ async def report_storage(storage_channel: discord.TextChannel):
             # calculate remaining hours
             remaining_hours = hours_from_now(
                 datetime.fromisoformat(stored.release_time))
-            await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+            if stored.stored_by == '0006':
+                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
+            else:
+                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
 
 async def start_release_timed(bot):
