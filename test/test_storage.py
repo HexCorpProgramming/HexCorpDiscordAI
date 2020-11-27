@@ -130,7 +130,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(insert_storage.call_args.args[0].release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8 hours and for the following reason: recharge")
 
-    @patch("ai.storage.delete_storage")
     @patch("ai.storage.datetime")
     @patch("ai.storage.insert_storage")
     @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
@@ -165,7 +164,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(insert_storage.call_args.args[0].release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
 
-    @patch("ai.storage.delete_storage")
     @patch("ai.storage.datetime")
     @patch("ai.storage.insert_storage")
     @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
