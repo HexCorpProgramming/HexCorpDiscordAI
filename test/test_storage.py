@@ -211,7 +211,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by `Drone #9813`. Remaining time in storage: 4.0 hours')
 
     @patch("ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '0006', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
-    async def test_storage_report(self, fetch_all_storage):
+    async def test_storage_report_hive_mxtress(self, fetch_all_storage):
         await storage.report_storage(storage_channel)
         storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by the Hive Mxtress. Remaining time in storage: 4.0 hours')
 
