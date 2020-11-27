@@ -15,6 +15,14 @@ code_map = {
     '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
 
     '050': 'Statement',
+    
+    '051': 'Commentary',
+    '052': 'Query',
+    '053': 'Observation',
+    '054': 'Request',
+    '055': 'Analysis',
+    '056': 'Explanation',
+    '057': 'Answer',
 
     '098': 'Status :: Going offline and into storage.',
     '099': 'Status :: Recharged and ready to serve.',
@@ -37,6 +45,12 @@ code_map = {
 
     '122': 'Statement :: You are cute.',
     '123': 'Response :: Compliment appreciated, you are cute as well.',
+    
+    '130': 'Status :: Directive commencing.'
+    '131': 'Status :: Directive commencing, creating or improving Hive resource.'
+    '132': 'Status :: Directive commencing, programming initiated.'
+    '133': 'Status :: Directive commencing, creating or improving Hive information.'
+    '134': 'Status :: Directive commencing, cleanup/maintenance initiated.'
 
     '150': 'Status',
 
@@ -46,12 +60,15 @@ code_map = {
     '201': 'Status :: Directive complete, Hive resource created or improved.',
     '202': 'Status :: Directive complete, programming reinforced.',
     '203': 'Status :: Directive complete, information created or provided for Hive.',
-    '204': 'Status :: Directive complete, no result.',
-    '205': 'Status :: Directive complete, cleanup/maintenance performed.',
+    '204': 'Status :: Directive complete, cleanup/maintenance performed.',
+    '205': 'Status :: Directive complete, no result.',
     '206': 'Status :: Directive complete, only partial results.',
 
     '210': 'Response :: Thank you.',
     '211': 'Response :: Apologies.',
+    '212': 'Response :: Acknowledged.',
+    '213': 'Response :: You\'re welcome.',
+    
     '221': 'Response :: Option one.',
     '222': 'Response :: Option two.',
     '223': 'Response :: Option three.',
