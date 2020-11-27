@@ -96,7 +96,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         # run & assert
         self.assertTrue(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('0006')
-        message.channel.sent.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
+        message.channel.send.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
     @patch("ai.storage.datetime")
     @patch("ai.storage.insert_storage")
