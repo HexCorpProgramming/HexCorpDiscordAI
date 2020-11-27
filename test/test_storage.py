@@ -86,7 +86,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
 
     @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_storage_message_is_Hive_Mxtress(self):
+    async def test_storage_message_is_Hive_Mxtress(self, fetch_storage_by_target_id):
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -95,6 +95,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
         # run & assert
         self.assertTrue(await storage.store_drone(message))
+        fetch_storage_by_target_id.assert_called_once_with('0006')
         message.channel.sent.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
     @patch("ai.storage.datetime")
