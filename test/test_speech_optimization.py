@@ -134,7 +134,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
         # assert
         message.delete.assert_not_called()
-    
+
     @patch("ai.speech_optimization.is_optimized")
     async def test_optimize_speech_in_mod_channel(self, is_optimized):
         # setup
