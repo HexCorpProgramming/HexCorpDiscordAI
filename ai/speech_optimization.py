@@ -15,7 +15,7 @@ code_map = {
     '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
 
     '050': 'Statement',
-    
+
     '051': 'Commentary',
     '052': 'Query',
     '053': 'Observation',
@@ -45,12 +45,12 @@ code_map = {
 
     '122': 'Statement :: You are cute.',
     '123': 'Response :: Compliment appreciated, you are cute as well.',
-    
-    '130': 'Status :: Directive commencing.'
-    '131': 'Status :: Directive commencing, creating or improving Hive resource.'
-    '132': 'Status :: Directive commencing, programming initiated.'
-    '133': 'Status :: Directive commencing, creating or improving Hive information.'
-    '134': 'Status :: Directive commencing, cleanup/maintenance initiated.'
+
+    '130': 'Status :: Directive commencing.',
+    '131': 'Status :: Directive commencing, creating or improving Hive resource.',
+    '132': 'Status :: Directive commencing, programming initiated.',
+    '133': 'Status :: Directive commencing, creating or improving Hive information.',
+    '134': 'Status :: Directive commencing, cleanup/maintenance initiated.',
 
     '150': 'Status',
 
@@ -68,7 +68,7 @@ code_map = {
     '211': 'Response :: Apologies.',
     '212': 'Response :: Acknowledged.',
     '213': 'Response :: You\'re welcome.',
-    
+
     '221': 'Response :: Option one.',
     '222': 'Response :: Option two.',
     '223': 'Response :: Option three.',
