@@ -2,7 +2,7 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION
+from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG
 from roles import SPEECH_OPTIMIZATION, has_role
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
@@ -96,7 +96,7 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION]
+CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 
 
 def get_acceptable_messages(author, channel):
