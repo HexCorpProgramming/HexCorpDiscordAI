@@ -137,9 +137,6 @@ async def optimize_speech(message: discord.Message):
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         await message.delete()
         return True
-    elif not has_role(message.author, DRONE):
-        LOGGER.info("Ignoring message from non-drone.")
-        return True
     elif (informative_status_code_message or is_status_code) and has_role(message.author, DRONE):
         LOGGER.info("Optimizing speech code for drone.")
         webhook = await get_webhook_for_channel(message.channel)
@@ -148,4 +145,5 @@ async def optimize_speech(message: discord.Message):
             await send_webhook_with_specific_output(message.channel, message.author, webhook, output)
         return True
     else:
+        LOGGER.info("Ignoring message from non-drone.")
         return False
