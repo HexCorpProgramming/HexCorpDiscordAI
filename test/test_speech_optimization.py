@@ -5,6 +5,9 @@ import roles
 import channels
 import ai.speech_optimization as speech_optimization
 
+drone_role = Mock()
+drone_role.name = roles.DRONE
+
 optimized_role = Mock()
 optimized_role.name = roles.SPEECH_OPTIMIZATION
 
@@ -15,6 +18,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # setup
         message = AsyncMock()
         message.content = "9813 :: 050 :: beep boop"
+        message.author.roles = [drone_role]
 
         # run
         response = await speech_optimization.print_status_code(message)
@@ -27,6 +31,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # setup
         message = AsyncMock()
         message.content = "9813 :: 050"
+        message.author.roles = [drone_role]
 
         # run
         response = await speech_optimization.print_status_code(message)
@@ -39,9 +44,23 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # setup
         message = AsyncMock()
         message.content = "9813 :: beep boop"
+        message.author.roles = [drone_role]
 
         # run
         response = await speech_optimization.print_status_code(message)
+
+        # assert
+        message.delete.assert_not_called()
+        self.assertFalse(response)
+
+    async def test_print_status_code_from_nondrone(self):
+        # setup
+        message = AsyncMock()
+        message.content = "0000 :: 050"
+        message.author.roles = []
+
+        # run
+        response = await speech_optimization.optimize_speech(message)
 
         # assert
         message.delete.assert_not_called()
@@ -55,7 +74,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "3287 :: 122"
         message.author.display_name = "⬡-Drone #3287"
-        message.author.roles = [optimized_role]
+        message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
 
@@ -76,7 +95,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "It is a cute beep boop"
         message.author.display_name = "⬡-Drone #3287"
-        message.author.roles = [optimized_role]
+        message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
 
@@ -92,7 +111,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "3287 :: 050 :: All drones are cute~"
         message.author.display_name = "⬡-Drone #3287"
-        message.author.roles = [optimized_role]
+        message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
 
@@ -108,7 +127,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "It is a cute beep boop"
         message.author.display_name = "⬡-Drone #3287"
-        message.author.roles = []
+        message.author.roles = [drone_role]
 
         is_optimized.return_value = False
 
@@ -124,7 +143,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "It will be an adorable drone and beep boop"
         message.author.display_name = "⬡-Drone #3287"
-        message.author.roles = [optimized_role]
+        message.author.roles = [drone_role, optimized_role]
         message.channel.name = channels.ORDERS_REPORTING
 
         is_optimized.return_value = True
