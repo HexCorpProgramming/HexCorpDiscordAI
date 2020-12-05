@@ -2,7 +2,7 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION
+from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from roles import SPEECH_OPTIMIZATION, has_role
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
@@ -96,7 +96,8 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION]
+CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
+CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
 
 
 def get_acceptable_messages(author, channel):
@@ -135,7 +136,7 @@ async def optimize_speech(message: discord.Message):
     is_status_code = acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name)
     is_acceptable = message.content in get_acceptable_messages(message.author, message.channel.name) or is_status_code
 
-    if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST:
+    if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST and message.channel.category.name not in CATEGORY_BLACKLIST:
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         await message.delete()
         return True
