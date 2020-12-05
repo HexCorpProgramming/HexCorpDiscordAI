@@ -14,7 +14,6 @@ optimized_role.name = roles.SPEECH_OPTIMIZATION
 
 class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
-
     @patch("ai.speech_optimization.is_drone")
     @patch("ai.speech_optimization.is_optimized")
     async def test_print_status_code(self, is_optimized, is_drone):
