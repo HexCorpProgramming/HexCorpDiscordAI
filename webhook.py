@@ -1,6 +1,5 @@
 import discord
 
-from bot_utils import get_id
 from channels import DRONE_HIVE_CHANNELS
 
 from glitch import glitch_if_applicable
@@ -10,7 +9,7 @@ from resources import DRONE_AVATAR
 
 async def send_webhook_with_specific_output(channel: discord.TextChannel, author: discord.Member, webhook: discord.Webhook, output: str):
     if channel.name in DRONE_HIVE_CHANNELS:
-        await webhook.send(glitch_if_applicable(output, author), username=f"⬡-Drone #{get_id(author.display_name)}", avatar_url=DRONE_AVATAR)
+        await webhook.send(glitch_if_applicable(output, author), username=author.display_name, avatar_url=DRONE_AVATAR)
     else:
         await webhook.send(glitch_if_applicable(output, author), username=author.display_name, avatar_url=author.avatar_url)
 
