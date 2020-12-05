@@ -3,7 +3,6 @@ import re
 import discord
 from bot_utils import get_id
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
-from roles import SPEECH_OPTIMIZATION, has_role
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
@@ -116,7 +115,7 @@ def get_acceptable_messages(author, channel):
 async def print_status_code(message: discord.Message):
     informative_status_code = informative_status_code_regex.match(
         message.content)
-    if informative_status_code and not has_role(message.author, SPEECH_OPTIMIZATION):
+    if informative_status_code and not is_optimized(message.author):
         await message.delete()
         return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
