@@ -137,3 +137,20 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
         # assert
         message.delete.assert_not_called()
+
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_in_mod_channel(self, is_optimized):
+        # setup
+        message = AsyncMock()
+        message.content = "It is a good moderator drone and beep boop"
+        message.author.display_name = "⬡-Drone #9813"
+        message.author.roles = [optimized_role]
+        message.channel.category.name = channels.MODERATION_CATEGORY
+
+        is_optimized.return_value = True
+
+        # run
+        await speech_optimization.optimize_speech(message)
+
+        # assert
+        message.delete.assert_not_called()

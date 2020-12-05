@@ -1,5 +1,10 @@
 # HexCorp Control Tower
 OFFICE = 'hex-office'
+MODERATION_CHANNEL = 'moderation-channel'
+
+# Moderation
+MODERATION_CATEGORY = 'moderation'
+MODERATION_LOG = 'moderation-log'
 
 # HexCorp-Induction
 CONSENT_CHANNEL = 'hexcorp-submission'
