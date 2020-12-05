@@ -9,6 +9,7 @@ import random
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
+from inspect import signature
 
 # Modules
 import ai.stoplights as stoplights
@@ -29,6 +30,7 @@ import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.status_message as status_messages
 from ai.mantras import Mantra_Handler
+import ai.thought_denial as thought_denial
 import webhook
 # Utils
 from bot_utils import get_id, COMMAND_PREFIX
@@ -41,6 +43,8 @@ from db import drone_dao
 from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
+# Data objects
+from db.data_objects import MessageCopy
 
 LOGGER = logging.getLogger('ai')
 
@@ -88,7 +92,9 @@ message_listeners = [
     speech_optimization.optimize_speech,
     respond.respond_to_question,
     identity_enforcement.enforce_identity,
+    thought_denial.deny_thoughts,
     storage.store_drone,
+
 ]
 
 
@@ -372,15 +378,29 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
+    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url)
+
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
         LOGGER.info(f"Executing: {listener}")
-        if await listener(message):  # Return early if any listeners return true.
-            return
+
+        # If a message listener accepts two parameters, that means it is able to transform the message copy.
+        # This means it affects a user's display name, avatar, or message content. Such as speech optimization or identity enforcement.
+
+        if len(signature(listener).parameters) == 2:
+            LOGGER.info("Listener has 2 params.")
+            if await listener(message, message_copy):  # Return early if any listeners return true.
+                return
+        else:
+            LOGGER.info("Listener has 1 param.")
+            if await listener(message):  # Return early if any listeners return true.
+                return
     LOGGER.info("End of message listener stack.")
 
-    LOGGER.info("Processing additional commands.")
+    LOGGER.info("Checking for need to webhook.")
+    await webhook.webhook_if_content_altered(message, message_copy)
 
+    LOGGER.info("Processing additional commands.")
     await bot.process_commands(message)
 
 
