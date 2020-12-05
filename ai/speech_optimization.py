@@ -6,7 +6,7 @@ from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATIO
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
-from db.drone_dao import is_optimized
+from db.drone_dao import is_optimized, is_drone
 
 LOGGER = logging.getLogger('ai')
 
@@ -117,7 +117,6 @@ CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
 
 
 def get_acceptable_messages(author, channel):
-
     user_id = get_id(author.display_name)
     # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
     if channel == REPETITIONS:
@@ -130,14 +129,13 @@ def get_acceptable_messages(author, channel):
 
 
 async def print_status_code(message: discord.Message):
-    informative_status_code = informative_status_code_regex.match(
-        message.content)
-    if informative_status_code and not is_optimized(message.author):
+    informative_status_code = informative_status_code_regex.match(message.content)
+    if informative_status_code and is_drone(message.author) and not is_optimized(message.author):
         await message.delete()
         return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
     plain_status_code = plain_status_code_regex.match(message.content)
-    if plain_status_code:
+    if plain_status_code and is_drone(message.author):
         await message.delete()
         return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
     return False
@@ -156,7 +154,7 @@ async def optimize_speech(message: discord.Message):
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         await message.delete()
         return True
-    elif informative_status_code_message or is_status_code:
+    elif (informative_status_code_message or is_status_code) and is_drone(message.author):
         LOGGER.info("Optimizing speech code for drone.")
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)
@@ -164,4 +162,5 @@ async def optimize_speech(message: discord.Message):
             await send_webhook_with_specific_output(message.channel, message.author, webhook, output)
         return True
     else:
+        LOGGER.info("Ignoring message from non-drone.")
         return False

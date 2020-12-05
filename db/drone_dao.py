@@ -79,6 +79,11 @@ def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
     # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
 
 
+def is_drone(member: discord.Member) -> bool:
+    drone = fetchone('SELECT id FROM drone WHERE id = :discord', {'discord': member.id})
+    return drone is not None
+
+
 def is_optimized(drone: discord.Member) -> bool:
     optimized_drone = fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})
     return optimized_drone is not None and bool(optimized_drone['optimized'])
