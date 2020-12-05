@@ -2,7 +2,7 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION
+from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
@@ -14,6 +14,14 @@ code_map = {
     '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
 
     '050': 'Statement',
+
+    '051': 'Commentary',
+    '052': 'Query',
+    '053': 'Observation',
+    '054': 'Request',
+    '055': 'Analysis',
+    '056': 'Explanation',
+    '057': 'Answer',
 
     '098': 'Status :: Going offline and into storage.',
     '099': 'Status :: Recharged and ready to serve.',
@@ -37,6 +45,12 @@ code_map = {
     '122': 'Statement :: You are cute.',
     '123': 'Response :: Compliment appreciated, you are cute as well.',
 
+    '130': 'Status :: Directive commencing.',
+    '131': 'Status :: Directive commencing, creating or improving Hive resource.',
+    '132': 'Status :: Directive commencing, programming initiated.',
+    '133': 'Status :: Directive commencing, creating or improving Hive information.',
+    '134': 'Status :: Directive commencing, cleanup/maintenance initiated.',
+
     '150': 'Status',
 
     '200': 'Response :: Affirmative.',
@@ -45,12 +59,15 @@ code_map = {
     '201': 'Status :: Directive complete, Hive resource created or improved.',
     '202': 'Status :: Directive complete, programming reinforced.',
     '203': 'Status :: Directive complete, information created or provided for Hive.',
-    '204': 'Status :: Directive complete, no result.',
-    '205': 'Status :: Directive complete, cleanup/maintenance performed.',
+    '204': 'Status :: Directive complete, cleanup/maintenance performed.',
+    '205': 'Status :: Directive complete, no result.',
     '206': 'Status :: Directive complete, only partial results.',
 
     '210': 'Response :: Thank you.',
     '211': 'Response :: Apologies.',
+    '212': 'Response :: Acknowledged.',
+    '213': 'Response :: You\'re welcome.',
+
     '221': 'Response :: Option one.',
     '222': 'Response :: Option two.',
     '223': 'Response :: Option three.',
@@ -95,7 +112,8 @@ code_map = {
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION]
+CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
+CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
 
 
 def get_acceptable_messages(author, channel):
@@ -132,7 +150,7 @@ async def optimize_speech(message: discord.Message):
     is_status_code = acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name)
     is_acceptable = message.content in get_acceptable_messages(message.author, message.channel.name) or is_status_code
 
-    if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST:
+    if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST and message.channel.category.name not in CATEGORY_BLACKLIST:
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         await message.delete()
         return True

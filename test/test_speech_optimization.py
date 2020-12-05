@@ -14,6 +14,7 @@ optimized_role.name = roles.SPEECH_OPTIMIZATION
 
 class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
+
     @patch("ai.speech_optimization.is_drone")
     @patch("ai.speech_optimization.is_optimized")
     async def test_print_status_code(self, is_optimized, is_drone):
@@ -23,6 +24,8 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         is_drone.return_value = True
+        is_optimized.return_value = False
+
         is_optimized.return_value = False
 
         # run
@@ -159,6 +162,23 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.display_name = "⬡-Drone #3287"
         message.author.roles = [drone_role, optimized_role]
         message.channel.name = channels.ORDERS_REPORTING
+
+        is_optimized.return_value = True
+
+        # run
+        await speech_optimization.optimize_speech(message)
+
+        # assert
+        message.delete.assert_not_called()
+
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_optimize_speech_in_mod_channel(self, is_optimized):
+        # setup
+        message = AsyncMock()
+        message.content = "It is a good moderator drone and beep boop"
+        message.author.display_name = "⬡-Drone #9813"
+        message.author.roles = [optimized_role]
+        message.channel.category.name = channels.MODERATION_CATEGORY
 
         is_optimized.return_value = True
 
