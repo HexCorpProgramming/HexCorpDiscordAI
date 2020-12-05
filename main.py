@@ -38,7 +38,7 @@ import id_converter
 from db import database
 from db import drone_dao
 # Constants
-from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS
+from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS, IDENTITY_ENFORCEMENT
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -168,6 +168,21 @@ async def toggle_speech_optimization(context, *drones):
                            drone_dao.is_optimized,
                            lambda: "Speech optimization is now active.",
                            lambda: "Speech optimization disengaged.")
+
+
+@guild_only()
+@bot.command(aliases=['tei'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_enforce_identity 5890 9813')
+async def toggle_enforce_identity(context, *drones):
+    '''
+    Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
+    '''
+    await toggle_parameter(context,
+                           drones,
+                           "identity_inforcement",
+                           get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                           drone_dao.is_identity_enforced,
+                           lambda: "Identity enforcement is now active.",
+                           lambda: "Identity enforcement disengaged.")
 
 
 @guild_only()

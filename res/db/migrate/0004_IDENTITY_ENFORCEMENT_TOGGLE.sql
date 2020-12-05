@@ -1,0 +1,1 @@
+ALTER TABLE drone ADD identity_inforcement BOOL DEFAULT 0;
