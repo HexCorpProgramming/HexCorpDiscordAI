@@ -3,11 +3,10 @@ import re
 import discord
 from bot_utils import get_id
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION
-from roles import SPEECH_OPTIMIZATION, DRONE, has_role
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
-from db.drone_dao import is_optimized
+from db.drone_dao import is_optimized, is_drone
 
 LOGGER = logging.getLogger('ai')
 
@@ -113,12 +112,12 @@ def get_acceptable_messages(author, channel):
 
 async def print_status_code(message: discord.Message):
     informative_status_code = informative_status_code_regex.match(message.content)
-    if informative_status_code and has_role(message.author, DRONE) and not has_role(message.author, SPEECH_OPTIMIZATION):
+    if informative_status_code and is_drone(message.author) and not is_optimized(message.author):
         await message.delete()
         return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
     plain_status_code = plain_status_code_regex.match(message.content)
-    if plain_status_code and has_role(message.author, DRONE):
+    if plain_status_code and is_drone(message.author):
         await message.delete()
         return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
     return False
@@ -137,7 +136,7 @@ async def optimize_speech(message: discord.Message):
         LOGGER.info("Deleting inappropriate message by optimized drone.")
         await message.delete()
         return True
-    elif (informative_status_code_message or is_status_code) and has_role(message.author, DRONE):
+    elif (informative_status_code_message or is_status_code) and is_drone(message.author):
         LOGGER.info("Optimizing speech code for drone.")
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)

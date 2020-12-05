@@ -14,11 +14,16 @@ optimized_role.name = roles.SPEECH_OPTIMIZATION
 
 class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
-    async def test_print_status_code(self):
+    @patch("ai.speech_optimization.is_drone")
+    @patch("ai.speech_optimization.is_optimized")
+    async def test_print_status_code(self, is_optimized, is_drone):
         # setup
         message = AsyncMock()
         message.content = "9813 :: 050 :: beep boop"
         message.author.roles = [drone_role]
+
+        is_drone.return_value = True
+        is_optimized.return_value = False
 
         # run
         response = await speech_optimization.print_status_code(message)
@@ -27,11 +32,14 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.delete.assert_called_once()
         self.assertEqual(response, "9813 :: Code `050` :: Statement :: beep boop")
 
-    async def test_print_status_code_plain(self):
+    @patch("ai.speech_optimization.is_drone")
+    async def test_print_status_code_plain(self, is_drone):
         # setup
         message = AsyncMock()
         message.content = "9813 :: 050"
         message.author.roles = [drone_role]
+
+        is_drone.return_value = True
 
         # run
         response = await speech_optimization.print_status_code(message)
@@ -73,7 +81,8 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.speech_optimization.is_optimized")
     @patch("ai.speech_optimization.send_webhook_with_specific_output")
     @patch("ai.speech_optimization.get_webhook_for_channel")
-    async def test_optimize_speech(self, get_webhook_for_channel, send_webhook_with_specific_output, is_optimized):
+    @patch("ai.speech_optimization.is_drone")
+    async def test_optimize_speech(self, is_drone, get_webhook_for_channel, send_webhook_with_specific_output, is_optimized):
         # setup
         message = AsyncMock()
         message.content = "3287 :: 122"
@@ -81,6 +90,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
+        is_drone.return_value = True
 
         webhook = AsyncMock()
         get_webhook_for_channel.return_value = webhook
