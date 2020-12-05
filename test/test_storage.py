@@ -148,7 +148,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         delete_storage.assert_called_once_with('elapse_storage_id')
 
     async def test_release_unauthorized(self):
-        for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.ADMIN, roles.MODERATION, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER, roles.PATREON_SUPPORTER]:
+        for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.ADMIN, roles.MODERATION, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER]:
             # setup
             role_mock = Mock()
             role_mock.name = role
