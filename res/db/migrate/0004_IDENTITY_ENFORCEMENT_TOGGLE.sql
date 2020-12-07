@@ -1,1 +1,1 @@
-ALTER TABLE drone ADD identity_inforcement BOOL DEFAULT 0;
+ALTER TABLE drone ADD identity_enforcement BOOL DEFAULT 0;

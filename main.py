@@ -86,8 +86,8 @@ message_listeners = [
     stoplights.check_for_stoplights,
     id_prepending.check_if_prepending_necessary,
     speech_optimization.optimize_speech,
-    respond.respond_to_question,
     identity_enforcement.enforce_identity,
+    respond.respond_to_question,
     storage.store_drone,
 ]
 
@@ -178,7 +178,7 @@ async def toggle_enforce_identity(context, *drones):
     '''
     await toggle_parameter(context,
                            drones,
-                           "identity_inforcement",
+                           "identity_enforcement",
                            get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
                            drone_dao.is_identity_enforced,
                            lambda: "Identity enforcement is now active.",

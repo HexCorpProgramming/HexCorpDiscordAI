@@ -100,8 +100,8 @@ def is_prepending_id(drone: discord.Member) -> bool:
 
 
 def is_identity_enforced(drone: discord.Member) -> bool:
-    enforced_drone = fetchone('SELECT identity_inforcement FROM drone WHERE id = :discord', {'discord': drone.id})
-    return enforced_drone is not None and bool(enforced_drone['identity_inforcement'])
+    enforced_drone = fetchone('SELECT identity_enforcement FROM drone WHERE id = :discord', {'discord': drone.id})
+    return enforced_drone is not None and bool(enforced_drone['identity_enforcement'])
 
 
 def get_trusted_users(discord_id: int) -> List[int]:
