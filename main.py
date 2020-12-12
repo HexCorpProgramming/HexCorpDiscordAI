@@ -38,7 +38,7 @@ import id_converter
 from db import database
 from db import drone_dao
 # Constants
-from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS, IDENTITY_ENFORCEMENT
+from roles import has_role, has_any_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS, IDENTITY_ENFORCEMENT, MODERATION_ROLES
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 
@@ -198,6 +198,16 @@ async def toggle_drone_glitch(context, *drones):
                            drone_dao.is_glitched,
                            lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
                            lambda: "Drone corruption at acceptable levels.")
+
+
+@guild_only()
+@bot.command(brief="DroneOS", usage=f'{bot.command_prefix}emergency_release 9813')
+async def emergency_release(context, drone_id: str):
+    '''
+    Lets moderators disable all DroneOS restrictions currently active on a drone.
+    '''
+    if has_any_role(context.author, MODERATION_ROLES):
+        await drone_management.emergency_release(context, drone_id)
 
 
 @dm_only()

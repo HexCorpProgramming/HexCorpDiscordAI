@@ -1,9 +1,11 @@
 import logging
 from discord.utils import get
 
-from roles import DRONE, GLITCHED, STORED, ASSOCIATE
+from roles import DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION
+from id_converter import convert_id_to_member
+from display_names import update_display_name
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 
@@ -53,3 +55,20 @@ def remove_drone_from_db(drone_id: str):
     delete_drone_order_by_drone_id(drone_id)
     delete_storage_by_target_id(drone_id)
     delete_drone_by_drone_id(drone_id)
+
+
+async def emergency_release(context, drone_id: str):
+    drone_member = convert_id_to_member(context.guild, drone_id)
+
+    if drone_member is None:
+        await context.channel.send(f"No drone with ID {drone_id} found.")
+        return
+
+    update_droneOS_parameter(drone_member, "id_prepending", False)
+    update_droneOS_parameter(drone_member, "optimized", False)
+    update_droneOS_parameter(drone_member, "identity_enforcement", False)
+    update_droneOS_parameter(drone_member, "glitched", False)
+    await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT))
+    await update_display_name(drone_member)
+
+    await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
