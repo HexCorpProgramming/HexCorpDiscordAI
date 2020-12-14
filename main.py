@@ -152,7 +152,7 @@ async def toggle_id_prepending(context, *drones):
                            get(context.guild.roles, name=ID_PREPENDING),
                            drone_dao.is_prepending_id,
                            lambda: "ID prepending is now mandatory.",
-                           lambda: "Prepending? More like POST pending no that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+                           lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
 
 
 @guild_only()
