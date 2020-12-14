@@ -139,3 +139,23 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         delete_drone_by_drone_id.assert_called_once_with(to_remove)
         delete_storage_by_target_id.assert_called_once_with(to_remove)
         delete_drone_order_by_drone_id.assert_called_once_with(to_remove)
+
+    @patch("ai.drone_management.update_display_name")
+    @patch("ai.drone_management.convert_id_to_member")
+    @patch("ai.drone_management.update_droneOS_parameter")
+    async def test_emergency_release(self, update_droneOS_parameter, convert_id_to_member, update_display_name):
+        # setup
+        to_remove = "1234"
+        context = AsyncMock()
+
+        member = AsyncMock()
+
+        convert_id_to_member.return_value = member
+
+        # run
+        await drone_management.emergency_release(context, to_remove)
+
+        # assert
+        context.channel.send.assert_called_once_with("Restrictions disabled for drone 1234.")
+        update_droneOS_parameter.assert_has_calls([call(member, "id_prepending", False), call(member, "optimized", False), call(member, "identity_enforcement", False), call(member, "glitched", False)])
+        update_display_name.assert_called_once_with(member)
