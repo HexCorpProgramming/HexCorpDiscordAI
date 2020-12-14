@@ -25,7 +25,8 @@ class Drone:
         glitched: bool = None,
         trusted_users: str = None,
         last_activity: datetime = None,
-        id_prepending: bool = None
+        id_prepending: bool = None,
+        identity_enforcement: bool = None
     ):
         self.id = id
         self.drone_id = drone_id
@@ -34,6 +35,7 @@ class Drone:
         self.trusted_users = trusted_users
         self.last_activity = last_activity
         self.id_prepending = id_prepending
+        self.identity_enforcement = identity_enforcement
 
 
 class Storage:

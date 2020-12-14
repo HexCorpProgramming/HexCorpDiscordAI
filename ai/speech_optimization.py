@@ -6,7 +6,7 @@ from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATIO
 from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
 from webhook import get_webhook_for_channel
-from db.drone_dao import is_optimized, is_drone
+from db.drone_dao import is_optimized, is_drone, is_identity_enforced
 
 LOGGER = logging.getLogger('ai')
 
@@ -149,6 +149,7 @@ async def optimize_speech(message: discord.Message):
 
     is_status_code = acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name)
     is_acceptable = message.content in get_acceptable_messages(message.author, message.channel.name) or is_status_code
+    identity_enforced = is_identity_enforced(message.author)
 
     if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST and message.channel.category.name not in CATEGORY_BLACKLIST:
         LOGGER.info("Deleting inappropriate message by optimized drone.")
@@ -159,7 +160,7 @@ async def optimize_speech(message: discord.Message):
         webhook = await get_webhook_for_channel(message.channel)
         output = await print_status_code(message)
         if output:
-            await send_webhook_with_specific_output(message.channel, message.author, webhook, output)
+            await send_webhook_with_specific_output(message.channel, message.author, webhook, output, identity_enforced)
         return True
     else:
         LOGGER.info("Ignoring message from non-drone.")
