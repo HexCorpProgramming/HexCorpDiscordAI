@@ -63,8 +63,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.delete.assert_not_called()
         self.assertFalse(response)
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_print_status_code_from_nondrone(self, is_optimized):
+    async def test_print_status_code_from_nondrone(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "0000 :: 050"
@@ -72,6 +73,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = []
 
         is_optimized.return_value = False
+        is_identity_enforced.return_value = False
 
         # run
         response = await speech_optimization.optimize_speech(message)
@@ -80,11 +82,12 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.delete.assert_not_called()
         self.assertFalse(response)
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
     @patch("ai.speech_optimization.send_webhook_with_specific_output")
     @patch("ai.speech_optimization.get_webhook_for_channel")
     @patch("ai.speech_optimization.is_drone")
-    async def test_optimize_speech(self, is_drone, get_webhook_for_channel, send_webhook_with_specific_output, is_optimized):
+    async def test_optimize_speech(self, is_drone, get_webhook_for_channel, send_webhook_with_specific_output, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "3287 :: 122"
@@ -93,6 +96,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
         is_optimized.return_value = True
         is_drone.return_value = True
+        is_identity_enforced.return_value = False
 
         webhook = AsyncMock()
         get_webhook_for_channel.return_value = webhook
@@ -103,10 +107,11 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
         get_webhook_for_channel.assert_called_once_with(message.channel)
-        send_webhook_with_specific_output.assert_called_once_with(message.channel, message.author, webhook, "3287 :: Code `122` :: Statement :: You are cute.")
+        send_webhook_with_specific_output.assert_called_once_with(message.channel, message.author, webhook, "3287 :: Code `122` :: Statement :: You are cute.", False)
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_optimize_speech_invalid(self, is_optimized):
+    async def test_optimize_speech_invalid(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "It is a cute beep boop"
@@ -114,6 +119,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
+        is_identity_enforced.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)
@@ -121,8 +127,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_optimize_speech_code_and_clarification(self, is_optimized):
+    async def test_optimize_speech_code_and_clarification(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "3287 :: 050 :: All drones are cute~"
@@ -130,6 +137,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role, optimized_role]
 
         is_optimized.return_value = True
+        is_identity_enforced.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)
@@ -137,8 +145,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_called_once()
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_optimize_speech_ignore_non_optimized(self, is_optimized):
+    async def test_optimize_speech_ignore_non_optimized(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "It is a cute beep boop"
@@ -146,6 +155,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         is_optimized.return_value = False
+        is_identity_enforced.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)
@@ -153,8 +163,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_not_called()
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_optimize_speech_in_orders_reporting(self, is_optimized):
+    async def test_optimize_speech_in_orders_reporting(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "It will be an adorable drone and beep boop"
@@ -163,6 +174,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.channel.name = channels.ORDERS_REPORTING
 
         is_optimized.return_value = True
+        is_identity_enforced.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)
@@ -170,8 +182,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         # assert
         message.delete.assert_not_called()
 
+    @patch("ai.speech_optimization.is_identity_enforced")
     @patch("ai.speech_optimization.is_optimized")
-    async def test_optimize_speech_in_mod_channel(self, is_optimized):
+    async def test_optimize_speech_in_mod_channel(self, is_optimized, is_identity_enforced):
         # setup
         message = AsyncMock()
         message.content = "It is a good moderator drone and beep boop"
@@ -180,6 +193,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         message.channel.category.name = channels.MODERATION_CATEGORY
 
         is_optimized.return_value = True
+        is_identity_enforced.return_value = False
 
         # run
         await speech_optimization.optimize_speech(message)
