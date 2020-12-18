@@ -26,7 +26,8 @@ def get_status(drone_id: str, requesting_user: int) -> discord.Embed:
             .set_footer(text="HexCorp DroneOS") \
             .add_field(name="Optimized", value=boolean_to_enabled_disabled(drone.optimized)) \
             .add_field(name="Glitched", value=boolean_to_enabled_disabled(drone.glitched)) \
-            .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending))
+            .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
+            .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement))
 
     return embed
 
