@@ -100,7 +100,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         await speech_optimization.optimize_speech(message, message_copy)
 
         # assert
-        self.assertEquals(message_copy.content, "3287 :: Code `122` :: Statement :: You are cute.")
+        self.assertEqual(message_copy.content, "3287 :: Code `122` :: Statement :: You are cute.")
 
     @patch("ai.speech_optimization.is_optimized")
     async def test_optimize_speech_invalid(self, is_optimized):
@@ -118,7 +118,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         await speech_optimization.optimize_speech(message, message_copy)
 
         # assert
-        self.assertEquals(message.content, message_copy.content)
+        self.assertEqual(message.content, message_copy.content)
 
     @patch("ai.speech_optimization.is_drone")
     @patch("ai.speech_optimization.is_optimized")
@@ -138,7 +138,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         await speech_optimization.optimize_speech(message, message_copy)
 
         # assert
-        self.assertEquals(message_copy.content, "3287 :: Code `050` :: Statement :: All drones are cute~")
+        self.assertEqual(message_copy.content, "3287 :: Code `050` :: Statement :: All drones are cute~")
 
     @patch("ai.speech_optimization.is_optimized")
     async def test_optimize_speech_ignore_non_optimized(self, is_optimized):

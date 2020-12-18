@@ -373,17 +373,15 @@ async def on_message(message: discord.Message):
         # This means it affects a user's display name, avatar, or message content. Such as speech optimization or identity enforcement.
 
         if len(signature(listener).parameters) == 2:
-            LOGGER.info("Listener has 2 params.")
             if await listener(message, message_copy):  # Return early if any listeners return true.
                 return
         else:
-            LOGGER.info("Listener has 1 param.")
             if await listener(message):  # Return early if any listeners return true.
                 return
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Checking for need to webhook.")
-    await webhook.webhook_if_content_altered(message, message_copy)
+    await webhook.webhook_if_message_altered(message, message_copy)
 
     LOGGER.info("Processing additional commands.")
     await bot.process_commands(message)

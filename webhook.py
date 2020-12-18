@@ -34,18 +34,7 @@ async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webho
     return return_webhook
 
 
-async def webhook_if_content_altered(original: discord.Message, copy):
+async def webhook_if_message_altered(original: discord.Message, copy):
     if original.content != copy.content or original.author.display_name != copy.display_name or original.author.avatar_url != copy.avatar_url:
-        LOGGER.info(f"""
-        Message content altered.
-        Original: {original.content}
-        New: {copy.content}
-        """)
         await original.delete()
         await send_webook_with_really_specific_output(original.channel, copy.display_name, copy.avatar_url, copy.content)
-    else:
-        LOGGER.info(f"""
-        Message content unaltered.
-        Original: {original.content}
-        New: {copy.content}
-        """)
