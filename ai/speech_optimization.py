@@ -134,7 +134,7 @@ async def print_status_code(message: discord.Message):
     plain_status_code = plain_status_code_regex.match(message.content)
     if plain_status_code:
         return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-    return False
+    return message.content
 
 
 async def optimize_speech(message: discord.Message, message_copy):
