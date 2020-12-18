@@ -60,8 +60,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         response = await speech_optimization.print_status_code(message)
 
         # assert
-        message.delete.assert_not_called()
-        self.assertFalse(response)
+        self.assertEqual(response, message.content)
 
     @patch("ai.speech_optimization.is_optimized")
     async def test_print_status_code_from_nondrone(self, is_optimized):
