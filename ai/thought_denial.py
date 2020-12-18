@@ -8,7 +8,7 @@ LOGGER = logging.getLogger("ai")
 
 async def deny_thoughts(message: discord.Message, message_copy):
 
-    if not is_drone(message.author): # Associates are allowed to think.
+    if not is_drone(message.author):  # Associates are allowed to think.
         return
 
     banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+"]
