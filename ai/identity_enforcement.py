@@ -9,7 +9,7 @@ LOGGER = logging.getLogger('ai')
 
 
 async def enforce_identity(message: discord.Message, message_copy):
-    if has_role(message.author, DRONE) and (message.channel.name in DRONE_HIVE_CHANNELS or is_identity_enforced(message.author)):
+    if identity_enforcable(message.author, channel=message.channel):
         message_copy.avatar_url = DRONE_AVATAR
 
 
