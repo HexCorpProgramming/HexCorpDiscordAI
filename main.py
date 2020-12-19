@@ -28,6 +28,7 @@ import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.status_message as status_messages
+import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
 import ai.thought_denial as thought_denial
 import webhook
@@ -91,6 +92,7 @@ message_listeners = [
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
     thought_denial.deny_thoughts,
+    glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
 
