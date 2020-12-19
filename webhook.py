@@ -13,7 +13,7 @@ async def proxy_message_by_webhook(message_content, message_username=None, messa
 
     if webhook is None and channel is not None:
         webhook = await get_webhook_for_channel(channel)
-    
+
     if webhook is None:
         LOGGER.warn(f"Failed to retrieve a webhook. Could not proxy message: '{message_content}'")
         return False
