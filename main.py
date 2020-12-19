@@ -23,7 +23,6 @@ import ai.emote as emote
 import ai.assign as assign
 import ai.orders_reporting as orders_reporting
 import ai.status as status
-import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
@@ -115,11 +114,19 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
-    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        target_webhook = await webhook.get_webhook_for_channel(target_channel)
-        for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
-            if amp_profile is not None:
-                await target_webhook.send(f'{amp_profile["id"]} :: {message}', username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
+
+    if not has_role(context.author, HIVE_MXTRESS) and context.channel.name == OFFICE:
+        return
+
+    channel_webhook = await webhook.get_webhook_for_channel(target_channel)
+
+    for drone in member_drones:
+        LOGGER.info("Amplifying message!!")
+        await webhook.proxy_message_by_webhook(message_content=message,
+                                               message_username=drone.display_name,
+                                               message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                               webhook=channel_webhook)
 
 
 async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
@@ -141,9 +148,12 @@ async def toggle_parameter(context, drones, toggle_column: str, role: discord.Ro
                 message = toggle_on_message()
 
             if await update_display_name(drone):
-                # Display name has been updated, get the new drone object
+                # Display name has been updated, get the new drone object with updated display name.
                 drone = context.guild.get_member(drone.id)
-            await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
+            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
+                                                   message_username=drone.display_name,
+                                                   message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, context=context) else DRONE_AVATAR,
+                                                   webhook=channel_webhook)
 
 
 @guild_only()
