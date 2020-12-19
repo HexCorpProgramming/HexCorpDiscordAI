@@ -76,7 +76,7 @@ def is_question(message: discord.Message):
     return False
 
 
-async def respond_to_question(message: discord.Message):
+async def respond_to_question(message: discord.Message, message_copy=None):
     if not is_question(message):
         return False
 

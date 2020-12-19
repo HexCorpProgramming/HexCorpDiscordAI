@@ -27,7 +27,7 @@ MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 NON_REMOVABLE_ROLES = [roles.MODERATION_ROLES, roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING]
 
 
-async def store_drone(message: discord.Message):
+async def store_drone(message: discord.Message, message_copy=None):
     '''
     Process posted messages.
     '''

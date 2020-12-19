@@ -1,7 +1,6 @@
 # Core
 import discord
 from discord.utils import get
-
 import sys
 import asyncio
 import logging
@@ -9,7 +8,6 @@ import random
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
 from traceback import TracebackException
-from inspect import signature
 
 # Modules
 import ai.stoplights as stoplights
@@ -380,16 +378,8 @@ async def on_message(message: discord.Message):
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
         LOGGER.info(f"Executing: {listener}")
-
-        # If a message listener accepts two parameters, that means it is able to transform the message copy.
-        # This means it affects a user's display name, avatar, or message content. Such as speech optimization or identity enforcement.
-
-        if len(signature(listener).parameters) == 2:
-            if await listener(message, message_copy):  # Return early if any listeners return true.
-                return
-        else:
-            if await listener(message):  # Return early if any listeners return true.
-                return
+        if await listener(message, message_copy):  # Return early if any listeners return true.
+            return
     LOGGER.info("End of message listener stack.")
 
     LOGGER.info("Checking for need to webhook.")

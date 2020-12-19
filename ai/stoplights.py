@@ -4,7 +4,7 @@ from roles import MODERATION
 from resources import CLOCK, TRAFFIC_LIGHTS
 
 
-async def check_for_stoplights(message: discord.Message):
+async def check_for_stoplights(message: discord.Message, message_copy=None):
     if CLOCK in message.content:
         moderator_role = get(message.guild.roles, name=MODERATION)
         await message.channel.send(f"Moderators needed {moderator_role.mention}!")

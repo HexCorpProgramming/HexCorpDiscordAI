@@ -24,7 +24,7 @@ def roll_id() -> str:
     return f'{id:04}'
 
 
-async def check_for_assignment_message(message: discord.Message):
+async def check_for_assignment_message(message: discord.Message, message_copy=None):
 
     if message.channel.name != ASSIGNMENT_CHANNEL:
         return False
