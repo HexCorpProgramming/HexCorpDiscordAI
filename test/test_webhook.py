@@ -1,7 +1,7 @@
 from webhook import webhook_if_message_altered
 import unittest
 from unittest.mock import Mock, AsyncMock, patch
-from db.data_objects import MessageCopy
+from ai.data_objects import MessageCopy
 
 
 class TestWebhook(unittest.IsolatedAsyncioTestCase):

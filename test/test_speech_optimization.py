@@ -5,7 +5,7 @@ import roles
 import channels
 import ai.speech_optimization as speech_optimization
 
-from db.data_objects import MessageCopy
+from ai.data_objects import MessageCopy
 
 drone_role = Mock()
 drone_role.name = roles.DRONE

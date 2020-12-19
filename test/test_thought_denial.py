@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 from ai.thought_denial import deny_thoughts
-from db.data_objects import MessageCopy
+from ai.data_objects import MessageCopy
 
 
 class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):

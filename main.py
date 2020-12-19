@@ -43,7 +43,7 @@ from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_M
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 # Data objects
-from db.data_objects import MessageCopy
+from ai.data_objects import MessageCopy
 
 LOGGER = logging.getLogger('ai')
 
