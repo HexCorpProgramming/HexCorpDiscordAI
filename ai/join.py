@@ -25,7 +25,7 @@ async def on_member_join(member: discord.Member):
     await member.add_roles(initiate_role)
 
 
-async def check_for_consent(message: discord.Message):
+async def check_for_consent(message: discord.Message, message_copy=None):
     '''On consent message, remove initiate role and give associate'''
 
     if message.channel.name != CONSENT_CHANNEL:

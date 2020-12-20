@@ -7,7 +7,7 @@ from bot_utils import COMMAND_PREFIX
 LOGGER = logging.getLogger('ai')
 
 
-async def check_if_prepending_necessary(message: discord.Message):
+async def check_if_prepending_necessary(message: discord.Message, message_copy=None):
     if is_prepending_id(message.author):
         drone_id = bot_utils.get_id(message.author.display_name)
         if message.content.startswith(f"{drone_id} :: ") or message.content.startswith(COMMAND_PREFIX):
