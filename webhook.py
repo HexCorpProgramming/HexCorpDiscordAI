@@ -1,5 +1,6 @@
 import discord
 import logging
+from ai.data_objects import MessageCopy
 
 LOGGER = logging.getLogger("ai")
 
@@ -32,7 +33,7 @@ async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webho
     return return_webhook
 
 
-async def webhook_if_message_altered(original: discord.Message, copy):
+async def webhook_if_message_altered(original: discord.Message, copy: MessageCopy):
     '''
     This function calls the proxy_message_by_webhook function if the message copy
     has been altered in any way by the on_message event listeners in main.py
