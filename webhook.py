@@ -1,21 +1,25 @@
 import discord
+import logging
+from ai.data_objects import MessageCopy
 
-from channels import DRONE_HIVE_CHANNELS
-
-from glitch import glitch_if_applicable
-
-from resources import DRONE_AVATAR
+LOGGER = logging.getLogger("ai")
 
 
-async def send_webhook_with_specific_output(channel: discord.TextChannel, author: discord.Member, webhook: discord.Webhook, output: str, identity_enforced: bool = False):
-    if channel.name in DRONE_HIVE_CHANNELS or identity_enforced:
-        await webhook.send(glitch_if_applicable(output, author), username=author.display_name, avatar_url=DRONE_AVATAR)
-    else:
-        await webhook.send(glitch_if_applicable(output, author), username=author.display_name, avatar_url=author.avatar_url)
+async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, webhook=None, channel=None):
+    '''
+    Proxies a message via webhook. If a webhook is not provided, one will be retrieved via the channel object passed as a parameter.
+    If neither a webhook or channel object are passed, this function will do nothing.
+    Message content is mandatory. If no username or avatar are provided, the message will be proxied with webhook defaults.
+    '''
 
+    if webhook is None and channel is not None:
+        webhook = await get_webhook_for_channel(channel)
 
-async def send_webhook(message: discord.Message, webhook: discord.Webhook):
-    await send_webhook_with_specific_output(message.channel, message.author, webhook, message.content, True)
+    if webhook is None:
+        LOGGER.warn(f"Failed to retrieve a webhook. Could not proxy message: '{message_content}'")
+        return False
+
+    await webhook.send(message_content, avatar_url=message_avatar, username=message_username)
 
 
 async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webhook:
@@ -27,3 +31,18 @@ async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webho
         return_webhook = webhooks[0]
 
     return return_webhook
+
+
+async def webhook_if_message_altered(original: discord.Message, copy: MessageCopy):
+    '''
+    This function calls the proxy_message_by_webhook function if the message copy
+    has been altered in any way by the on_message event listeners in main.py
+    '''
+    if original.content != copy.content or original.author.display_name != copy.display_name or original.author.avatar_url != copy.avatar_url:
+        LOGGER.info("Proxying altered message.")
+        await original.delete()
+        await proxy_message_by_webhook(message_content=copy.content,
+                                       message_username=copy.display_name,
+                                       message_avatar=copy.avatar_url,
+                                       channel=original.channel,
+                                       webhook=None)

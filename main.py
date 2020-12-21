@@ -1,7 +1,6 @@
 # Core
 import discord
 from discord.utils import get
-
 import sys
 import asyncio
 import logging
@@ -22,13 +21,14 @@ import ai.emote as emote
 import ai.assign as assign
 import ai.orders_reporting as orders_reporting
 import ai.status as status
-import ai.amplifier as amplifier
 import ai.drone_management as drone_management
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.status_message as status_messages
+import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
+import ai.thought_denial as thought_denial
 import webhook
 # Utils
 from bot_utils import get_id, COMMAND_PREFIX
@@ -38,9 +38,11 @@ import id_converter
 from db import database
 from db import drone_dao
 # Constants
-from roles import has_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS, IDENTITY_ENFORCEMENT
+from roles import has_role, has_any_role, SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, HIVE_MXTRESS, IDENTITY_ENFORCEMENT, MODERATION_ROLES
 from channels import DRONE_HIVE_CHANNELS, OFFICE, ORDERS_REPORTING, REPETITIONS, BOT_DEV_COMMS
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
+# Data objects
+from ai.data_objects import MessageCopy
 
 LOGGER = logging.getLogger('ai')
 
@@ -87,8 +89,11 @@ message_listeners = [
     id_prepending.check_if_prepending_necessary,
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
+    thought_denial.deny_thoughts,
+    glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
+
 ]
 
 
@@ -109,11 +114,19 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     Allows the Hive Mxtress to speak through other drones.
     '''
-    if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        target_webhook = await webhook.get_webhook_for_channel(target_channel)
-        for amp_profile in amplifier.generate_amplification_information(target_channel, drones):
-            if amp_profile is not None:
-                await target_webhook.send(f'{amp_profile["id"]} :: {message}', username=amp_profile["username"], avatar_url=amp_profile["avatar_url"])
+    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
+
+    if not has_role(context.author, HIVE_MXTRESS) and context.channel.name == OFFICE:
+        return
+
+    channel_webhook = await webhook.get_webhook_for_channel(target_channel)
+
+    for drone in member_drones:
+        LOGGER.info("Amplifying message!!")
+        await webhook.proxy_message_by_webhook(message_content=message,
+                                               message_username=drone.display_name,
+                                               message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                               webhook=channel_webhook)
 
 
 async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
@@ -135,9 +148,12 @@ async def toggle_parameter(context, drones, toggle_column: str, role: discord.Ro
                 message = toggle_on_message()
 
             if await update_display_name(drone):
-                # Display name has been updated, get the new drone object
+                # Display name has been updated, get the new drone object with updated display name.
                 drone = context.guild.get_member(drone.id)
-            await webhook.send_webhook_with_specific_output(context.channel, drone, channel_webhook, f'{get_id(drone.display_name)} :: {message}')
+            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
+                                                   message_username=drone.display_name,
+                                                   message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, context=context) else DRONE_AVATAR,
+                                                   webhook=channel_webhook)
 
 
 @guild_only()
@@ -198,6 +214,16 @@ async def toggle_drone_glitch(context, *drones):
                            drone_dao.is_glitched,
                            lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
                            lambda: "Drone corruption at acceptable levels.")
+
+
+@guild_only()
+@bot.command(brief="DroneOS", usage=f'{bot.command_prefix}emergency_release 9813')
+async def emergency_release(context, drone_id: str):
+    '''
+    Lets moderators disable all DroneOS restrictions currently active on a drone.
+    '''
+    if has_any_role(context.author, MODERATION_ROLES):
+        await drone_management.emergency_release(context, drone_id)
 
 
 @dm_only()
@@ -357,15 +383,19 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
+    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url)
+
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
         LOGGER.info(f"Executing: {listener}")
-        if await listener(message):  # Return early if any listeners return true.
+        if await listener(message, message_copy):  # Return early if any listeners return true.
             return
     LOGGER.info("End of message listener stack.")
 
-    LOGGER.info("Processing additional commands.")
+    LOGGER.info("Checking for need to webhook.")
+    await webhook.webhook_if_message_altered(message, message_copy)
 
+    LOGGER.info("Processing additional commands.")
     await bot.process_commands(message)
 
 

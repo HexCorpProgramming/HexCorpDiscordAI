@@ -20,12 +20,11 @@ def glitch(text: str):
 glitch_template = re.compile(r'(\d{4} :: )(.*)')
 
 
-def glitch_if_applicable(text: str, author: discord.Member):
-    if is_glitched(author):
-        template_match = glitch_template.match(text)
+async def glitch_if_applicable(message: discord.Message, message_copy):
+    if is_glitched(message.author):
+        template_match = glitch_template.match(message_copy.content)
         if template_match:
-            return template_match.group(1) + glitch(template_match.group(2))
+            message_copy.content = template_match.group(1) + glitch(template_match.group(2))  # If a drone is using an op code, only glitch the part after its ID.
         else:
-            return glitch(text)
-    else:
-        return text
+            message_copy.content = glitch(message_copy.content)  # Otherwise, glitch the whole message.
+    return False

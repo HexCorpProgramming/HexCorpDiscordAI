@@ -3,10 +3,8 @@ import re
 import discord
 from bot_utils import get_id
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
-from webhook import send_webhook_with_specific_output
 from ai.mantras import Mantra_Handler
-from webhook import get_webhook_for_channel
-from db.drone_dao import is_optimized, is_drone, is_identity_enforced
+from db.drone_dao import is_optimized, is_drone
 
 LOGGER = logging.getLogger('ai')
 
@@ -131,17 +129,15 @@ def get_acceptable_messages(author, channel):
 async def print_status_code(message: discord.Message):
     informative_status_code = informative_status_code_regex.match(message.content)
     if informative_status_code and is_drone(message.author) and not is_optimized(message.author):
-        await message.delete()
         return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
 
     plain_status_code = plain_status_code_regex.match(message.content)
-    if plain_status_code and is_drone(message.author):
-        await message.delete()
+    if plain_status_code:
         return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-    return False
+    return message.content
 
 
-async def optimize_speech(message: discord.Message):
+async def optimize_speech(message: discord.Message, message_copy):
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
     acceptable_status_code_message = plain_status_code_regex.match(message.content)
@@ -149,7 +145,6 @@ async def optimize_speech(message: discord.Message):
 
     is_status_code = acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name)
     is_acceptable = message.content in get_acceptable_messages(message.author, message.channel.name) or is_status_code
-    identity_enforced = is_identity_enforced(message.author)
 
     if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST and message.channel.category.name not in CATEGORY_BLACKLIST:
         LOGGER.info("Deleting inappropriate message by optimized drone.")
@@ -157,11 +152,8 @@ async def optimize_speech(message: discord.Message):
         return True
     elif (informative_status_code_message or is_status_code) and is_drone(message.author):
         LOGGER.info("Optimizing speech code for drone.")
-        webhook = await get_webhook_for_channel(message.channel)
-        output = await print_status_code(message)
-        if output:
-            await send_webhook_with_specific_output(message.channel, message.author, webhook, output, identity_enforced)
-        return True
+        message_copy.content = await print_status_code(message)
+        return False
     else:
         LOGGER.info("Ignoring message from non-drone.")
         return False
