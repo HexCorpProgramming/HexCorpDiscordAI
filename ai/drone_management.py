@@ -1,11 +1,16 @@
 import logging
 from discord.utils import get
+import discord
 
-from roles import DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION
-from id_converter import convert_id_to_member
+from roles import has_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS
+from id_converter import convert_id_to_member, convert_ids_to_members
 from display_names import update_display_name
+import webhook
+from bot_utils import get_id
+from ai.identity_enforcement import identity_enforcable
+from resources import DRONE_AVATAR
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id
@@ -74,3 +79,30 @@ async def emergency_release(context, drone_id: str):
     await update_display_name(drone_member)
 
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
+
+
+async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
+    member_drones = convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
+
+    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
+
+    for drone in member_drones:
+        trusted_users = get_trusted_users(drone.id)
+        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
+            message = ""
+            if is_toggle_activated(drone):
+                update_droneOS_parameter(drone, toggle_column, False)
+                await drone.remove_roles(role)
+                message = toggle_off_message()
+            else:
+                update_droneOS_parameter(drone, toggle_column, True)
+                await drone.add_roles(role)
+                message = toggle_on_message()
+
+            if await update_display_name(drone):
+                # Display name has been updated, get the new drone object with updated display name.
+                drone = context.guild.get_member(drone.id)
+            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
+                                                   message_username=drone.display_name,
+                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, context=context) else DRONE_AVATAR,
+                                                   webhook=channel_webhook)
