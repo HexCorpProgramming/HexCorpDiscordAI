@@ -1,9 +1,10 @@
 import logging
 from discord.utils import get
 import discord
+from typing import List
 
 from roles import has_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS
-from id_converter import convert_id_to_member, convert_ids_to_members
+from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
 from bot_utils import get_id
@@ -81,12 +82,10 @@ async def emergency_release(context, drone_id: str):
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
 
 
-async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
-    member_drones = convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-
+async def toggle_parameter(context, drones: List[discord.Member], toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
-    for drone in member_drones:
+    for drone in drones:
         trusted_users = get_trusted_users(drone.id)
         if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
             message = ""
