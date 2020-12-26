@@ -8,6 +8,7 @@ from display_names import update_display_name
 from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
+from db.timer_dao import delete_timers_by_drone_id
 
 LOGGER = logging.getLogger('ai')
 
@@ -55,6 +56,7 @@ def remove_drone_from_db(drone_id: str):
     delete_drone_order_by_drone_id(drone_id)
     delete_storage_by_target_id(drone_id)
     delete_drone_by_drone_id(drone_id)
+    delete_timers_by_drone_id(drone_id)
 
 
 async def emergency_release(context, drone_id: str):

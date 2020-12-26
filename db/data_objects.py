@@ -56,3 +56,12 @@ class DroneOrder:
         self.drone_id = drone_id
         self.protocol = protocol
         self.finish_time = finish_time
+
+
+class Timer:
+
+    def __init__(self, id: str = None, drone_id: str = None, mode: str = None, end_time: datetime = None):
+        self.id = id
+        self.drone_id = drone_id
+        self.mode = mode
+        self.end_time = end_time

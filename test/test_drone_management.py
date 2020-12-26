@@ -125,10 +125,11 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         remove_drone_from_db.assert_not_called()
         context.send.assert_called_once_with('You are not a drone. Can not unassign.')
 
+    @patch("ai.drone_management.delete_timers_by_drone_id")
     @patch("ai.drone_management.delete_drone_order_by_drone_id")
     @patch("ai.drone_management.delete_storage_by_target_id")
     @patch("ai.drone_management.delete_drone_by_drone_id")
-    def test_remove_drone_from_db(self, delete_drone_by_drone_id, delete_storage_by_target_id, delete_drone_order_by_drone_id):
+    def test_remove_drone_from_db(self, delete_drone_by_drone_id, delete_storage_by_target_id, delete_drone_order_by_drone_id, delete_timers_by_drone_id):
         # setup
         to_remove = "1234"
 
@@ -139,6 +140,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         delete_drone_by_drone_id.assert_called_once_with(to_remove)
         delete_storage_by_target_id.assert_called_once_with(to_remove)
         delete_drone_order_by_drone_id.assert_called_once_with(to_remove)
+        delete_timers_by_drone_id.assert_called_once_with(to_remove)
 
     @patch("ai.drone_management.update_display_name")
     @patch("ai.drone_management.convert_id_to_member")
