@@ -5,7 +5,7 @@ import sys
 import asyncio
 import logging
 import random
-from typing import Union
+from typing import Union, Optional
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only, Greedy
 from traceback import TracebackException
@@ -20,6 +20,7 @@ import ai.id_prepending as id_prepending
 import ai.join as join
 import ai.respond as respond
 import ai.storage as storage
+import ai.timers as timers
 import ai.emote as emote
 import ai.assign as assign
 import ai.orders_reporting as orders_reporting
@@ -82,6 +83,7 @@ checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
 updating_status_message = False
+checking_for_elapsed_timers = False
 
 # Register message listeners.
 message_listeners = [
@@ -106,7 +108,8 @@ async def bigtext(context, sentence):
     Let the AI say things using emotes.
     '''
     if context.channel.name not in DRONE_HIVE_CHANNELS:
-        if (reply := emote.generate_big_text(context.channel, sentence)):
+        reply = emote.generate_big_text(context.channel, sentence)
+        if reply:
             await context.send(reply)
 
 
@@ -133,7 +136,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
 
 @guild_only()
 @bot.command(aliases=['tid'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
-async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]]):
+async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
     '''
     Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
     '''
@@ -143,12 +146,13 @@ async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, Dro
                                             get(context.guild.roles, name=ID_PREPENDING),
                                             drone_dao.is_prepending_id,
                                             lambda: "ID prepending is now mandatory.",
-                                            lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+                                            lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
+                                            hours)
 
 
 @guild_only()
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
-async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]]):
+async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
@@ -158,12 +162,13 @@ async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Membe
                                             get(context.guild.roles, name=SPEECH_OPTIMIZATION),
                                             drone_dao.is_optimized,
                                             lambda: "Speech optimization is now active.",
-                                            lambda: "Speech optimization disengaged.")
+                                            lambda: "Speech optimization disengaged.",
+                                            hours)
 
 
 @guild_only()
 @bot.command(aliases=['tei'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_enforce_identity 5890 9813')
-async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]]):
+async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
     '''
@@ -173,12 +178,13 @@ async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, 
                                             get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
                                             drone_dao.is_identity_enforced,
                                             lambda: "Identity enforcement is now active.",
-                                            lambda: "Identity enforcement disengaged.")
+                                            lambda: "Identity enforcement disengaged.",
+                                            hours)
 
 
 @guild_only()
 @bot.command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
-async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]]):
+async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
@@ -188,7 +194,8 @@ async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, Dron
                                             get(context.guild.roles, name=GLITCHED),
                                             drone_dao.is_glitched,
                                             lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                                            lambda: "Drone corruption at acceptable levels.")
+                                            lambda: "Drone corruption at acceptable levels.",
+                                            hours)
 
 
 @guild_only()
@@ -391,7 +398,7 @@ async def on_member_remove(member: discord.Member):
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
     await mantra_handler.load_mantra()
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message
+    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message, checking_for_elapsed_timers
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
@@ -408,6 +415,10 @@ async def on_ready():
     if not updating_status_message:
         asyncio.ensure_future(status_messages.start_change_status(bot))
         updating_status_message = True
+
+    if not checking_for_elapsed_timers:
+        asyncio.ensure_future(timers.start_process_timers(bot))
+        checking_for_elapsed_timers = True
 
 
 @bot.event
