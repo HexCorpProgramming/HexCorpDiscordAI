@@ -2,6 +2,8 @@ from webhook import webhook_if_message_altered
 import unittest
 from unittest.mock import Mock, AsyncMock, patch
 from ai.data_objects import MessageCopy
+import discord
+import io
 
 
 class TestWebhook(unittest.IsolatedAsyncioTestCase):
@@ -98,3 +100,45 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
                                              message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None)
+
+    @patch("webhook.proxy_message_by_webhook")
+    async def test_attachments_are_converted_into_file_objects(self, send_webhook):
+        '''
+        The webhook_if_message altered function should read each Attachment object in the MessageCopy's attachments attribute
+        and convert them into appropriate discord.File objects before passing them to the proxy_message_by_webhook function.
+
+        This is because discord.Message objects have a list of discord.Attachments to represent files, 
+        but webhooks require discord.File objects.
+        '''
+
+        attachment_mock_one = AsyncMock()
+        attachment_mock_one.read.return_value = b"Hello world."
+        attachment_mock_one.filename = "file1.png"
+
+        attachment_mock_two = AsyncMock()
+        attachment_mock_two.read.return_value = b"Hello again, world."
+        attachment_mock_two.filename = "file2.png"
+
+        expected_file_one = discord.File(io.BytesIO(b"Hello world."), filename="file1.png")
+        expected_file_two = discord.File(io.BytesIO(b"Hello again, world."), filename="file2.png")
+
+        message_original = AsyncMock()
+        message_original.channel = "Channel."
+        message_original.content = "Content."
+        message_original.author.display_name = "Display name"
+        message_original.author.avatar_url = "Avatar URL"
+        message_original.attachments = [attachment_mock_one, attachment_mock_two]
+
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url, message_original.attachments)
+        message_copy.content = "Altered content."
+
+        await webhook_if_message_altered(message_original, message_copy)
+
+        converted_file_one = send_webhook.call_args.kwargs['message_attachments'][0]
+        converted_file_two = send_webhook.call_args.kwargs['message_attachments'][1]
+
+        self.assertEqual(converted_file_one.filename, expected_file_one.filename)
+        self.assertEqual(converted_file_two.filename, expected_file_two.filename)
+        
+        self.assertEqual(converted_file_one.fp.read(), expected_file_one.fp.read())
+        self.assertEqual(converted_file_two.fp.read(), expected_file_two.fp.read())
