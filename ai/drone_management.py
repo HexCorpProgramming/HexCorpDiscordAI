@@ -91,6 +91,7 @@ async def toggle_parameter(context,
                            role: discord.Role,
                            is_toggle_activated: Callable[[discord.Member], bool],
                            toggle_on_message: Callable[[], str],
+                           toggle_on_timed_message: Callable[[int], str],
                            toggle_off_message: Callable[[], str],
                            hours: Optional[int] = 0):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
@@ -117,12 +118,12 @@ async def toggle_parameter(context,
                     end_time = str(datetime.now() + timedelta(hours=hours))
                     timer = Timer(str(uuid4()), fetch_drone_with_id(drone.id).drone_id, toggle_column, end_time)
                     insert_timer(timer)
+                    message = toggle_on_timed_message(hours)
                     LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
 
             if await update_display_name(drone):
                 # Display name has been updated, get the new drone object with updated display name.
                 drone = context.guild.get_member(drone.id)
-            # TODO: update feedback texts
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
                                                    message_avatar=drone.avatar_url if not identity_enforcable(drone, context=context) else DRONE_AVATAR,

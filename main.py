@@ -146,6 +146,7 @@ async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, Dro
                                             get(context.guild.roles, name=ID_PREPENDING),
                                             drone_dao.is_prepending_id,
                                             lambda: "ID prepending is now mandatory.",
+                                            lambda hours: f"ID prepending is now mandatory for {hours} hours.",
                                             lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
                                             hours)
 
@@ -162,6 +163,7 @@ async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Membe
                                             get(context.guild.roles, name=SPEECH_OPTIMIZATION),
                                             drone_dao.is_optimized,
                                             lambda: "Speech optimization is now active.",
+                                            lambda hours: f"Speech optimization is now active for {hours} hours.",
                                             lambda: "Speech optimization disengaged.",
                                             hours)
 
@@ -178,6 +180,7 @@ async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, 
                                             get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
                                             drone_dao.is_identity_enforced,
                                             lambda: "Identity enforcement is now active.",
+                                            lambda hours: f"Identity enforcement is now active for {hours} hours.",
                                             lambda: "Identity enforcement disengaged.",
                                             hours)
 
@@ -194,6 +197,7 @@ async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, Dron
                                             get(context.guild.roles, name=GLITCHED),
                                             drone_dao.is_glitched,
                                             lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
+                                            lambda hours: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {hours} hours.",
                                             lambda: "Drone corruption at acceptable levels.",
                                             hours)
 
