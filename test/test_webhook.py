@@ -45,6 +45,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
                                              message_avatar=message_copy.avatar_url,
+                                             message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None)
 
@@ -69,6 +70,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
                                              message_avatar=message_copy.avatar_url,
+                                             message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None)
 
@@ -93,5 +95,6 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
                                              message_avatar=message_copy.avatar_url,
+                                             message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None)
