@@ -138,6 +138,11 @@ async def print_status_code(message: discord.Message):
 
 
 async def optimize_speech(message: discord.Message, message_copy):
+
+    # Strip attachments only if a drone is optimized via hc!tso.
+    if is_optimized(message.author):
+        message_copy.attachments = None
+
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
     acceptable_status_code_message = plain_status_code_regex.match(message.content)
