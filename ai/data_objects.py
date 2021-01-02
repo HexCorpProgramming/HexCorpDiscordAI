@@ -4,7 +4,7 @@ class MessageCopy:
         content=None,
         display_name=None,
         avatar_url=None,
-        attachments=None
+        attachments=[]
     ):
         self.content = content
         self.display_name = display_name

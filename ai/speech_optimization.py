@@ -141,7 +141,7 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Strip attachments only if a drone is optimized via hc!tso.
     if is_optimized(message.author):
-        message_copy.attachments = None
+        message_copy.attachments = []
 
     # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
 
