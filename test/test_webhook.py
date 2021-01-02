@@ -107,7 +107,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         The webhook_if_message altered function should read each Attachment object in the MessageCopy's attachments attribute
         and convert them into appropriate discord.File objects before passing them to the proxy_message_by_webhook function.
 
-        This is because discord.Message objects have a list of discord.Attachments to represent files, 
+        This is because discord.Message objects have a list of discord.Attachments to represent files,
         but webhooks require discord.File objects.
         '''
 
@@ -139,6 +139,6 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(converted_file_one.filename, expected_file_one.filename)
         self.assertEqual(converted_file_two.filename, expected_file_two.filename)
-        
+
         self.assertEqual(converted_file_one.fp.read(), expected_file_one.fp.read())
         self.assertEqual(converted_file_two.fp.read(), expected_file_two.fp.read())
