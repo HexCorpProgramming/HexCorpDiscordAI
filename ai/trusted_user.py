@@ -2,11 +2,36 @@ import logging
 
 from discord.utils import get
 import discord
+from discord.ext.commands import Cog, command, dm_only
 
+from bot_utils import COMMAND_PREFIX
 from db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone
 from resources import HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
+
+
+class TrustedUserCog(Cog):
+
+    @dm_only()
+    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief="DroneOS")
+    async def add_trusted_user(self, context, user_name: str):
+        '''
+        Add user with the given nickname as a trusted user.
+        Use quotation marks if the username contains spaces.
+        This command is used in DMs with the AI.
+        '''
+        await add_trusted_user(context, user_name)
+
+    @dm_only()
+    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief="DroneOS")
+    async def remove_trusted_user(self, context, user_name: str):
+        '''
+        Remove a given user from the list of trusted users.
+        Use quotation marks if the username contains spaces.
+        This command is used in DMs with the AI.
+        '''
+        await remove_trusted_user(context, user_name)
 
 
 async def add_trusted_user(context, trusted_user_name: str):
