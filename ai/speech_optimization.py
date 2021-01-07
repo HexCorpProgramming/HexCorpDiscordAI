@@ -107,9 +107,11 @@ code_map = {
     '451': 'Error :: Unable to obey/respond for legal reasons! Do not continue!!',
 }
 
-informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
-plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
-drone_id_regex = re.compile(r'\d{4}')
+informative_status_code_regex = re.compile(r'^(\d{4}) :: (\d{3}) :: (.*)$')
+plain_status_code_regex = re.compile(r'^(\d{4}) :: (\d{3})$')
+
+informative_addressing_code_regex = re.compile(r'^(\d{4}) :: 110 :: (\d{4}) :: (.*)$')
+plain_addressing_code_regex = re.compile(r'^(\d{4}) :: 110 :: (\d{4})$')
 
 CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
@@ -149,10 +151,10 @@ def status_correctly_identified(author: discord.Author, plain_status=None, infor
         return False
 
 
-async def translate_code(plain_status=None, informative_status=None):
+def translate_code(plain_status=None, informative_status=None, special_status=None):
     '''
     Gets the human-readble status and rewrites the message in full.
-    
+
     Regex groups:
     (1): Author's drone ID.
     (2): Status code e.g "200"
@@ -164,7 +166,7 @@ async def translate_code(plain_status=None, informative_status=None):
     elif informative_status:
         return f"{informative_status.group(2)} + this is an informative status code"
     else:
-        return "If you see this message, yell at 5890."
+        return None
 
 
 async def optimize_speech(message: discord.Message, message_copy):
@@ -173,7 +175,7 @@ async def optimize_speech(message: discord.Message, message_copy):
     "5890 :: 200" > "5890 :: Code 200 :: Affirmative"
 
     Drones can append additional information after a status code.
-    Optimized drones cannot, and will have their message automatically trimmed if attempted.
+    Optimized drones cannot, and will have their message deleted if attempted.
     '''
 
     # Do not attempt to optimize non-drones.
@@ -183,20 +185,17 @@ async def optimize_speech(message: discord.Message, message_copy):
     plain_status = None
     informative_status = None
 
-    # Attempt to find a status code message. If an informative status code is
-    # found, do not attempt to find a plain status code.
+    # Attempt to find a status code message.
     informative_status = informative_status_code_regex.match(message_copy.content)
-    if not informative_status:
-        plain_status = plain_status_code_regex.match(message_copy.content)
+    plain_status = plain_status_code_regex.match(message_copy.content)
 
-    # If a status code has not been identified, return early.
-    # Delete message if drone is optimized.
-    if informative_status is None and plain_status is None:
-        if is_optimized(message.author):
-            await message.delete()
-            return True
-        else:
-            return False
+    # If an appropriate status code has not been identified, return early.
+    # Delete message if drone is optimized and has not posted a plain status message.
+    if informative_status is None and plain_status is None and not is_optimized(message.author):
+        return False
+    elif plain_status is None and is_optimized(message.author):
+        await message.delete()
+        return True
 
     # Confirm that the status code begins with the drone's ID.
     if not status_correctly_identified(message.author, plain_status, informative_status):
@@ -204,5 +203,28 @@ async def optimize_speech(message: discord.Message, message_copy):
         return True
 
     # Finally, optimize the code.
-    message_copy.content = await translate_code(plain_status, informative_status)
+    optimized_message = translate_code(plain_status, informative_status)
+    if optimized_message is not None:
+        message_copy.content = optimized_message
     return False
+
+'''
+TODO:
+
+Rewrite the regex so there's only one status code regex.
+`^((\d{4}) :: (\d{3}))( :: (.*)$)?`
+This allows the first matched group to be a plain status code.
+So just check if .group(1) == message.content
+If true, then the user has posted a plain status code
+Otherwise, the user has posted an informative status code.
+
+Given the message:
+5890 :: 110 :: Hello world
+
+0: 5890 :: 110 :: Hello world (Full match)
+1: 5890 :: 110 (Plain status code)
+2: 5890 (Drone ID)
+3: 110 (Status code)
+4:  :: Hello world (Informational status full formatting)
+5: Hello world (Informational status message)
+'''
