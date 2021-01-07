@@ -109,6 +109,7 @@ code_map = {
 
 informative_status_code_regex = re.compile(r'(\d{4}) :: (\d{3}) :: (.*)$')
 plain_status_code_regex = re.compile(r'(\d{4}) :: (\d{3})$')
+drone_id_regex = re.compile(r'\d{4}')
 
 CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
@@ -126,34 +127,82 @@ def get_acceptable_messages(author, channel):
         return []
 
 
-async def print_status_code(message: discord.Message):
-    informative_status_code = informative_status_code_regex.match(message.content)
-    if informative_status_code and is_drone(message.author) and not is_optimized(message.author):
-        return f'{informative_status_code.group(1)} :: Code `{informative_status_code.group(2)}` :: {code_map.get(informative_status_code.group(2), "INVALID CODE")} :: {informative_status_code.group(3)}'
+def status_correctly_identified(author: discord.Author, plain_status=None, informative_status=None):
+    '''
+    Returns true if status begins with author's drone ID. Otherwise returns false.
 
-    plain_status_code = plain_status_code_regex.match(message.content)
-    if plain_status_code:
-        return f'{plain_status_code.group(1)} :: Code `{plain_status_code.group(2)}` :: {code_map.get(plain_status_code.group(2), "INVALID CODE")}'
-    return message.content
+    Author: 5890
+    Message: '5890 :: 200'
+    Returns: True
+    Message: '9813 :: 200'
+    Returns: False
+    '''
+
+    required_id = get_id(author.display_name)
+
+    if plain_status is not None:
+        return required_id == plain_status.group(1)
+    elif informative_status is not None:
+        return required_id == informative_status.group(1)
+    else:
+        # This shouldn't happen.
+        return False
+
+
+async def translate_code(plain_status=None, informative_status=None):
+    '''
+    Gets the human-readble status and rewrites the message in full.
+    
+    Regex groups:
+    (1): Author's drone ID.
+    (2): Status code e.g "200"
+    (3): Additional information (informative_status only).
+    '''
+
+    if plain_status:
+        return f"{plain_status.group(2)} + this is a plain status code"
+    elif informative_status:
+        return f"{informative_status.group(2)} + this is an informative status code"
+    else:
+        return "If you see this message, yell at 5890."
 
 
 async def optimize_speech(message: discord.Message, message_copy):
-    # If the message is written by a drone with speech optimization, and the message is NOT a valid message, delete it.
+    '''
+    This function allows status codes to be transformed into human-readable versions.
+    "5890 :: 200" > "5890 :: Code 200 :: Affirmative"
 
-    acceptable_status_code_message = plain_status_code_regex.match(message.content)
-    informative_status_code_message = informative_status_code_regex.match(message.content)
+    Drones can append additional information after a status code.
+    Optimized drones cannot, and will have their message automatically trimmed if attempted.
+    '''
 
-    is_status_code = acceptable_status_code_message and acceptable_status_code_message.group(1) == get_id(message.author.display_name)
-    is_acceptable = message.content in get_acceptable_messages(message.author, message.channel.name) or is_status_code
+    # Do not attempt to optimize non-drones.
+    if not is_drone(message.author):
+        return False
 
-    if is_optimized(message.author) and not is_acceptable and message.channel.name not in CHANNEL_BLACKLIST and message.channel.category.name not in CATEGORY_BLACKLIST:
-        LOGGER.info("Deleting inappropriate message by optimized drone.")
+    plain_status = None
+    informative_status = None
+
+    # Attempt to find a status code message. If an informative status code is
+    # found, do not attempt to find a plain status code.
+    informative_status = informative_status_code_regex.match(message_copy.content)
+    if not informative_status:
+        plain_status = plain_status_code_regex.match(message_copy.content)
+
+    # If a status code has not been identified, return early.
+    # Delete message if drone is optimized.
+    if informative_status is None and plain_status is None:
+        if is_optimized(message.author):
+            await message.delete()
+            return True
+        else:
+            return False
+
+    # Confirm that the status code begins with the drone's ID.
+    if not status_correctly_identified(message.author, plain_status, informative_status):
         await message.delete()
         return True
-    elif (informative_status_code_message or is_status_code) and is_drone(message.author):
-        LOGGER.info("Optimizing speech code for drone.")
-        message_copy.content = await print_status_code(message)
-        return False
-    else:
-        LOGGER.info("Ignoring message from non-drone.")
-        return False
+
+    # Finally, optimize the code.
+    message_copy.content = await translate_code(plain_status, informative_status)
+    return False
