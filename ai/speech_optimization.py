@@ -5,6 +5,16 @@ from bot_utils import get_id
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from ai.mantras import Mantra_Handler
 from db.drone_dao import is_optimized, is_drone
+from enum import Enum
+
+
+class StatusType(Enum):
+    NONE = 1
+    PLAIN = 2
+    INFORMATIVE = 3
+    ADDRESS_PLAIN = 4
+    ADDRESS_INFORMATIVE = 5
+
 
 LOGGER = logging.getLogger('ai')
 
