@@ -197,13 +197,13 @@ def get_status_type(status: Optional[re.Match]):
     elif status.group(3) == "110" and status.group(5) is not None:
         # Handle 110 address-by-ID special case.
         address_info = addressing_regex.match(status.group(5))
-        if address_info.group(1) is not None and address_info.group(2) is not None:
+        if address_info is None:
+            # If a target ID is not found then it's just an informative status code.
+            return StatusType.INFORMATIVE
+        elif address_info.group(1) is not None and address_info.group(2) is not None:
             return StatusType.ADDRESS_BY_ID_INFORMATIVE
         elif address_info.group(1) is not None and address_info.group(2) is None:
             return StatusType.ADDRESS_BY_ID_PLAIN
-        else:
-            # If a target ID is not found then it's just an informative status code.
-            return StatusType.INFORMATIVE
     elif status.group(5) is not None:
         return StatusType.INFORMATIVE
     elif status.group(5) is None:
@@ -237,8 +237,22 @@ async def optimize_speech(message: discord.Message, message_copy):
         await message.delete()
         return True
 
-    
+    # Build message based on status type.
+    # TODO: Consider replacing "XXXX :: Code XXX :: " with a base_message variable for reusability.
+    drone_id = get_id(message.author.display_name)
 
+    if status_type is StatusType.PLAIN:
+        message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: {code_map.get(status.group(3), 'INVALID CODE')}"
+    elif status_type is StatusType.INFORMATIVE:
+        message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
+    elif status_type in (StatusType.ADDRESS_BY_ID_PLAIN, StatusType.ADDRESS_BY_ID_INFORMATIVE):
+        address_info = addressing_regex.match(status.group(5))
+        if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
+            message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: Addressing: Drone #{address_info.group(1)}"
+        elif status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
+            message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
+
+    return False
 
 
 '''
