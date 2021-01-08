@@ -194,6 +194,14 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
+    if status is None:
+        return False
+
+    # Confirm the status starts with the drone's ID
+    if status.group(2) != get_id(message.author.display_name):
+        LOGGER.info("Status did not match drone ID.")
+        await message.delete()
+        return True
 
     # Determine status type
     status_type = get_status_type(status)
