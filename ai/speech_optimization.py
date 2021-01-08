@@ -228,19 +228,18 @@ async def optimize_speech(message: discord.Message, message_copy):
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
 
-    # Determine type type
+    # Determine status type
     status_type = get_status_type(status)
 
-    if status_type is StatusType.PLAIN:
-        LOGGER.info("PLAIN STATUS CODE GOT")
-    if status_type is StatusType.INFORMATIVE:
-        LOGGER.info("INFORMATIVE STATUS CODE GOT")
-    if status_type is StatusType.NONE:
-        LOGGER.info("NO STATUS TYPE RECIEVED")
-    if status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
-        LOGGER.info("INFORMATIVE ID ADDRESS GOT")
-    if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
-        LOGGER.info("PLAIN ID ADDRESS GOT")
+    # Delete unauthorized messages
+    if is_optimized(message.author) and status_type in (StatusType.INFORMATIVE, StatusType.ADDRESS_BY_ID_INFORMATIVE):
+        await message.send("An optimized drone just tried to use an informative status code.")
+        await message.delete()
+        return True
+
+    
+
+
 
 '''
 TODO:
