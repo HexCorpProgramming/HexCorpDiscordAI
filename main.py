@@ -383,7 +383,7 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
-    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url)
+    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
