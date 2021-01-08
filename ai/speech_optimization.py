@@ -25,9 +25,6 @@ class StatusType(Enum):
     ADDRESS_BY_ID_INFORMATIVE = 5
     # "5890 :: 110 :: 9813 :: You are cute!"
 
-    INVALID_ID = 6
-    # Status with an ID belonging to a different drone.
-
 
 LOGGER = logging.getLogger('ai')
 
@@ -151,36 +148,6 @@ This regex is to be checked on the status regex's 5th group when the status code
 
 CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
-
-
-def get_acceptable_messages(author, channel):
-    user_id = get_id(author.display_name)
-    # Only returns mantra if channels is hexcorp-repetitions; else it returns nothing
-    if channel == REPETITIONS:
-        return [
-            # Mantra
-            f'{user_id} :: {Mantra_Handler.current_mantra}'
-        ]
-    else:
-        return []
-
-
-def translate_code(plain_status=None, informative_status=None, special_status=None):
-    '''
-    Gets the human-readble status and rewrites the message in full.
-
-    Regex groups:
-    (1): Author's drone ID.
-    (2): Status code e.g "200"
-    (3): Additional information (informative_status only).
-    '''
-
-    if plain_status:
-        return f"{plain_status.group(2)} + this is a plain status code"
-    elif informative_status:
-        return f"{informative_status.group(2)} + this is an informative status code"
-    else:
-        return None
 
 
 def get_status_type(status: Optional[re.Match]):
