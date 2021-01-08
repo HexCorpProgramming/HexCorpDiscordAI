@@ -6,15 +6,24 @@ from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATIO
 from ai.mantras import Mantra_Handler
 from db.drone_dao import is_optimized, is_drone
 from enum import Enum
+from typing import Optional
 
 
 class StatusType(Enum):
     NONE = 1
-    PLAIN = 2
-    INFORMATIVE = 3
-    ADDRESS_PLAIN = 4
-    ADDRESS_INFORMATIVE = 5
+    # "Hello every(dr)one."
 
+    PLAIN = 2
+    # "5890 :: 200"
+
+    INFORMATIVE = 3
+    # "5890 :: 109 :: hdsjks"
+
+    ADDRESS_BY_ID_PLAIN = 4
+    # "5890 :: 110 :: 9813"
+
+    ADDRESS_BY_ID_INFORMATIVE = 5
+    # "5890 :: 110 :: 9813 :: You are cute!"
 
 LOGGER = logging.getLogger('ai')
 
@@ -117,11 +126,16 @@ code_map = {
     '451': 'Error :: Unable to obey/respond for legal reasons! Do not continue!!',
 }
 
-informative_status_code_regex = re.compile(r'^(\d{4}) :: (\d{3}) :: (.*)$')
-plain_status_code_regex = re.compile(r'^(\d{4}) :: (\d{3})$')
-
-informative_addressing_code_regex = re.compile(r'^(\d{4}) :: 110 :: (\d{4}) :: (.*)$')
-plain_addressing_code_regex = re.compile(r'^(\d{4}) :: 110 :: (\d{4})$')
+status_code_regex = re.compile(r'^((\d{4}) :: (\d{3}))( :: (.*))?$')
+'''
+Regex groups:
+0: Full match. (5890 :: 200 :: Additional information)
+1: Plain status code (5890 :: 200)
+2: Author's drone ID (5890)
+3: Status code (200)
+4: Informative status addition with double colon formatting (" :: Additional information")
+5: Informative status text. ("Additional information")
+'''
 
 CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
@@ -179,6 +193,18 @@ def translate_code(plain_status=None, informative_status=None, special_status=No
         return None
 
 
+def get_status_type(status: Optional[re.Match]):
+    if status is None:
+        return StatusType.NONE
+    elif status.group(3) == "110" and status.group(4) is None:
+        return StatusType.ADDRESS_PLAIN
+    elif status.group(3) == "110" and status.group(4) is not None:
+        return StatusType.ADDRESS_INFORMATIVE
+    elif status.group(4) is not None:
+        return StatusType.INFORMATIVE
+    else:
+        return StatusType.PLAIN
+
 async def optimize_speech(message: discord.Message, message_copy):
     '''
     This function allows status codes to be transformed into human-readable versions.
@@ -192,31 +218,11 @@ async def optimize_speech(message: discord.Message, message_copy):
     if not is_drone(message.author):
         return False
 
-    plain_status = None
-    informative_status = None
-
     # Attempt to find a status code message.
-    informative_status = informative_status_code_regex.match(message_copy.content)
-    plain_status = plain_status_code_regex.match(message_copy.content)
+    status = status_code_regex.match(message_copy.content)
 
-    # If an appropriate status code has not been identified, return early.
-    # Delete message if drone is optimized and has not posted a plain status message.
-    if informative_status is None and plain_status is None and not is_optimized(message.author):
-        return False
-    elif plain_status is None and is_optimized(message.author):
-        await message.delete()
-        return True
-
-    # Confirm that the status code begins with the drone's ID.
-    if not status_correctly_identified(message.author, plain_status, informative_status):
-        await message.delete()
-        return True
-
-    # Finally, optimize the code.
-    optimized_message = translate_code(plain_status, informative_status)
-    if optimized_message is not None:
-        message_copy.content = optimized_message
-    return False
+    # Determine type type
+    status_type = get_status_type(status)
 
 '''
 TODO:
