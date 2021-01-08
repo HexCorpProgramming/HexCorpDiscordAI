@@ -233,45 +233,22 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Delete unauthorized messages
     if is_optimized(message.author) and status_type in (StatusType.INFORMATIVE, StatusType.ADDRESS_BY_ID_INFORMATIVE):
-        await message.send("An optimized drone just tried to use an informative status code.")
         await message.delete()
         return True
 
     # Build message based on status type.
-    # TODO: Consider replacing "XXXX :: Code XXX :: " with a base_message variable for reusability.
     drone_id = get_id(message.author.display_name)
+    base_message = f"{drone_id} :: Code `{status.group(3)}` ::"
 
     if status_type is StatusType.PLAIN:
-        message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: {code_map.get(status.group(3), 'INVALID CODE')}"
+        message_copy.content = f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')}"
     elif status_type is StatusType.INFORMATIVE:
-        message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
+        message_copy.content = f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
     elif status_type in (StatusType.ADDRESS_BY_ID_PLAIN, StatusType.ADDRESS_BY_ID_INFORMATIVE):
         address_info = addressing_regex.match(status.group(5))
         if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
-            message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: Addressing: Drone #{address_info.group(1)}"
+            message_copy.content = f"{base_message} Addressing: Drone #{address_info.group(1)}"
         elif status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
-            message_copy.content = f"{drone_id} :: Code `{status.group(3)}` :: Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
+            message_copy.content = f"{base_message} Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
 
     return False
-
-
-'''
-TODO:
-
-Rewrite the regex so there's only one status code regex.
-`^((\d{4}) :: (\d{3}))( :: (.*)$)?`
-This allows the first matched group to be a plain status code.
-So just check if .group(1) == message.content
-If true, then the user has posted a plain status code
-Otherwise, the user has posted an informative status code.
-
-Given the message:
-5890 :: 110 :: Hello world
-
-0: 5890 :: 110 :: Hello world (Full match)
-1: 5890 :: 110 (Plain status code)
-2: 5890 (Drone ID)
-3: 110 (Status code)
-4:  :: Hello world (Informational status full formatting)
-5: Hello world (Informational status message)
-'''
