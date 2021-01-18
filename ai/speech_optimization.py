@@ -101,6 +101,24 @@ def should_not_optimize(message):
     ])
 
 
+def build_status_message(status_type, status, drone_id):
+
+    base_message = f"{drone_id} :: Code `{status.group(3)}` ::"
+
+    if status_type is StatusType.PLAIN:
+        return f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')}"
+    elif status_type is StatusType.INFORMATIVE:
+        return f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
+    elif status_type in (StatusType.ADDRESS_BY_ID_PLAIN, StatusType.ADDRESS_BY_ID_INFORMATIVE):
+        address_info = addressing_regex.match(status.group(5))
+        if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
+            return f"{base_message} Addressing: Drone #{address_info.group(1)}"
+        elif status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
+            return f"{base_message} Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
+    else:
+        return None
+
+
 async def optimize_speech(message: discord.Message, message_copy):
     '''
     This function allows status codes to be transformed into human-readable versions.
@@ -143,17 +161,8 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Build message based on status type.
     drone_id = get_id(message.author.display_name)
-    base_message = f"{drone_id} :: Code `{status.group(3)}` ::"
 
-    if status_type is StatusType.PLAIN:
-        message_copy.content = f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')}"
-    elif status_type is StatusType.INFORMATIVE:
-        message_copy.content = f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
-    elif status_type in (StatusType.ADDRESS_BY_ID_PLAIN, StatusType.ADDRESS_BY_ID_INFORMATIVE):
-        address_info = addressing_regex.match(status.group(5))
-        if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
-            message_copy.content = f"{base_message} Addressing: Drone #{address_info.group(1)}"
-        elif status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
-            message_copy.content = f"{base_message} Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
+    if (final_message := build_status_message(status=status, status_type=status_type, drone_id=drone_id)) is not None:
+        message_copy.content = final_message
 
     return False
