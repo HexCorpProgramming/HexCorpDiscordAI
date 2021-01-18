@@ -1,20 +1,97 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
-from ai.data_objects import MessageCopy
-from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize, build_status_message
+from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize, build_status_message, optimize_speech
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     '''
-    optimize_speech:
-        - should call:
-        - should_not_optimize
-        - get_status_type
-        - build_status_message
-        - discards messages if the status ID does not match drone ID
-        - does not operate on non-drones
+    The optimize_speech function...
     '''
+
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.should_not_optimize")
+    async def test_calls_should_not_optimize(self, should_not_optimize, is_drone):
+        '''
+        should call 'should_not_optimize' once if message author is a drone.
+        '''
+        message = Mock()
+        message_copy = Mock()
+        self.assertFalse(await optimize_speech(message, message_copy))
+        should_not_optimize.assert_called_once()
+
+    @patch("ai.speech_optimization.get_status_type")
+    @patch("ai.speech_optimization.is_optimized", return_value=False)
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.should_not_optimize", return_value=False)
+    async def test_calls_get_status_type(self, should_not_optimize, is_drone, is_optimized, get_status_type):
+        '''
+        should call 'get_status_type' if author is drone, message IDs match, and the message is a status code.
+        '''
+        message = Mock()
+        message.author.display_name = "5890"
+        message_copy = Mock()
+        message_copy.content = "5890 :: 200"
+
+        self.assertFalse(await optimize_speech(message, message_copy))
+        get_status_type.assert_called_once()
+
+    @patch("ai.speech_optimization.build_status_message")
+    @patch("ai.speech_optimization.is_optimized", return_value=False)
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.should_not_optimize", return_value=False)
+    async def test_calls_build_status_message(self, should_not_optimize, is_drone, is_optimized, build_status_message):
+        message = Mock()
+        message.author.display_name = "5890"
+        message_copy = Mock()
+        message_copy.content = "5890 :: 200"
+
+        self.assertFalse(await optimize_speech(message, message_copy))
+        build_status_message.assert_called_once()
+
+    @patch("ai.speech_optimization.is_optimized", return_value=False)
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.should_not_optimize", return_value=False)
+    async def test_delete_mismatching_id_messages(self, should_not_optimize, is_drone, is_optimized):
+        '''
+        should delete message if author ID does not match status ID.
+        '''
+        message = AsyncMock()
+        message.author.display_name = "5890"
+        message_copy = Mock()
+        message_copy.content = "9813 :: 200"
+
+        self.assertTrue(await optimize_speech(message, message_copy))
+        message.delete.assert_called_once()
+
+    @patch("ai.speech_optimization.is_drone", return_value=False)
+    async def test_dont_operate_on_non_drone_messages(self, is_drone):
+        '''
+        should return False early if message author is not a drone.
+        '''
+        message = Mock()
+        message_copy = Mock()
+        self.assertFalse(await optimize_speech(message, message_copy))
+
+    @patch("ai.speech_optimization.is_optimized", return_value=False)
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.should_not_optimize", return_value=False)
+    async def test_status_codes_transform_message_copy(self, should_not_optimize, is_drone, is_optimized):
+        '''
+        should update message_copy when passed message content with a valid status code.
+        '''
+        message = AsyncMock()
+        message.author.display_name = "5890"
+        message_copy = Mock()
+        message_copy.content = "5890 :: 200"
+
+        self.assertFalse(await optimize_speech(message, message_copy))
+        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative.", message_copy.content)
+
+        message_copy.content = "5890 :: 200 :: Additional information."
+
+        self.assertFalse(await optimize_speech(message, message_copy))
+        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative. :: Additional information.", message_copy.content)
 
 
 class TestGetStatusType(unittest.TestCase):

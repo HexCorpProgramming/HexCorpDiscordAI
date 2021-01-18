@@ -103,6 +103,9 @@ def should_not_optimize(message):
 
 def build_status_message(status_type, status, drone_id):
 
+    if status_type is StatusType.NONE or status is None:
+        return None
+
     base_message = f"{drone_id} :: Code `{status.group(3)}` ::"
 
     if status_type is StatusType.PLAIN:
