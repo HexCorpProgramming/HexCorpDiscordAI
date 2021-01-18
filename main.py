@@ -116,8 +116,8 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
 
-    # if not has_role(context.author, HIVE_MXTRESS) and context.channel.name == OFFICE:
-    #     return
+    if not has_role(context.author, HIVE_MXTRESS) or context.channel.name != OFFICE:
+        return False
 
     channel_webhook = await webhook.get_webhook_for_channel(target_channel)
 
@@ -126,6 +126,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
                                                message_username=drone.display_name,
                                                message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
                                                webhook=channel_webhook)
+    return True
 
 
 async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
