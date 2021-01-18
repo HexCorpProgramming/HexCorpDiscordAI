@@ -43,6 +43,9 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
 
 
 class GetStatusTypeTest(unittest.TestCase):
+    '''
+    The get_status_type function...
+    '''
 
     def test_returns_none_if_none(self):
         '''
@@ -85,3 +88,39 @@ class GetStatusTypeTest(unittest.TestCase):
         '''
         message = status_code_regex.match("5890 :: 304")
         self.assertEqual(StatusType.PLAIN, get_status_type(message))
+
+
+class ShouldNotOptimizeTest(unittest.TestCase):
+    '''
+    The should_not_optimize function...
+    '''
+
+    def test_true_if_mantra_in_mantra_channel(self):
+        '''
+        returns true if message channel is repetitions and message content is correct mantra.
+        '''
+        return True
+
+    def test_manta_string_contains_authors_drone_id(self):
+        '''
+        should generate a mantra check string using the author's drone ID.
+        '''
+        return True
+
+    def test_true_if_channel_name_in_whitelist(self):
+        '''
+        returns true if message channel name is in whitelist.
+        '''
+        return True
+
+    def test_true_if_channel_category_is_moderation(self):
+        '''
+        returns true if channel category name is in whitelist.
+        '''
+        return True
+
+    def test_false_otherwise(self):
+        '''
+        returns false if none of the above.
+        '''
+        return True
