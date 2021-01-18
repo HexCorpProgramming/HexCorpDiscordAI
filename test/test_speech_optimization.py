@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from ai.data_objects import MessageCopy
-from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize
+from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize, build_status_message
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -75,9 +75,7 @@ class TestShouldNotOptimize(unittest.TestCase):
         '''
         returns true if message channel is repetitions and message content is correct mantra.
         '''
-
         mantra_handler.current_mantra = "Beep boop."
-
         message = Mock()
         message.content = "5890 :: Beep boop."
         message.channel.name = REPETITIONS
@@ -89,7 +87,6 @@ class TestShouldNotOptimize(unittest.TestCase):
         '''
         returns true if message channel name is in whitelist.
         '''
-
         msg_orders_reporting = Mock()
         msg_orders_reporting.author.display_name = "5890"
         msg_orders_reporting.channel.name = ORDERS_REPORTING
@@ -115,7 +112,6 @@ class TestShouldNotOptimize(unittest.TestCase):
         '''
         returns true if channel category name is in whitelist.
         '''
-        
         message = Mock()
         message.author.display_name = "5890"
         message.channel.category.name = MODERATION_CATEGORY
@@ -126,7 +122,6 @@ class TestShouldNotOptimize(unittest.TestCase):
         '''
         returns false if none of the above.
         '''
-        
         message = Mock()
         message.author.display_name = "HexDrone 5890"
         message.content = "5890 :: 200"
@@ -143,23 +138,44 @@ class TestBuildStatusMessage(unittest.TestCase):
         '''
         returns a plain status message when given a plain status code.
         '''
+        status = status_code_regex.match("5890 :: 200")
+        self.assertEqual(
+            "5890 :: Code `200` :: Response :: Affirmative.",
+            build_status_message(status_type=StatusType.PLAIN, status=status, drone_id="5890")
+        )
 
     def test_informative_message(self):
         '''
         returns an informative status message when given an informative status code.
         '''
+        status = status_code_regex.match("5890 :: 050 :: Goodbye.")
+        self.assertEqual(
+            "5890 :: Code `050` :: Statement :: Goodbye.",
+            build_status_message(status_type=StatusType.INFORMATIVE, status=status, drone_id="5890")
+        )
 
     def test_plain_address_message(self):
         '''
         returns a plain address by ID status message when a 110 code references a drone by ID.
         '''
+        status = status_code_regex.match("5890 :: 110 :: 9813")
+        self.assertEqual(
+            "5890 :: Code `110` :: Addressing: Drone #9813",
+            build_status_message(status_type=StatusType.ADDRESS_BY_ID_PLAIN, status=status, drone_id="5890")
+        )
 
     def test_informative_address_message(self):
         '''
         returns an informative address by ID status message when a 110 code references a drone by ID with additional information.
         '''
+        status = status_code_regex.match("5890 :: 110 :: 9813 :: Hello.")
+        self.assertEqual(
+            "5890 :: Code `110` :: Addressing: Drone #9813 :: Hello.",
+            build_status_message(status_type=StatusType.ADDRESS_BY_ID_INFORMATIVE, status=status, drone_id="5890")
+        )
 
     def test_none_message(self):
         '''
-        returns None if all else fails.
+        returns None if all else fails, if status is None, or StatusType is NONE.
         '''
+        self.assertIsNone(build_status_message(StatusType.NONE, None, "5890"))
