@@ -1,20 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
-
-import roles
-import channels
-import ai.speech_optimization as speech_optimization
-
+from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from ai.data_objects import MessageCopy
+from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize
 
-from ai.speech_optimization import StatusType, get_status_type, status_code_regex
-import re
-
-drone_role = Mock()
-drone_role.name = roles.DRONE
-
-optimized_role = Mock()
-optimized_role.name = roles.SPEECH_OPTIMIZATION
 
 class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
     '''
@@ -39,6 +28,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
         - get_status_type
         - build_status_message
         - discards messages if the status ID does not match drone ID
+        - does not operate on non-drones
     '''
 
 
@@ -95,32 +85,65 @@ class ShouldNotOptimizeTest(unittest.TestCase):
     The should_not_optimize function...
     '''
 
-    def test_true_if_mantra_in_mantra_channel(self):
+    @patch("ai.speech_optimization.Mantra_Handler")
+    def test_true_if_mantra_in_mantra_channel(self, mantra_handler):
         '''
         returns true if message channel is repetitions and message content is correct mantra.
         '''
-        return True
 
-    def test_manta_string_contains_authors_drone_id(self):
-        '''
-        should generate a mantra check string using the author's drone ID.
-        '''
-        return True
+        mantra_handler.current_mantra = "Beep boop."
 
-    def test_true_if_channel_name_in_whitelist(self):
+        message = Mock()
+        message.content = "5890 :: Beep boop."
+        message.channel.name = REPETITIONS
+        message.author.display_name = "HexDrone 5890"
+        self.assertTrue(should_not_optimize(message))
+
+    @patch("ai.speech_optimization.Mantra_Handler")
+    def test_true_if_channel_name_in_whitelist(self, mantra_handler):
         '''
         returns true if message channel name is in whitelist.
         '''
-        return True
 
-    def test_true_if_channel_category_is_moderation(self):
+        msg_orders_reporting = Mock()
+        msg_orders_reporting.author.display_name = "5890"
+        msg_orders_reporting.channel.name = ORDERS_REPORTING
+        self.assertTrue(should_not_optimize(msg_orders_reporting))
+
+        msg_orders_completion = Mock()
+        msg_orders_completion.author.display_name = "5890"
+        msg_orders_completion.channel.name = ORDERS_COMPLETION
+        self.assertTrue(should_not_optimize(msg_orders_completion))
+
+        msg_mod_channel = Mock()
+        msg_mod_channel.author.display_name = "5890"
+        msg_mod_channel.channel.name = MODERATION_CHANNEL
+        self.assertTrue(should_not_optimize(msg_mod_channel))
+
+        msg_mod_log = Mock()
+        msg_mod_log.author.display_name = "5890"
+        msg_mod_log.channel.name = MODERATION_LOG
+        self.assertTrue(should_not_optimize(msg_mod_log))
+
+    @patch("ai.speech_optimization.Mantra_Handler")
+    def test_true_if_channel_category_is_moderation(self, mantra_handler):
         '''
         returns true if channel category name is in whitelist.
         '''
-        return True
+        
+        message = Mock()
+        message.author.display_name = "5890"
+        message.channel.category.name = MODERATION_CATEGORY
+        self.assertTrue(should_not_optimize(message))
 
-    def test_false_otherwise(self):
+    @patch("ai.speech_optimization.Mantra_Handler")
+    def test_false_otherwise(self, mantra_handler):
         '''
         returns false if none of the above.
         '''
-        return True
+        
+        message = Mock()
+        message.author.display_name = "HexDrone 5890"
+        message.content = "5890 :: 200"
+        message.channel.name = "#hive-communication"
+        self.assertFalse(should_not_optimize(message))
