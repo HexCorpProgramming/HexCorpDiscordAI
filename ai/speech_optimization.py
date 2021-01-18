@@ -2,11 +2,12 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
+from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
 from db.drone_dao import is_optimized, is_drone
 from resources import code_map
 from enum import Enum
 from typing import Optional
+from ai.mantras import Mantra_Handler
 
 
 class StatusType(Enum):
@@ -78,7 +79,27 @@ def get_status_type(status: Optional[re.Match]):
         return StatusType.PLAIN
     else:
         return StatusType.NONE
-    
+
+
+def should_not_optimize(message):
+    '''
+    Handles cases where the speech optimizer receieves a message it should not optimize.
+
+    Returns true if:
+    - Channel is mantras and message is current mantra.
+    - Message from any channel: Orders reporting, Orders completion, Moderation channel, moderation log.
+    - Message from category: Moderation
+    '''
+
+    drone_id = get_id(message.author.display_name)
+    acceptable_mantra = f"{drone_id} :: {Mantra_Handler.current_mantra}"
+
+    return any([
+        (message.channel.name == REPETITIONS and message.content == acceptable_mantra),
+        (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
+        (message.channel.category.name == MODERATION_CATEGORY)
+    ])
+
 
 async def optimize_speech(message: discord.Message, message_copy):
     '''
@@ -93,10 +114,15 @@ async def optimize_speech(message: discord.Message, message_copy):
     if not is_drone(message.author):
         return False
 
+    # Skip edge cases
+    if should_not_optimize(message):
+        return False
+
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
-    if status is None:
-        return False
+    if status is None and is_optimized(message.author):
+        await message.delete()
+        return True
 
     # Confirm the status starts with the drone's ID
     if status.group(2) != get_id(message.author.display_name):
@@ -109,8 +135,11 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Delete unauthorized messages
     if is_optimized(message.author) and status_type in (StatusType.INFORMATIVE, StatusType.ADDRESS_BY_ID_INFORMATIVE):
+        LOGGER.info("Deleting unauthorized message from optimized HexDrone.")
         await message.delete()
         return True
+    else:
+        LOGGER.info("Message is acceptable.")
 
     # Build message based on status type.
     drone_id = get_id(message.author.display_name)
