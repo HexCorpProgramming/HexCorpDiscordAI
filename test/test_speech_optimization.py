@@ -5,23 +5,8 @@ from ai.data_objects import MessageCopy
 from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize
 
 
-class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
+class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     '''
-    should_not_optimize:
-        - returns True if channel is repetitions and message content is mantra
-        - acceptable mantra includes a drone's ID.
-        - returns True if channel category is moderation channel
-        - returns True if channel name in whitelist
-        - returns False otherwise
-
-    build_status_message:
-        - should return an appropriate message for:
-        - PLAIN
-        - INFORMATIVE
-        - ADDRESS_BY_ID_PLAIN
-        - ADDRESS_BY_ID_INFORMATIVE
-        - should return None if NONE.
-
     optimize_speech:
         - should call:
         - should_not_optimize
@@ -32,7 +17,7 @@ class SpeechOptimizationTest(unittest.IsolatedAsyncioTestCase):
     '''
 
 
-class GetStatusTypeTest(unittest.TestCase):
+class TestGetStatusType(unittest.TestCase):
     '''
     The get_status_type function...
     '''
@@ -80,7 +65,7 @@ class GetStatusTypeTest(unittest.TestCase):
         self.assertEqual(StatusType.PLAIN, get_status_type(message))
 
 
-class ShouldNotOptimizeTest(unittest.TestCase):
+class TestShouldNotOptimize(unittest.TestCase):
     '''
     The should_not_optimize function...
     '''
@@ -147,3 +132,34 @@ class ShouldNotOptimizeTest(unittest.TestCase):
         message.content = "5890 :: 200"
         message.channel.name = "#hive-communication"
         self.assertFalse(should_not_optimize(message))
+
+
+class TestBuildStatusMessage(unittest.TestCase):
+    '''
+    The build_status_message function...
+    '''
+
+    def test_plain_message(self):
+        '''
+        returns a plain status message when given a plain status code.
+        '''
+
+    def test_informative_message(self):
+        '''
+        returns an informative status message when given an informative status code.
+        '''
+
+    def test_plain_address_message(self):
+        '''
+        returns a plain address by ID status message when a 110 code references a drone by ID.
+        '''
+
+    def test_informative_address_message(self):
+        '''
+        returns an informative address by ID status message when a 110 code references a drone by ID with additional information.
+        '''
+
+    def test_none_message(self):
+        '''
+        returns None if all else fails.
+        '''
