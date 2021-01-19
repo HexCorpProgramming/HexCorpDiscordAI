@@ -136,7 +136,7 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
 
 @guild_only()
 @bot.command(aliases=['tid'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
-async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
+async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: Optional[int] = 0):
     '''
     Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
     '''
@@ -146,14 +146,14 @@ async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, Dro
                                                get(context.guild.roles, name=ID_PREPENDING),
                                                drone_dao.is_prepending_id,
                                                lambda: "ID prepending is now mandatory.",
-                                               lambda hours: f"ID prepending is now mandatory for {hours} hours.",
+                                               lambda minutes: f"ID prepending is now mandatory for {minutes} minutes.",
                                                lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
-                                               hours)
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
-async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
+async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
@@ -163,14 +163,14 @@ async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Membe
                                                get(context.guild.roles, name=SPEECH_OPTIMIZATION),
                                                drone_dao.is_optimized,
                                                lambda: "Speech optimization is now active.",
-                                               lambda hours: f"Speech optimization is now active for {hours} hours.",
+                                               lambda minutes: f"Speech optimization is now active for {minutes} minutes.",
                                                lambda: "Speech optimization disengaged.",
-                                               hours)
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['tei'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_enforce_identity 5890 9813')
-async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
+async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
     '''
@@ -180,14 +180,14 @@ async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, 
                                                get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
                                                drone_dao.is_identity_enforced,
                                                lambda: "Identity enforcement is now active.",
-                                               lambda hours: f"Identity enforcement is now active for {hours} hours.",
+                                               lambda minutes: f"Identity enforcement is now active for {minutes} minutes.",
                                                lambda: "Identity enforcement disengaged.",
-                                               hours)
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
-async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], hours: Optional[int] = 0):
+async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: Optional[int] = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
@@ -197,9 +197,9 @@ async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, Dron
                                                get(context.guild.roles, name=GLITCHED),
                                                drone_dao.is_glitched,
                                                lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                                               lambda hours: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {hours} hours.",
+                                               lambda minutes: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {minutes} minutes.",
                                                lambda: "Drone corruption at acceptable levels.",
-                                               hours)
+                                               minutes)
 
 
 @guild_only()

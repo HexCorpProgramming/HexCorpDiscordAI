@@ -93,7 +93,7 @@ async def toggle_parameter(context,
                            toggle_on_message: Callable[[], str],
                            toggle_on_timed_message: Callable[[int], str],
                            toggle_off_message: Callable[[], str],
-                           hours: Optional[int] = 0):
+                           minutes: Optional[int] = 0):
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in drones:
@@ -114,11 +114,11 @@ async def toggle_parameter(context,
                 message = toggle_on_message()
 
                 # create a new timer
-                if hours > 0:
-                    end_time = str(datetime.now() + timedelta(hours=hours))
+                if minutes > 0:
+                    end_time = str(datetime.now() + timedelta(minutes=minutes))
                     timer = Timer(str(uuid4()), fetch_drone_with_id(drone.id).drone_id, toggle_column, end_time)
                     insert_timer(timer)
-                    message = toggle_on_timed_message(hours)
+                    message = toggle_on_timed_message(minutes)
                     LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
 
             if await update_display_name(drone):
