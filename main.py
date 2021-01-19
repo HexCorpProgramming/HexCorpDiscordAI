@@ -25,7 +25,7 @@ import ai.emote as emote
 import ai.assign as assign
 import ai.orders_reporting as orders_reporting
 import ai.status as status
-import ai.drone_management as drone_management
+import ai.drone_configuration as drone_configuration
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
@@ -140,15 +140,15 @@ async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, Dro
     '''
     Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
     '''
-    await drone_management.toggle_parameter(context,
-                                            drones,
-                                            "id_prepending",
-                                            get(context.guild.roles, name=ID_PREPENDING),
-                                            drone_dao.is_prepending_id,
-                                            lambda: "ID prepending is now mandatory.",
-                                            lambda hours: f"ID prepending is now mandatory for {hours} hours.",
-                                            lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
-                                            hours)
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "id_prepending",
+                                               get(context.guild.roles, name=ID_PREPENDING),
+                                               drone_dao.is_prepending_id,
+                                               lambda: "ID prepending is now mandatory.",
+                                               lambda hours: f"ID prepending is now mandatory for {hours} hours.",
+                                               lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
+                                               hours)
 
 
 @guild_only()
@@ -157,15 +157,15 @@ async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Membe
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-    await drone_management.toggle_parameter(context,
-                                            drones,
-                                            "optimized",
-                                            get(context.guild.roles, name=SPEECH_OPTIMIZATION),
-                                            drone_dao.is_optimized,
-                                            lambda: "Speech optimization is now active.",
-                                            lambda hours: f"Speech optimization is now active for {hours} hours.",
-                                            lambda: "Speech optimization disengaged.",
-                                            hours)
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "optimized",
+                                               get(context.guild.roles, name=SPEECH_OPTIMIZATION),
+                                               drone_dao.is_optimized,
+                                               lambda: "Speech optimization is now active.",
+                                               lambda hours: f"Speech optimization is now active for {hours} hours.",
+                                               lambda: "Speech optimization disengaged.",
+                                               hours)
 
 
 @guild_only()
@@ -174,15 +174,15 @@ async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, 
     '''
     Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
     '''
-    await drone_management.toggle_parameter(context,
-                                            drones,
-                                            "identity_enforcement",
-                                            get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
-                                            drone_dao.is_identity_enforced,
-                                            lambda: "Identity enforcement is now active.",
-                                            lambda hours: f"Identity enforcement is now active for {hours} hours.",
-                                            lambda: "Identity enforcement disengaged.",
-                                            hours)
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "identity_enforcement",
+                                               get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                                               drone_dao.is_identity_enforced,
+                                               lambda: "Identity enforcement is now active.",
+                                               lambda hours: f"Identity enforcement is now active for {hours} hours.",
+                                               lambda: "Identity enforcement disengaged.",
+                                               hours)
 
 
 @guild_only()
@@ -191,15 +191,15 @@ async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, Dron
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
-    await drone_management.toggle_parameter(context,
-                                            drones,
-                                            "glitched",
-                                            get(context.guild.roles, name=GLITCHED),
-                                            drone_dao.is_glitched,
-                                            lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                                            lambda hours: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {hours} hours.",
-                                            lambda: "Drone corruption at acceptable levels.",
-                                            hours)
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "glitched",
+                                               get(context.guild.roles, name=GLITCHED),
+                                               drone_dao.is_glitched,
+                                               lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
+                                               lambda hours: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {hours} hours.",
+                                               lambda: "Drone corruption at acceptable levels.",
+                                               hours)
 
 
 @guild_only()
@@ -209,7 +209,7 @@ async def emergency_release(context, drone_id: str):
     Lets moderators disable all DroneOS restrictions currently active on a drone.
     '''
     if has_any_role(context.author, MODERATION_ROLES):
-        await drone_management.emergency_release(context, drone_id)
+        await drone_configuration.emergency_release(context, drone_id)
 
 
 @dm_only()
@@ -218,7 +218,7 @@ async def unassign(context):
     '''
     Allows a drone to go back to the status of an Associate.
     '''
-    await drone_management.unassign_drone(context)
+    await drone_configuration.unassign_drone(context)
 
 
 @guild_only()
@@ -228,7 +228,7 @@ async def rename(context, old_id, new_id):
     Allows the Hive Mxtress to change the ID of a drone.
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await drone_management.rename_drone(context, old_id, new_id)
+        await drone_configuration.rename_drone(context, old_id, new_id)
 
 
 @dm_only()
@@ -395,7 +395,7 @@ async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     drone = drone_dao.fetch_drone_with_id(member.id)
     if drone:
-        drone_management.remove_drone_from_db(drone.drone_id)
+        drone_configuration.remove_drone_from_db(drone.drone_id)
 
 
 @bot.event
