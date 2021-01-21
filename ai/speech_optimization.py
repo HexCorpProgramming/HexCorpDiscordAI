@@ -139,6 +139,9 @@ async def optimize_speech(message: discord.Message, message_copy):
     if should_not_optimize(message):
         return False
 
+    if is_optimized(message.author):
+        message_copy.attachments = []
+
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
     if status is None and is_optimized(message.author):
