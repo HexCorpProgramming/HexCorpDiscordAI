@@ -144,9 +144,12 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
-    if status is None and is_optimized(message.author):
-        await message.delete()
-        return True
+    if status is None:
+        if is_optimized(message.author):
+            await message.delete()
+            return True
+        else:
+            return False
 
     # Confirm the status starts with the drone's ID
     if status.group(2) != get_id(message.author.display_name):

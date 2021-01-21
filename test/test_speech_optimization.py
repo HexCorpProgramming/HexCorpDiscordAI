@@ -181,6 +181,23 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("5890 :: Code `110` :: Addressing: Drone #9813", message_copy.content)
 
+    @patch("ai.speech_optimization.should_not_optimize", return_value=False)
+    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("ai.speech_optimization.is_optimized", return_value=False)
+    async def test_no_status_found(self, is_op, is_drn, not_op):
+        '''
+        should not edit the message copy if no status code is found.
+        '''
+
+        message = Mock()
+        message.content = "5890 :: It is a good day to be a good drone."
+        message.author.display_name = "5890"
+        message_copy = MessageCopy(content=message.content)
+
+        await optimize_speech(message, message_copy)
+
+        self.assertEqual("5890 :: It is a good day to be a good drone.", message_copy.content)
+
 
 class TestGetStatusType(unittest.TestCase):
     '''
