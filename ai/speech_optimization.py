@@ -39,6 +39,7 @@ Regex groups for full status code regex:
 4: Informative status addition with double colon (" :: Additional information")
 5: Informative status text. ("Additional information")
 '''
+
 addressing_regex = re.compile(r'(\d{4})( :: (.*))?')
 '''
 This regex is to be checked on the status regex's 5th group when the status code is 110 (addressing).
