@@ -19,7 +19,7 @@ def convert_ids_to_members(guild: discord.Guild, drone_ids) -> Set[discord.Membe
     return drone_members
 
 
-def convert_id_to_member(guild: discord.Guild, drone_id) -> Optional[discord.Member]:
+def convert_id_to_member(guild: discord.Guild, drone_id: str) -> Optional[discord.Member]:
     '''
     Takes a given drone ID (e.g "5890") and returns it as a member object if available.
     '''
