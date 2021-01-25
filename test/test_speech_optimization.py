@@ -4,6 +4,7 @@ from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATIO
 from ai.speech_optimization import StatusType, get_status_type, status_code_regex, should_not_optimize, build_status_message, optimize_speech
 from ai.data_objects import MessageCopy
 
+
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     '''
     The optimize_speech function...
