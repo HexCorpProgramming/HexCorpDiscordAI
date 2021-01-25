@@ -35,7 +35,7 @@ from ai.mantras import Mantra_Handler
 import ai.thought_denial as thought_denial
 import webhook
 # Utils
-from bot_utils import COMMAND_PREFIX
+from bot_utils import COMMAND_PREFIX, get_id
 import id_converter
 # Database
 from db import database
