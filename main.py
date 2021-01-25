@@ -5,9 +5,12 @@ import sys
 import asyncio
 import logging
 import random
+from typing import Union
 from logging import handlers
-from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only
+from discord.ext.commands import Bot, MissingRequiredArgument, guild_only, dm_only, Greedy
 from traceback import TracebackException
+
+from ai.commands import DroneMemberConverter, NamedParameterConverter
 
 # Modules
 import ai.stoplights as stoplights
@@ -17,11 +20,12 @@ import ai.id_prepending as id_prepending
 import ai.join as join
 import ai.respond as respond
 import ai.storage as storage
+import ai.timers as timers
 import ai.emote as emote
 import ai.assign as assign
 import ai.orders_reporting as orders_reporting
 import ai.status as status
-import ai.drone_management as drone_management
+import ai.drone_configuration as drone_configuration
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
@@ -31,8 +35,7 @@ from ai.mantras import Mantra_Handler
 import ai.thought_denial as thought_denial
 import webhook
 # Utils
-from bot_utils import get_id, COMMAND_PREFIX
-from display_names import update_display_name
+from bot_utils import COMMAND_PREFIX, get_id
 import id_converter
 # Database
 from db import database
@@ -80,6 +83,7 @@ checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
 updating_status_message = False
+checking_for_elapsed_timers = False
 
 # Register message listeners.
 message_listeners = [
@@ -104,7 +108,8 @@ async def bigtext(context, sentence):
     Let the AI say things using emotes.
     '''
     if context.channel.name not in DRONE_HIVE_CHANNELS:
-        if (reply := emote.generate_big_text(context.channel, sentence)):
+        reply = emote.generate_big_text(context.channel, sentence)
+        if reply:
             await context.send(reply)
 
 
@@ -116,104 +121,88 @@ async def amplify(context, message: str, target_channel: discord.TextChannel, *d
     '''
     member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
 
-    if not has_role(context.author, HIVE_MXTRESS) and context.channel.name == OFFICE:
-        return
+    if not has_role(context.author, HIVE_MXTRESS) or context.channel.name != OFFICE:
+        return False
 
     channel_webhook = await webhook.get_webhook_for_channel(target_channel)
 
     for drone in member_drones:
-        LOGGER.info("Amplifying message!!")
-        await webhook.proxy_message_by_webhook(message_content=message,
+        await webhook.proxy_message_by_webhook(message_content=f"{get_id(drone.display_name)} :: {message}",
                                                message_username=drone.display_name,
                                                message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
                                                webhook=channel_webhook)
+    return True
 
 
-async def toggle_parameter(context, drones, toggle_column: str, role: discord.Role, is_toggle_activated, toggle_on_message, toggle_off_message):
-    member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
-
-    channel_webhook = await webhook.get_webhook_for_channel(context.channel)
-
-    for drone in member_drones:
-        trusted_users = drone_dao.get_trusted_users(drone.id)
-        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
-            message = ""
-            if is_toggle_activated(drone):
-                drone_dao.update_droneOS_parameter(drone, toggle_column, False)
-                await drone.remove_roles(role)
-                message = toggle_off_message()
-            else:
-                drone_dao.update_droneOS_parameter(drone, toggle_column, True)
-                await drone.add_roles(role)
-                message = toggle_on_message()
-
-            if await update_display_name(drone):
-                # Display name has been updated, get the new drone object with updated display name.
-                drone = context.guild.get_member(drone.id)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
-                                                   message_username=drone.display_name,
-                                                   message_avatar=drone.avatar_url if not identity_enforcement.identity_enforcable(drone, context=context) else DRONE_AVATAR,
-                                                   webhook=channel_webhook)
+minutes_parameter = "minutes"
 
 
 @guild_only()
 @bot.command(aliases=['tid'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_id_prepending 5890 9813')
-async def toggle_id_prepending(context, *drones):
+async def toggle_id_prepending(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(minutes_parameter, int) = 0):
     '''
     Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
     '''
-    await toggle_parameter(context,
-                           drones,
-                           "id_prepending",
-                           get(context.guild.roles, name=ID_PREPENDING),
-                           drone_dao.is_prepending_id,
-                           lambda: "ID prepending is now mandatory.",
-                           lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.")
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "id_prepending",
+                                               get(context.guild.roles, name=ID_PREPENDING),
+                                               drone_dao.is_prepending_id,
+                                               lambda: "ID prepending is now mandatory.",
+                                               lambda minutes: f"ID prepending is now mandatory for {minutes} minutes.",
+                                               lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_speech_optimization 5890 9813')
-async def toggle_speech_optimization(context, *drones):
+async def toggle_speech_optimization(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(minutes_parameter, int) = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone speech optimization.
     '''
-    await toggle_parameter(context,
-                           drones,
-                           "optimized",
-                           get(context.guild.roles, name=SPEECH_OPTIMIZATION),
-                           drone_dao.is_optimized,
-                           lambda: "Speech optimization is now active.",
-                           lambda: "Speech optimization disengaged.")
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "optimized",
+                                               get(context.guild.roles, name=SPEECH_OPTIMIZATION),
+                                               drone_dao.is_optimized,
+                                               lambda: "Speech optimization is now active.",
+                                               lambda minutes: f"Speech optimization is now active for {minutes} minutes.",
+                                               lambda: "Speech optimization disengaged.",
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['tei'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_enforce_identity 5890 9813')
-async def toggle_enforce_identity(context, *drones):
+async def toggle_enforce_identity(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(minutes_parameter, int) = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
     '''
-    await toggle_parameter(context,
-                           drones,
-                           "identity_enforcement",
-                           get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
-                           drone_dao.is_identity_enforced,
-                           lambda: "Identity enforcement is now active.",
-                           lambda: "Identity enforcement disengaged.")
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "identity_enforcement",
+                                               get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                                               drone_dao.is_identity_enforced,
+                                               lambda: "Identity enforcement is now active.",
+                                               lambda minutes: f"Identity enforcement is now active for {minutes} minutes.",
+                                               lambda: "Identity enforcement disengaged.",
+                                               minutes)
 
 
 @guild_only()
 @bot.command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{bot.command_prefix}toggle_drone_glitch 9813 3287')
-async def toggle_drone_glitch(context, *drones):
+async def toggle_drone_glitch(context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(minutes_parameter, int) = 0):
     '''
     Lets the Hive Mxtress or trusted users toggle drone glitch levels.
     '''
-    await toggle_parameter(context,
-                           drones,
-                           "glitched",
-                           get(context.guild.roles, name=GLITCHED),
-                           drone_dao.is_glitched,
-                           lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                           lambda: "Drone corruption at acceptable levels.")
+    await drone_configuration.toggle_parameter(context,
+                                               drones,
+                                               "glitched",
+                                               get(context.guild.roles, name=GLITCHED),
+                                               drone_dao.is_glitched,
+                                               lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
+                                               lambda minutes: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {minutes} minutes.",
+                                               lambda: "Drone corruption at acceptable levels.",
+                                               minutes)
 
 
 @guild_only()
@@ -223,7 +212,7 @@ async def emergency_release(context, drone_id: str):
     Lets moderators disable all DroneOS restrictions currently active on a drone.
     '''
     if has_any_role(context.author, MODERATION_ROLES):
-        await drone_management.emergency_release(context, drone_id)
+        await drone_configuration.emergency_release(context, drone_id)
 
 
 @dm_only()
@@ -232,7 +221,7 @@ async def unassign(context):
     '''
     Allows a drone to go back to the status of an Associate.
     '''
-    await drone_management.unassign_drone(context)
+    await drone_configuration.unassign_drone(context)
 
 
 @guild_only()
@@ -242,7 +231,7 @@ async def rename(context, old_id, new_id):
     Allows the Hive Mxtress to change the ID of a drone.
     '''
     if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-        await drone_management.rename_drone(context, old_id, new_id)
+        await drone_configuration.rename_drone(context, old_id, new_id)
 
 
 @dm_only()
@@ -383,7 +372,7 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
-    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url)
+    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
     for listener in message_listeners:
@@ -409,14 +398,14 @@ async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     drone = drone_dao.fetch_drone_with_id(member.id)
     if drone:
-        drone_management.remove_drone_from_db(drone.drone_id)
+        drone_configuration.remove_drone_from_db(drone.drone_id)
 
 
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
     await mantra_handler.load_mantra()
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message
+    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message, checking_for_elapsed_timers
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
@@ -433,6 +422,10 @@ async def on_ready():
     if not updating_status_message:
         asyncio.ensure_future(status_messages.start_change_status(bot))
         updating_status_message = True
+
+    if not checking_for_elapsed_timers:
+        asyncio.ensure_future(timers.start_process_timers(bot))
+        checking_for_elapsed_timers = True
 
 
 @bot.event
