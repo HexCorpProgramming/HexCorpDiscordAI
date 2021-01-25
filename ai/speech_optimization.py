@@ -166,8 +166,6 @@ async def optimize_speech(message: discord.Message, message_copy):
         LOGGER.info("Deleting unauthorized message from optimized HexDrone.")
         await message.delete()
         return True
-    else:
-        LOGGER.info("Message is acceptable.")
 
     # Build message based on status type.
     drone_id = get_id(message.author.display_name)
