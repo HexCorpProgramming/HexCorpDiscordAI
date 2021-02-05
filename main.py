@@ -33,6 +33,7 @@ import ai.status_message as status_messages
 import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
 import ai.thought_denial as thought_denial
+import ai.react as react
 import webhook
 # Utils
 from bot_utils import COMMAND_PREFIX, get_id
@@ -98,6 +99,11 @@ message_listeners = [
     respond.respond_to_question,
     storage.store_drone,
 
+]
+
+# register message listeners that take messages sent by bots
+bot_message_listeners = [
+    react.parse_for_reactions
 ]
 
 
@@ -363,10 +369,6 @@ async def request_voice_role(context):
 
 @bot.event
 async def on_message(message: discord.Message):
-    # Ignore all messages by any bot (AI Mxtress and webhooks)
-    if message.author.bot:
-        return
-
     # handle DMs
     if isinstance(message.channel, discord.DMChannel):
         await bot.process_commands(message)
@@ -375,7 +377,9 @@ async def on_message(message: discord.Message):
     message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
-    for listener in message_listeners:
+    # use the listeners for bot messages or user messages
+    applicable_listeners = bot_message_listeners if message.author.bot else message_listeners
+    for listener in applicable_listeners:
         LOGGER.info(f"Executing: {listener}")
         if await listener(message, message_copy):  # Return early if any listeners return true.
             return
