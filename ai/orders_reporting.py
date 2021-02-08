@@ -1,16 +1,36 @@
 import asyncio
 import logging
-from uuid import uuid4
 from datetime import datetime, timedelta
-from discord.utils import get
+from uuid import uuid4
+
+from bot_utils import get_id, COMMAND_PREFIX
+from discord.ext.commands import Cog, command, guild_only
 from channels import ORDERS_REPORTING
-from bot_utils import get_id
-from db.drone_order_dao import delete_drone_order, insert_drone_order, fetch_all_drone_orders, get_order_by_drone_id
 from db.data_objects import DroneOrder
+from db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
+                                get_order_by_drone_id, insert_drone_order)
+from discord.utils import get
 from id_converter import convert_id_to_member
 from roles import DRONE, has_role
 
 LOGGER = logging.getLogger('ai')
+
+
+class OrderReportingCog(Cog):
+
+    @guild_only()
+    @command(aliases=["report_order"], usage=f'{COMMAND_PREFIX}report maid 35')
+    async def report(self, context, protocol_name: str, protocol_time: int):
+        '''
+        Report your orders in the appropriate channel to serve the Hive. The duration can be a maximum of 120 minutes.
+        '''
+        try:
+            int(protocol_time)
+        except ValueError:
+            await context.send("Your protocol time must be an integer (whole number) between 1 and 120 minutes.")
+
+        if context.channel.name == ORDERS_REPORTING:
+            await report_order(context, protocol_name, protocol_time)
 
 
 async def start_check_for_completed_orders(bot):

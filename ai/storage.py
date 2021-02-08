@@ -1,17 +1,22 @@
 import asyncio
 import logging
 import re
-from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import List
+from uuid import uuid4
+
 import discord
-from discord.utils import get
+from discord.ext.commands import Cog, command, guild_only
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from db.data_objects import Storage as StorageDO
-from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
+from db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
+                            fetch_all_storage, fetch_storage_by_target_id,
+                            insert_storage)
+from discord.utils import get
 from id_converter import convert_id_to_member
+from bot_utils import COMMAND_PREFIX
 
 LOGGER = logging.getLogger('ai')
 
@@ -27,7 +32,19 @@ MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING]
 
 
-async def store_drone(message: discord.Message, message_copy=None) -> bool:
+class StorageCog(Cog):
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
+    async def release(self, context, drone):
+        '''
+        Allows the Hive Mxtress to release a drone from storage.
+        '''
+        if roles.has_role(context.author, roles.HIVE_MXTRESS):
+            await release(context, drone)
+
+
+async def store_drone(message: discord.Message, message_copy=None):
     '''
     Process posted messages.
     '''
