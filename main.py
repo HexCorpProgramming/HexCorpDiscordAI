@@ -24,9 +24,9 @@ import ai.drone_configuration as drone_configuration
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
-import ai.status_message as status_messages
 import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
+import ai.status_message as status_message
 import ai.thought_denial as thought_denial
 import ai.amplify as amplify
 import webhook
@@ -71,7 +71,6 @@ bot.remove_command("help")
 checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
-updating_status_message = False
 checking_for_elapsed_timers = False
 
 # Register message listeners.
@@ -89,6 +88,8 @@ message_listeners = [
 
 ]
 
+status_message_cog = status_message.StatusMessageCog(bot)
+
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
@@ -99,6 +100,7 @@ bot.add_cog(orders_reporting.OrderReportingCog())
 bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
+bot.add_cog(status_message_cog)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
@@ -182,7 +184,11 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message, checking_for_elapsed_timers
+    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, checking_for_elapsed_timers
+
+    if not status_message_cog.change_status.is_running():
+        LOGGER.info("Starting up change_status loop.")
+        status_message_cog.change_status.start()
 
     if not checking_for_completed_orders:
         asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
@@ -195,10 +201,6 @@ async def on_ready():
     if not checking_for_stored_drones_to_release:
         asyncio.ensure_future(storage.start_release_timed(bot))
         checking_for_stored_drones_to_release = True
-
-    if not updating_status_message:
-        asyncio.ensure_future(status_messages.start_change_status(bot))
-        updating_status_message = True
 
     if not checking_for_elapsed_timers:
         asyncio.ensure_future(timers.start_process_timers(bot))
@@ -225,10 +227,8 @@ async def on_error(event, *args, **kwargs):
 
 def main():
     set_up_logger()
-
     # Prepare database
     database.prepare()
-
     bot.run(sys.argv[1])
 
 
