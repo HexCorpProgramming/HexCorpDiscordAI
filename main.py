@@ -91,21 +91,22 @@ message_listeners = [
 # Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
 status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
+orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
 # Cogs with tasks that rely on the bot being active.
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
+bot.add_cog(orders_reporting_cog)
 
+# Cogs that do not use tasks.
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
 bot.add_cog(trusted_user.TrustedUserCog())
 bot.add_cog(drone_os_status.DroneOsStatusCog())
-bot.add_cog(orders_reporting.OrderReportingCog())
 bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
-
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
@@ -195,9 +196,9 @@ async def on_ready():
         LOGGER.info("Starting up change_status loop.")
         status_message_cog.change_status.start()
 
-    if not checking_for_completed_orders:
-        asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
-        checking_for_completed_orders = True
+    if not orders_reporting_cog.deactivate_drones_with_completed_orders.is_running():
+        LOGGER.info("Starting up drone_protocol_deactivation loop.")
+        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
 
     if not storage_cog.report_storage.is_running():
         LOGGER.info("Starting up report_storage loop.")
