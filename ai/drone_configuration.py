@@ -70,7 +70,7 @@ class DroneConfigurationCog(Cog):
                                get(context.guild.roles, name=ID_PREPENDING),
                                is_prepending_id,
                                lambda: "ID prepending is now mandatory.",
-                               lambda hours: f"ID prepending is now mandatory for {hours} hours.",
+                               lambda minutes: f"ID prepending is now mandatory for {minutes} minute(s).",
                                lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
                                minutes)
 
@@ -86,7 +86,7 @@ class DroneConfigurationCog(Cog):
                                get(context.guild.roles, name=SPEECH_OPTIMIZATION),
                                is_optimized,
                                lambda: "Speech optimization is now active.",
-                               lambda hours: f"Speech optimization is now active for {hours} hours.",
+                               lambda minutes: f"Speech optimization is now active for {minutes} minute(s).",
                                lambda: "Speech optimization disengaged.",
                                minutes)
 
@@ -102,7 +102,7 @@ class DroneConfigurationCog(Cog):
                                get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
                                is_identity_enforced,
                                lambda: "Identity enforcement is now active.",
-                               lambda hours: f"Identity enforcement is now active for {hours} hours.",
+                               lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
                                lambda: "Identity enforcement disengaged.",
                                minutes)
 
@@ -118,7 +118,7 @@ class DroneConfigurationCog(Cog):
                                get(context.guild.roles, name=GLITCHED),
                                is_glitched,
                                lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
-                               lambda hours: f"Drone corruption at un̘͟s̴a̯f̺e͈͡ levels for {hours} hours.",
+                               lambda minutes: f"Drone corruption scheduled to reflect un̘͟s̴a̯f̺e͈͡ levels for {minutes} minute(s).",
                                lambda: "Drone corruption at acceptable levels.",
                                minutes)
 
