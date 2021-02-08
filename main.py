@@ -203,9 +203,9 @@ async def on_ready():
         LOGGER.info("Starting up report_storage loop.")
         storage_cog.report_storage.start()
 
-    if not checking_for_stored_drones_to_release:
-        asyncio.ensure_future(storage.start_release_timed(bot))
-        checking_for_stored_drones_to_release = True
+    if not storage_cog.release_timed.is_running():
+        LOGGER.info("Starting up release_timed loop.")
+        storage_cog.release_timed.start()
 
     if not checking_for_elapsed_timers:
         asyncio.ensure_future(timers.start_process_timers(bot))

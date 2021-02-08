@@ -38,6 +38,7 @@ class StorageCog(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.storage_channel = None
+        self.stored_role = None
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
@@ -48,7 +49,7 @@ class StorageCog(Cog):
         if roles.has_role(context.author, roles.HIVE_MXTRESS):
             await release(context, drone)
 
-    @tasks.loop(seconds=10.0)
+    @tasks.loop(hours=1)
     async def report_storage(self):
 
         LOGGER.info("Reporting storage.")
@@ -73,6 +74,25 @@ class StorageCog(Cog):
             self.storage_channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
         if self.storage_channel is None:
             raise AttributeError("Could not find storage chambers channel.")
+
+    @tasks.loop(minutes=1)
+    async def release_timed(self):
+
+        LOGGER.info("Releasing drones in storage.")
+
+        for elapsed_storage in fetch_all_elapsed_storage():
+            drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
+            member = self.bot.guilds[0].get_member(drone.id)
+
+            # restore roles to release from storage
+            await member.remove_roles(self.stored_role)
+            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], elapsed_storage.roles.split('|')))
+            delete_storage(elapsed_storage.id)
+
+    @release_timed.before_loop
+    async def get_stored_role(self):
+        if self.stored_role is None:
+            self.stored_role = get(self.bot.guilds[0].roles, name=roles.STORED)
 
 
 async def store_drone(message: discord.Message, message_copy=None):
@@ -137,27 +157,6 @@ async def store_drone(message: discord.Message, message_copy=None):
         drone_id = "the Hive Mxtress"
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
     return False
-
-async def start_release_timed(bot):
-    '''
-    Relase stored drones when the timer is up.
-    '''
-    stored_role = get(bot.guilds[0].roles, name=roles.STORED)
-    while True:
-        # use async sleep to avoid the bot locking up
-        await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
-        await release_timed(bot, stored_role)
-
-
-async def release_timed(bot, stored_role):
-    for elapsed_storage in fetch_all_elapsed_storage():
-        drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
-        member = bot.guilds[0].get_member(drone.id)
-
-        # restore roles to release from storage
-        await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
-        delete_storage(elapsed_storage.id)
 
 
 async def release(context, stored_drone):
