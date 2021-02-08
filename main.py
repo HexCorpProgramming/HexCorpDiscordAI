@@ -1,7 +1,6 @@
 # Core
 import discord
 import sys
-import asyncio
 import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
@@ -92,11 +91,13 @@ message_listeners = [
 status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
 orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
+timers_cog = timers.TimersCog(bot)
 
 # Cogs with tasks that rely on the bot being active.
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(orders_reporting_cog)
+bot.add_cog(timers_cog)
 
 # Cogs that do not use tasks.
 bot.add_cog(emote.EmoteCog())
@@ -208,9 +209,9 @@ async def on_ready():
         LOGGER.info("Starting up release_timed loop.")
         storage_cog.release_timed.start()
 
-    if not checking_for_elapsed_timers:
-        asyncio.ensure_future(timers.start_process_timers(bot))
-        checking_for_elapsed_timers = True
+    if not timers_cog.process_timers.is_running():
+        LOGGER.info("Starting up process_timers loop.")
+        timers_cog.process_timers.start()
 
 
 @bot.event
