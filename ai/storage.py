@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import discord
 from discord.ext.commands import Cog, command, guild_only
+from discord.ext import tasks
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from db.data_objects import Storage as StorageDO
@@ -34,6 +35,10 @@ NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOS
 
 class StorageCog(Cog):
 
+    def __init__(self, bot):
+        self.bot = bot
+        self.storage_channel = None
+
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
     async def release(self, context, drone):
@@ -42,6 +47,32 @@ class StorageCog(Cog):
         '''
         if roles.has_role(context.author, roles.HIVE_MXTRESS):
             await release(context, drone)
+
+    @tasks.loop(seconds=10.0)
+    async def report_storage(self):
+
+        LOGGER.info("Reporting storage.")
+
+        stored_drones = fetch_all_storage()
+        if len(stored_drones) == 0:
+            await self.storage_channel.send('No drones in storage.')
+        else:
+            for stored in stored_drones:
+                # calculate remaining hours
+                remaining_hours = hours_from_now(
+                    datetime.fromisoformat(stored.release_time))
+                if stored.stored_by == '0006':
+                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                else:
+                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+
+    @report_storage.before_loop
+    async def get_storage_channel(self):
+        LOGGER.info("Getting storage channel")
+        if self.storage_channel is None:
+            self.storage_channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
+        if self.storage_channel is None:
+            raise AttributeError("Could not find storage chambers channel.")
 
 
 async def store_drone(message: discord.Message, message_copy=None):
@@ -106,34 +137,6 @@ async def store_drone(message: discord.Message, message_copy=None):
         drone_id = "the Hive Mxtress"
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
     return False
-
-
-async def start_report_storage(bot):
-    '''
-    Report on currently stored drones.
-    '''
-    storage_channel = get(
-        bot.guilds[0].channels, name=STORAGE_CHAMBERS)
-    while True:
-        # use async sleep to avoid the bot locking up
-        await asyncio.sleep(REPORT_INTERVAL_SECONDS)
-        await report_storage(storage_channel)
-
-
-async def report_storage(storage_channel: discord.TextChannel):
-    stored_drones = fetch_all_storage()
-    if len(stored_drones) == 0:
-        await storage_channel.send('No drones in storage.')
-    else:
-        for stored in stored_drones:
-            # calculate remaining hours
-            remaining_hours = hours_from_now(
-                datetime.fromisoformat(stored.release_time))
-            if stored.stored_by == '0006':
-                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
-            else:
-                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
-
 
 async def start_release_timed(bot):
     '''
