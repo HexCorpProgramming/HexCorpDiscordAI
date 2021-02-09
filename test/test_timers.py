@@ -49,7 +49,6 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         timer_cog.process_timers.stop()
         await timer_cog.process_timers.get_task()
 
-
         # assert
         convert_id_to_member.assert_called_once_with(bot.guilds[0], timer.drone_id)
         drone_member.remove_roles.assert_called_once_with(optimized_role)
