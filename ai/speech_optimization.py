@@ -29,7 +29,7 @@ class StatusType(Enum):
 
 LOGGER = logging.getLogger('ai')
 
-status_code_regex = re.compile(r'^((\d{4}) :: (\d{3}))( :: (.*))?$')
+status_code_regex = re.compile(r'^((\d{4}) :: (\d{3}))( :: (.*))?$', re.DOTALL)
 '''
 Regex groups for full status code regex:
 0: Full match. (5890 :: 200 :: Additional information)
@@ -40,7 +40,7 @@ Regex groups for full status code regex:
 5: Informative status text. ("Additional information")
 '''
 
-addressing_regex = re.compile(r'(\d{4})( :: (.*))?')
+addressing_regex = re.compile(r'(\d{4})( :: (.*))?', re.DOTALL)
 '''
 This regex is to be checked on the status regex's 5th group when the status code is 110 (addressing).
 0: Full match ("9813 :: Additional information")
@@ -151,6 +151,8 @@ async def optimize_speech(message: discord.Message, message_copy):
             return True
         else:
             return False
+
+    LOGGER.info(f"Status message present: {status.group(0)}")
 
     # Confirm the status starts with the drone's ID
     if status.group(2) != get_id(message.author.display_name):
