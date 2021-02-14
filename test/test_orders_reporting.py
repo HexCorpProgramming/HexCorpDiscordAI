@@ -53,7 +53,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890', 'beep booping', str(datetime.now() + timedelta(minutes=25)))])
     async def test_check_for_completed_orders_none_completed(self, fetch_all_drone_orders):
-        #setup
+        # setup
         orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
         # run
