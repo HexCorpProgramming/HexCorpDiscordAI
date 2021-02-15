@@ -9,6 +9,7 @@ class StatusMessageCog(Cog):
 
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.LOGGER = logging.getLogger('ai')
         # discord.py only supports Game activites as of Nov 2020.
         self.ACTIVITIES = [
             Game("with your mind."),
@@ -16,11 +17,14 @@ class StatusMessageCog(Cog):
             Game("with electric sheep."),
             Game("in the conversion chamber."),
             Game("with good drones."),
-            Game("HexCom 2.")
+            Game("HexCom 2."),
+            Game("Dronification Squared"),
+            Game("Drone Hive Simulator"),
+            Game("Drone Factory"),
+            Game("Help, I'm trapped in a status message factory."),
+            Game("hard to get with local hypnotists."),
+            Game("high-steaks games with my hypnodomme.")
         ]
-        self.LOGGER = logging.getLogger('ai')
-        print(bot)
-        # self.change_status.start()  # Begin loop.
 
     @tasks.loop(hours=48)
     async def change_status(self):
