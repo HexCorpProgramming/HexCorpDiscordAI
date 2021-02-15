@@ -26,8 +26,6 @@ async def enforce_speech_optimization(message, message_copy):
     # Check if message is in any blacklists (specific channels + mantra channel if message is correct mantra).
     drone_id = get_id(message.author.display_name)
     acceptable_mantra = f"{drone_id} :: {Mantra_Handler.current_mantra}"
-    LOGGER.info(f"Acceptable mantra:\n{acceptable_mantra}")
-    LOGGER.info(f"Message:\n{message_copy.content}")
     if any([
         (message.channel.name == REPETITIONS and message_copy.content == acceptable_mantra),
         (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
