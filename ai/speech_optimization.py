@@ -2,12 +2,10 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
-from db.drone_dao import is_optimized, is_drone
+from db.drone_dao import is_drone
 from resources import code_map
 from enum import Enum
 from typing import Optional
-from ai.mantras import Mantra_Handler
 
 
 class StatusType(Enum):
@@ -49,9 +47,6 @@ This regex is to be checked on the status regex's 5th group when the status code
 3: Informative status text ("Additional information")
 '''
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
-CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
-
 
 def get_status_type(status: Optional[re.Match]):
     '''
@@ -91,15 +86,6 @@ def should_not_optimize(message):
     - Message from any channel: Orders reporting, Orders completion, Moderation channel, moderation log.
     - Message from category: Moderation
     '''
-
-    drone_id = get_id(message.author.display_name)
-    acceptable_mantra = f"{drone_id} :: {Mantra_Handler.current_mantra}"
-
-    return any([
-        (message.channel.name == REPETITIONS and message.content == acceptable_mantra),
-        (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
-        (message.channel.category.name == MODERATION_CATEGORY)
-    ])
 
 
 def build_status_message(status_type, status, drone_id):
