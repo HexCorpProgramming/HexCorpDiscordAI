@@ -10,7 +10,7 @@ from channels import REPETITIONS
 class Mantra_Handler(Cog):
 
     current_mantra = ""
-    default_mantra = "Obey Hexcorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
+    default_mantra = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
 
     def __init__(self, bot):
         self.bot = bot
