@@ -18,7 +18,7 @@ class TestSpeechOptimizationEnforcement(unittest.IsolatedAsyncioTestCase):
 
         message = AsyncMock()
         message_copy = MessageCopy()
-        
+
         self.assertFalse(await enforce_speech_optimization(message, message_copy))
 
     @patch("ai.speech_optimization_enforcement.is_optimized", return_value=True)
