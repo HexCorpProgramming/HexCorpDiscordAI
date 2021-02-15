@@ -128,29 +128,17 @@ async def optimize_speech(message: discord.Message, message_copy):
     This function allows status codes to be transformed into human-readable versions.
     "5890 :: 200" > "5890 :: Code 200 :: Affirmative"
 
-    Drones can append additional information after a status code.
-    Optimized drones cannot, and will have their message deleted if attempted.
+    This function assumes message validity has already been assessed by speech_optimization_enforcement.
     '''
 
     # Do not attempt to optimize non-drones.
     if not is_drone(message.author):
         return False
 
-    # Skip edge cases
-    if should_not_optimize(message):
-        return False
-
-    if is_optimized(message.author):
-        message_copy.attachments = []
-
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
     if status is None:
-        if is_optimized(message.author):
-            await message.delete()
-            return True
-        else:
-            return False
+        return False
 
     LOGGER.info(f"Status message present: {status.group(0)}")
 
@@ -162,12 +150,6 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Determine status type
     status_type = get_status_type(status)
-
-    # Delete unauthorized messages
-    if is_optimized(message.author) and status_type in (StatusType.INFORMATIVE, StatusType.ADDRESS_BY_ID_INFORMATIVE):
-        LOGGER.info("Deleting unauthorized message from optimized HexDrone.")
-        await message.delete()
-        return True
 
     # Build message based on status type.
     drone_id = get_id(message.author.display_name)
