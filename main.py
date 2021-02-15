@@ -191,7 +191,6 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, checking_for_elapsed_timers
 
     if not status_message_cog.change_status.is_running():
         LOGGER.info("Starting up change_status loop.")
