@@ -23,7 +23,7 @@ class StatusMessageCog(Cog):
             Game("Drone Factory"),
             Game("Help, I'm trapped in a status message factory."),
             Game("hard to get with local hypnotists."),
-            Game("high-steaks games with my hypnodomme.")
+            Game("high-stakes games with my hypnodomme.")
         ]
 
     @tasks.loop(hours=48)
