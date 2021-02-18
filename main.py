@@ -10,6 +10,7 @@ from traceback import TracebackException
 import ai.stoplights as stoplights
 import ai.identity_enforcement as identity_enforcement
 import ai.speech_optimization as speech_optimization
+import ai.speech_optimization_enforcement as speech_optimization_enforcement
 import ai.id_prepending as id_prepending
 import ai.join as join
 import ai.respond as respond
@@ -80,6 +81,7 @@ message_listeners = [
     stoplights.check_for_stoplights,
     id_prepending.check_if_prepending_necessary,
     speech_optimization.optimize_speech,
+    speech_optimization_enforcement.enforce_speech_optimization,
     identity_enforcement.enforce_identity,
     thought_denial.deny_thoughts,
     glitch_message.glitch_if_applicable,
