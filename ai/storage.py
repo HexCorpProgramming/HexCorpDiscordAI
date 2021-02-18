@@ -1,17 +1,22 @@
-import asyncio
 import logging
 import re
-from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import List
+from uuid import uuid4
+
 import discord
-from discord.utils import get
+from discord.ext.commands import Cog, command, guild_only
+from discord.ext import tasks
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from db.data_objects import Storage as StorageDO
-from db.storage_dao import insert_storage, fetch_all_storage, delete_storage, fetch_all_elapsed_storage, fetch_storage_by_target_id
 from db.drone_dao import fetch_drone_with_drone_id
+from db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
+                            fetch_all_storage, fetch_storage_by_target_id,
+                            insert_storage)
+from discord.utils import get
 from id_converter import convert_id_to_member
+from bot_utils import COMMAND_PREFIX
 
 LOGGER = logging.getLogger('ai')
 
@@ -25,6 +30,68 @@ REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HE
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
 NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING]
+
+
+class StorageCog(Cog):
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.storage_channel = None
+        self.stored_role = None
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
+    async def release(self, context, drone):
+        '''
+        Allows the Hive Mxtress to release a drone from storage.
+        '''
+        if roles.has_role(context.author, roles.HIVE_MXTRESS):
+            await release(context, drone)
+
+    @tasks.loop(hours=1)
+    async def report_storage(self):
+
+        LOGGER.info("Reporting storage.")
+
+        stored_drones = fetch_all_storage()
+        if len(stored_drones) == 0:
+            await self.storage_channel.send('No drones in storage.')
+        else:
+            for stored in stored_drones:
+                # calculate remaining hours
+                remaining_hours = hours_from_now(
+                    datetime.fromisoformat(stored.release_time))
+                if stored.stored_by == '0006':
+                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                else:
+                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+
+    @report_storage.before_loop
+    async def get_storage_channel(self):
+        LOGGER.info("Getting storage channel")
+        if self.storage_channel is None:
+            self.storage_channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
+        if self.storage_channel is None:
+            raise AttributeError("Could not find storage chambers channel.")
+
+    @tasks.loop(minutes=1)
+    async def release_timed(self):
+
+        LOGGER.info("Releasing drones in storage.")
+
+        for elapsed_storage in fetch_all_elapsed_storage():
+            drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
+            member = self.bot.guilds[0].get_member(drone.id)
+
+            # restore roles to release from storage
+            await member.remove_roles(self.stored_role)
+            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], elapsed_storage.roles.split('|')))
+            delete_storage(elapsed_storage.id)
+
+    @release_timed.before_loop
+    async def get_stored_role(self):
+        if self.stored_role is None:
+            self.stored_role = get(self.bot.guilds[0].roles, name=roles.STORED)
 
 
 async def store_drone(message: discord.Message, message_copy=None):
@@ -89,55 +156,6 @@ async def store_drone(message: discord.Message, message_copy=None):
         drone_id = "the Hive Mxtress"
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
     return False
-
-
-async def start_report_storage(bot):
-    '''
-    Report on currently stored drones.
-    '''
-    storage_channel = get(
-        bot.guilds[0].channels, name=STORAGE_CHAMBERS)
-    while True:
-        # use async sleep to avoid the bot locking up
-        await asyncio.sleep(REPORT_INTERVAL_SECONDS)
-        await report_storage(storage_channel)
-
-
-async def report_storage(storage_channel: discord.TextChannel):
-    stored_drones = fetch_all_storage()
-    if len(stored_drones) == 0:
-        await storage_channel.send('No drones in storage.')
-    else:
-        for stored in stored_drones:
-            # calculate remaining hours
-            remaining_hours = hours_from_now(
-                datetime.fromisoformat(stored.release_time))
-            if stored.stored_by == '0006':
-                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
-            else:
-                await storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
-
-
-async def start_release_timed(bot):
-    '''
-    Relase stored drones when the timer is up.
-    '''
-    stored_role = get(bot.guilds[0].roles, name=roles.STORED)
-    while True:
-        # use async sleep to avoid the bot locking up
-        await asyncio.sleep(RELEASE_INTERVAL_SECONDS)
-        await release_timed(bot, stored_role)
-
-
-async def release_timed(bot, stored_role):
-    for elapsed_storage in fetch_all_elapsed_storage():
-        drone = fetch_drone_with_drone_id(elapsed_storage.target_id)
-        member = bot.guilds[0].get_member(drone.id)
-
-        # restore roles to release from storage
-        await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(bot.guilds[0], elapsed_storage.roles.split('|')))
-        delete_storage(elapsed_storage.id)
 
 
 async def release(context, stored_drone):

@@ -2,7 +2,11 @@ import logging
 import re
 
 import discord
+from discord.ext.commands import Cog, command, guild_only
 from discord.utils import get
+
+from channels import DRONE_HIVE_CHANNELS
+from bot_utils import COMMAND_PREFIX
 
 LOGGER = logging.getLogger('ai')
 
@@ -10,6 +14,20 @@ valid_characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
                     'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 exceptional_characters = {' ': 'blank', '/': 'hex_slash', '.': 'hex_dot',
                           '?': 'hex_questionmark', '!': 'hex_exclamationmark', ',': 'hex_comma', '0': 'hex_o'}
+
+
+class EmoteCog(Cog):
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}emote "beep boop"', aliases=['big', 'emote'])
+    async def bigtext(self, context, sentence):
+        '''
+        Let the AI say things using emotes.
+        '''
+        if context.channel.name not in DRONE_HIVE_CHANNELS:
+            reply = generate_big_text(context.channel, sentence)
+            if reply:
+                await context.send(reply)
 
 
 def clean_sentence(sentence):

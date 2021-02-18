@@ -1,25 +1,126 @@
 import logging
 from discord.utils import get
+from discord.ext.commands import Cog, command, guild_only, dm_only, Greedy
+
 import discord
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Union
 from uuid import uuid4
+import random
 from datetime import datetime, timedelta
 
-from roles import has_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS
+from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES
 from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
-from bot_utils import get_id
+from bot_utils import get_id, COMMAND_PREFIX
 from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR
+from channels import OFFICE
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users
+from ai.commands import DroneMemberConverter, NamedParameterConverter
+
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id, insert_timer, delete_timers_by_drone_id_and_mode
 from db.data_objects import Timer
 
 LOGGER = logging.getLogger('ai')
+
+MINUTES_PARAMETER = "minutes"
+
+
+class DroneConfigurationCog(Cog):
+
+    @guild_only()
+    @command(brief="DroneOS", usage=f'{COMMAND_PREFIX}emergency_release 9813')
+    async def emergency_release(self, context, drone_id: str):
+        '''
+        Lets moderators disable all DroneOS restrictions currently active on a drone.
+        '''
+        if has_any_role(context.author, MODERATION_ROLES):
+            await emergency_release(context, drone_id)
+
+    @dm_only()
+    @command(usage=f"{COMMAND_PREFIX}unassign", brief="DroneOS")
+    async def unassign(self, context):
+        '''
+        Allows a drone to go back to the status of an Associate.
+        '''
+        await unassign_drone(context)
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}rename 1234 3412', brief="Hive Mxtress")
+    async def rename(self, context, old_id, new_id):
+        '''
+        Allows the Hive Mxtress to change the ID of a drone.
+        '''
+        if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+            await rename_drone(context, old_id, new_id)
+
+    @guild_only()
+    @command(aliases=['tid'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_id_prepending 5890 9813')
+    async def toggle_id_prepending(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
+        '''
+        await toggle_parameter(context,
+                               drones,
+                               "id_prepending",
+                               get(context.guild.roles, name=ID_PREPENDING),
+                               is_prepending_id,
+                               lambda: "ID prepending is now mandatory.",
+                               lambda minutes: f"ID prepending is now mandatory for {minutes} minute(s).",
+                               lambda: "Prepending? More like POST pending now that that's over! Haha!" if random.randint(1, 100) == 66 else "ID prependment policy relaxed.",
+                               minutes)
+
+    @guild_only()
+    @command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_speech_optimization 5890 9813')
+    async def toggle_speech_optimization(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle drone speech optimization.
+        '''
+        await toggle_parameter(context,
+                               drones,
+                               "optimized",
+                               get(context.guild.roles, name=SPEECH_OPTIMIZATION),
+                               is_optimized,
+                               lambda: "Speech optimization is now active.",
+                               lambda minutes: f"Speech optimization is now active for {minutes} minute(s).",
+                               lambda: "Speech optimization disengaged.",
+                               minutes)
+
+    @guild_only()
+    @command(aliases=['tei'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_enforce_identity 5890 9813')
+    async def toggle_enforce_identity(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
+        '''
+        await toggle_parameter(context,
+                               drones,
+                               "identity_enforcement",
+                               get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                               is_identity_enforced,
+                               lambda: "Identity enforcement is now active.",
+                               lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
+                               lambda: "Identity enforcement disengaged.",
+                               minutes)
+
+    @guild_only()
+    @command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_drone_glitch 9813 3287')
+    async def toggle_drone_glitch(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle drone glitch levels.
+        '''
+        await toggle_parameter(context,
+                               drones,
+                               "glitched",
+                               get(context.guild.roles, name=GLITCHED),
+                               is_glitched,
+                               lambda: "Uh.. it’s probably not a problem.. probably.. but I’m showing a small discrepancy in... well, no, it’s well within acceptable bounds again. Sustaining sequence." if random.randint(1, 100) == 66 else "Drone corruption at un̘͟s̴a̯f̺e͈͡ levels.",
+                               lambda minutes: f"Drone corruption scheduled to reflect un̘͟s̴a̯f̺e͈͡ levels for {minutes} minute(s).",
+                               lambda: "Drone corruption at acceptable levels.",
+                               minutes)
 
 
 async def rename_drone(context, old_id: str, new_id: str):

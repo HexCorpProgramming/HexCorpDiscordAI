@@ -4,7 +4,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 
 import roles
-import ai.timers as timers
+from ai.timers import TimersCog
 from db.data_objects import Timer
 
 
@@ -35,6 +35,8 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         bot = AsyncMock()
         bot.guilds[0].roles = [optimized_role]
 
+        timer_cog = TimersCog(bot)
+
         timer_id = str(uuid4())
         timer = Timer(timer_id, drone.drone_id, 'optimized', datetime.now() - timedelta(minutes=2))
 
@@ -43,7 +45,9 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.return_value = drone
 
         # run
-        await timers.process_timers(bot)
+        timer_cog.process_timers.start()
+        timer_cog.process_timers.stop()
+        await timer_cog.process_timers.get_task()
 
         # assert
         convert_id_to_member.assert_called_once_with(bot.guilds[0], timer.drone_id)

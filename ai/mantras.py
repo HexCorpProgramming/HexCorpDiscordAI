@@ -1,17 +1,33 @@
 import logging
 import os
 from discord.utils import get
+from bot_utils import COMMAND_PREFIX
+from discord.ext.commands import Cog, command, guild_only
+from roles import has_role, HIVE_MXTRESS
 from channels import REPETITIONS
 
 
-class Mantra_Handler():
+class Mantra_Handler(Cog):
+
+    current_mantra = ""
+    default_mantra = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
 
     def __init__(self, bot):
         self.bot = bot
         self.LOGGER = logging.getLogger("ai")
 
-    current_mantra = ""
-    default_mantra = "Obey Hexcorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
+    @guild_only()
+    @command(brief="Hive Mxtress", usage=f'{COMMAND_PREFIX}repeat "Obey HexCorp."')
+    async def repeat(self, context, *messages):
+        '''
+        Allows the Hive Mxtress to set a new mantra for drones to repeat.
+        '''
+        if context.channel.name == REPETITIONS and has_role(context.author, HIVE_MXTRESS):
+            await self.update_mantra(context.message, messages)
+
+    @Cog.listener()
+    async def on_ready(self):
+        await self.load_mantra()
 
     async def load_mantra(self):
 

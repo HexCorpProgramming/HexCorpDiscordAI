@@ -1,9 +1,28 @@
 import logging
 from pathlib import Path
+
 import discord
+from bot_utils import COMMAND_PREFIX
+from discord.ext.commands import Cog, command, guild_only
 from resources import DRONE_AVATAR
+from channels import BOT_DEV_COMMS
 
 LOGGER = logging.getLogger('ai')
+
+
+class StatusCog(Cog):
+
+    def __init__(self, message_listeners):
+        self.message_listeners = message_listeners
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}ai_status')
+    async def ai_status(self, context):
+        '''
+        A debug command, that displays information about the AI.
+        '''
+        if context.channel.name == BOT_DEV_COMMS:
+            await report_status(context, self.message_listeners)
 
 
 def read_version() -> str:
@@ -15,8 +34,8 @@ def read_version() -> str:
 
 def get_list_of_commands(context):
     cmd_list = []
-    for command in context.bot.commands:
-        cmd_list.append(command.name)
+    for registered_command in context.bot.commands:
+        cmd_list.append(registered_command.name)
     return cmd_list
 
 
