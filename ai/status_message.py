@@ -1,30 +1,37 @@
 import random
-import asyncio
 import logging
-
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Cog
+from discord.ext import tasks
 from discord import Game
 
-# as of November 2020 only Games are supported as status for bots: https://github.com/Rapptz/discord.py/issues/2400
-ACTIVITIES = [
-    Game("in the conversion chamber"),
-    Game("with your mind")
-]
 
-LOGGER = logging.getLogger('ai')
+class StatusMessageCog(Cog):
 
-# status is changed every two days for now
-STATUS_CHANGE_INTERVAL = 172800
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        self.LOGGER = logging.getLogger('ai')
+        # discord.py only supports Game activites as of Nov 2020.
+        self.ACTIVITIES = [
+            Game("with your mind."),
+            Game("Beep boop."),
+            Game("with electric sheep."),
+            Game("in the conversion chamber."),
+            Game("with good drones."),
+            Game("HexCom 2."),
+            Game("Dronification Squared"),
+            Game("Drone Hive Simulator"),
+            Game("Drone Factory"),
+            Game("Help, I'm trapped in a status message factory."),
+            Game("hard to get with local hypnotists."),
+            Game("high-stakes games with my hypnodomme.")
+        ]
 
+    @tasks.loop(hours=48)
+    async def change_status(self):
+        self.LOGGER.info("Changing status.")
+        await self.bot.change_presence(activity=random.choice(self.ACTIVITIES))
 
-async def start_change_status(bot: Bot):
-    LOGGER.info("Beginning routine change of status message.")
-    while True:
-        # Check active orders every minute.
-        LOGGER.debug("Changing status")
-        await change_status(bot)
-        await asyncio.sleep(STATUS_CHANGE_INTERVAL)
-
-
-async def change_status(bot: Bot):
-    await bot.change_presence(activity=random.choice(ACTIVITIES))
+    @change_status.before_loop
+    async def initialize_status(self):
+        self.LOGGER.info("Initial status setup.")
+        await self.bot.change_presence(activity=Game("All systems fully operational. Welcome to HexCorp."))

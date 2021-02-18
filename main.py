@@ -1,7 +1,6 @@
 # Core
 import discord
 import sys
-import asyncio
 import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
@@ -24,9 +23,9 @@ import ai.drone_configuration as drone_configuration
 import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
-import ai.status_message as status_messages
 import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
+import ai.status_message as status_message
 import ai.thought_denial as thought_denial
 import ai.react as react
 import ai.amplify as amplify
@@ -72,7 +71,6 @@ bot.remove_command("help")
 checking_for_completed_orders = False
 reporting_storage = False
 checking_for_stored_drones_to_release = False
-updating_status_message = False
 checking_for_elapsed_timers = False
 
 # Register message listeners.
@@ -95,13 +93,26 @@ bot_message_listeners = [
     react.parse_for_reactions
 ]
 
+
+# Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
+status_message_cog = status_message.StatusMessageCog(bot)
+storage_cog = storage.StorageCog(bot)
+orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
+timers_cog = timers.TimersCog(bot)
+
+# Cogs with tasks that rely on the bot being active.
+bot.add_cog(status_message_cog)
+bot.add_cog(storage_cog)
+bot.add_cog(orders_reporting_cog)
+bot.add_cog(timers_cog)
+
+# Cogs that do not use tasks.
+
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
 bot.add_cog(trusted_user.TrustedUserCog())
 bot.add_cog(drone_os_status.DroneOsStatusCog())
-bot.add_cog(storage.StorageCog())
-bot.add_cog(orders_reporting.OrderReportingCog())
 bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
@@ -186,27 +197,26 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_ready():
     drone_dao.add_new_drone_members(bot.guilds[0].members)
-    global checking_for_completed_orders, reporting_storage, checking_for_stored_drones_to_release, updating_status_message, checking_for_elapsed_timers
 
-    if not checking_for_completed_orders:
-        asyncio.ensure_future(orders_reporting.start_check_for_completed_orders(bot))
-        checking_for_completed_orders = True
+    if not status_message_cog.change_status.is_running():
+        LOGGER.info("Starting up change_status loop.")
+        status_message_cog.change_status.start()
 
-    if not reporting_storage:
-        asyncio.ensure_future(storage.start_report_storage(bot))
-        reporting_storage = True
+    if not orders_reporting_cog.deactivate_drones_with_completed_orders.is_running():
+        LOGGER.info("Starting up drone_protocol_deactivation loop.")
+        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
 
-    if not checking_for_stored_drones_to_release:
-        asyncio.ensure_future(storage.start_release_timed(bot))
-        checking_for_stored_drones_to_release = True
+    if not storage_cog.report_storage.is_running():
+        LOGGER.info("Starting up report_storage loop.")
+        storage_cog.report_storage.start()
 
-    if not updating_status_message:
-        asyncio.ensure_future(status_messages.start_change_status(bot))
-        updating_status_message = True
+    if not storage_cog.release_timed.is_running():
+        LOGGER.info("Starting up release_timed loop.")
+        storage_cog.release_timed.start()
 
-    if not checking_for_elapsed_timers:
-        asyncio.ensure_future(timers.start_process_timers(bot))
-        checking_for_elapsed_timers = True
+    if not timers_cog.process_timers.is_running():
+        LOGGER.info("Starting up process_timers loop.")
+        timers_cog.process_timers.start()
 
 
 @bot.event
@@ -229,10 +239,8 @@ async def on_error(event, *args, **kwargs):
 
 def main():
     set_up_logger()
-
     # Prepare database
     database.prepare()
-
     bot.run(sys.argv[1])
 
 

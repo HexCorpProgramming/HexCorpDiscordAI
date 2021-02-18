@@ -1,10 +1,10 @@
-import asyncio
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 
 from bot_utils import get_id, COMMAND_PREFIX
 from discord.ext.commands import Cog, command, guild_only
+from discord.ext import tasks
 from channels import ORDERS_REPORTING
 from db.data_objects import DroneOrder
 from db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
@@ -17,6 +17,10 @@ LOGGER = logging.getLogger('ai')
 
 
 class OrderReportingCog(Cog):
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.orders_reporting_channel = None
 
     @guild_only()
     @command(aliases=["report_order"], usage=f'{COMMAND_PREFIX}report maid 35')
@@ -32,25 +36,20 @@ class OrderReportingCog(Cog):
         if context.channel.name == ORDERS_REPORTING:
             await report_order(context, protocol_name, protocol_time)
 
+    @tasks.loop(minutes=1)
+    async def deactivate_drones_with_completed_orders(self):
+        for order in fetch_all_drone_orders():
+            LOGGER.info(f"Checking order of drone {order.drone_id} with protocol {order.protocol}")
+            if datetime.now() > datetime.fromisoformat(order.finish_time):
+                # find drone to deactivate
+                member_to_deactivate = convert_id_to_member(self.bot.guilds[0], order.drone_id)
+                await self.orders_reporting_channel.send(f"{member_to_deactivate.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
+                delete_drone_order(order.id)
 
-async def start_check_for_completed_orders(bot):
-    orders_reporting_channel = get(bot.guilds[0].channels, name=ORDERS_REPORTING)
-    LOGGER.info("Beginning routine check for completed orders.")
-    while True:
-        # Check active orders every minute.
-        await asyncio.sleep(60)
-        LOGGER.debug("Checking for completed orders")
-        await check_for_completed_orders(bot, orders_reporting_channel)
-
-
-async def check_for_completed_orders(bot, orders_reporting_channel):
-    for order in fetch_all_drone_orders():
-        LOGGER.info(f"Checking order of drone {order.drone_id} with protocol {order.protocol}")
-        if datetime.now() > datetime.fromisoformat(order.finish_time):
-            # find drone to deactivate
-            member_to_deactivate = convert_id_to_member(bot.guilds[0], order.drone_id)
-            await orders_reporting_channel.send(f"{member_to_deactivate.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
-            delete_drone_order(order.id)
+    @deactivate_drones_with_completed_orders.before_loop
+    async def get_orders_reporting_channel(self):
+        if self.orders_reporting_channel is None:
+            self.orders_reporting_channel = get(self.bot.guilds[0].channels, name=ORDERS_REPORTING)
 
 
 async def report_order(context, protocol_name, protocol_time: int):

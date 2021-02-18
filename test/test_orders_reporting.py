@@ -39,8 +39,12 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
 
         convert_id_to_member.return_value = activated_member
 
+        orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
+
         # run
-        await orders_reporting.check_for_completed_orders(bot, orders_reporting_channel)
+        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
+        orders_reporting_cog.deactivate_drones_with_completed_orders.stop()
+        await orders_reporting_cog.deactivate_drones_with_completed_orders.get_task()
 
         # assert
         convert_id_to_member.assert_called_once_with(bot.guilds[0], '5890')
@@ -50,9 +54,12 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890', 'beep booping', str(datetime.now() + timedelta(minutes=25)))])
     async def test_check_for_completed_orders_none_completed(self, fetch_all_drone_orders):
         # setup
+        orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
         # run
-        await orders_reporting.check_for_completed_orders(bot, orders_reporting_channel)
+        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
+        orders_reporting_cog.deactivate_drones_with_completed_orders.stop()
+        await orders_reporting_cog.deactivate_drones_with_completed_orders.get_task()
 
         # assert
         orders_reporting_channel.send.assert_not_called()
