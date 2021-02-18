@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+from typing import Optional, List
 
 import discord
 from discord.utils import get
@@ -36,34 +37,47 @@ async def check_for_assignment_message(message: discord.Message, message_copy=No
 
     # if the message is correct for being added, yay! if not, delete the message and let them know its bad
     if message.content == ASSIGNMENT_MESSAGE:
-        associate_role = get(message.guild.roles, name=roles.ASSOCIATE)
-        drone_role = get(message.guild.roles, name=roles.DRONE)
-
-        assigned_nick = ''
-        used_ids = get_used_drone_ids() + RESERVED_IDS
-        assigned_id = get_id(message.author.display_name)  # does user have a drone id in their display name?
-        if assigned_id is not None:
-            if assigned_id in used_ids:  # make sure display name number doesnt conflict
-                await message.channel.send(f'{message.author.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
-                return True
-        else:
-            assigned_id = roll_id()
-            while assigned_id in used_ids:  # loop until no conflict
-                assigned_id = roll_id()
-
-        assigned_nick = f'⬡-Drone #{assigned_id}'
-
-        # give them the drone role
-        await message.author.remove_roles(associate_role)
-        await message.author.add_roles(drone_role)
-        await message.author.edit(nick=assigned_nick)
-
-        # add new drone to DB
-        new_drone = Drone(message.author.id, assigned_id, False, False, HIVE_MXTRESS_USER_ID, datetime.now())
-        insert_drone(new_drone)
-
-        await message.channel.send(f'{message.author.mention}: {ASSIGNMENT_ANSWER}')
+        await create_drone(message.guild, message.author, message.channel)
     else:
         await messages.delete_request(message, ASSIGNMENT_REJECT)
 
     return True
+
+
+async def create_drone(guild: discord.Guild,
+                       target: discord.Member,
+                       feedback_channel: discord.TextChannel,
+                       additional_trusted_users: Optional[List[str]] = None,
+                       temporary_until: Optional[datetime] = None):
+    associate_role = get(guild.roles, name=roles.ASSOCIATE)
+    drone_role = get(guild.roles, name=roles.DRONE)
+
+    assigned_nick = ''
+    used_ids = get_used_drone_ids() + RESERVED_IDS
+    assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
+    if assigned_id is not None:
+        if assigned_id in used_ids:  # make sure display name number doesnt conflict
+            # TODO: how to handle this with temporary dronification?
+            await feedback_channel.send(f'{target.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
+            return True
+    else:
+        assigned_id = roll_id()
+        while assigned_id in used_ids:  # loop until no conflict
+            assigned_id = roll_id()
+
+    assigned_nick = f'⬡-Drone #{assigned_id}'
+
+    # give them the drone role
+    await target.remove_roles(associate_role)
+    await target.add_roles(drone_role)
+    await target.edit(nick=assigned_nick)
+
+    trusted_users = (additional_trusted_users or []) + [HIVE_MXTRESS_USER_ID]
+    # exclude self from trusted users list
+    if target.id in trusted_users:
+        trusted_users.remove(target.id)
+
+    # add new drone to DB
+    new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until)
+    insert_drone(new_drone)
+    await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')
