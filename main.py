@@ -27,6 +27,7 @@ import ai.glitch_message as glitch_message
 from ai.mantras import Mantra_Handler
 import ai.status_message as status_message
 import ai.thought_denial as thought_denial
+import ai.react as react
 import ai.amplify as amplify
 import webhook
 # Utils
@@ -87,6 +88,12 @@ message_listeners = [
 
 ]
 
+# register message listeners that take messages sent by bots
+bot_message_listeners = [
+    react.parse_for_reactions
+]
+
+
 # Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
 status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
@@ -100,6 +107,7 @@ bot.add_cog(orders_reporting_cog)
 bot.add_cog(timers_cog)
 
 # Cogs that do not use tasks.
+
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
@@ -150,10 +158,6 @@ async def help(context):
 
 @bot.event
 async def on_message(message: discord.Message):
-    # Ignore all messages by any bot (AI Mxtress and webhooks)
-    if message.author.bot:
-        return
-
     # handle DMs
     if isinstance(message.channel, discord.DMChannel):
         await bot.process_commands(message)
@@ -162,7 +166,9 @@ async def on_message(message: discord.Message):
     message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
-    for listener in message_listeners:
+    # use the listeners for bot messages or user messages
+    applicable_listeners = bot_message_listeners if message.author.bot else message_listeners
+    for listener in applicable_listeners:
         LOGGER.info(f"Executing: {listener}")
         if await listener(message, message_copy):  # Return early if any listeners return true.
             return
