@@ -2,12 +2,10 @@ import logging
 import re
 import discord
 from bot_utils import get_id
-from channels import REPETITIONS, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY
-from db.drone_dao import is_optimized, is_drone
+from db.drone_dao import is_drone
 from resources import code_map
 from enum import Enum
 from typing import Optional
-from ai.mantras import Mantra_Handler
 
 
 class StatusType(Enum):
@@ -49,9 +47,6 @@ This regex is to be checked on the status regex's 5th group when the status code
 3: Informative status text ("Additional information")
 '''
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
-CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
-
 
 def get_status_type(status: Optional[re.Match]):
     '''
@@ -82,26 +77,6 @@ def get_status_type(status: Optional[re.Match]):
         return StatusType.NONE
 
 
-def should_not_optimize(message):
-    '''
-    Handles cases where the speech optimizer receieves a message it should not optimize.
-
-    Returns true if:
-    - Channel is mantras and message is current mantra.
-    - Message from any channel: Orders reporting, Orders completion, Moderation channel, moderation log.
-    - Message from category: Moderation
-    '''
-
-    drone_id = get_id(message.author.display_name)
-    acceptable_mantra = f"{drone_id} :: {Mantra_Handler.current_mantra}"
-
-    return any([
-        (message.channel.name == REPETITIONS and message.content == acceptable_mantra),
-        (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
-        (message.channel.category.name == MODERATION_CATEGORY)
-    ])
-
-
 def build_status_message(status_type, status, drone_id):
 
     if status_type is StatusType.NONE or status is None:
@@ -128,29 +103,17 @@ async def optimize_speech(message: discord.Message, message_copy):
     This function allows status codes to be transformed into human-readable versions.
     "5890 :: 200" > "5890 :: Code 200 :: Affirmative"
 
-    Drones can append additional information after a status code.
-    Optimized drones cannot, and will have their message deleted if attempted.
+    This function assumes message validity has already been assessed by speech_optimization_enforcement.
     '''
 
     # Do not attempt to optimize non-drones.
     if not is_drone(message.author):
         return False
 
-    # Skip edge cases
-    if should_not_optimize(message):
-        return False
-
-    if is_optimized(message.author):
-        message_copy.attachments = []
-
     # Attempt to find a status code message.
     status = status_code_regex.match(message_copy.content)
     if status is None:
-        if is_optimized(message.author):
-            await message.delete()
-            return True
-        else:
-            return False
+        return False
 
     LOGGER.info(f"Status message present: {status.group(0)}")
 
@@ -162,12 +125,6 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Determine status type
     status_type = get_status_type(status)
-
-    # Delete unauthorized messages
-    if is_optimized(message.author) and status_type in (StatusType.INFORMATIVE, StatusType.ADDRESS_BY_ID_INFORMATIVE):
-        LOGGER.info("Deleting unauthorized message from optimized HexDrone.")
-        await message.delete()
-        return True
 
     # Build message based on status type.
     drone_id = get_id(message.author.display_name)
