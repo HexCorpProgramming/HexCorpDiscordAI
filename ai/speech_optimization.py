@@ -77,17 +77,6 @@ def get_status_type(status: Optional[re.Match]):
         return StatusType.NONE
 
 
-def should_not_optimize(message):
-    '''
-    Handles cases where the speech optimizer receieves a message it should not optimize.
-
-    Returns true if:
-    - Channel is mantras and message is current mantra.
-    - Message from any channel: Orders reporting, Orders completion, Moderation channel, moderation log.
-    - Message from category: Moderation
-    '''
-
-
 def build_status_message(status_type, status, drone_id):
 
     if status_type is StatusType.NONE or status is None:
