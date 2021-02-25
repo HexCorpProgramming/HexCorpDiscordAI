@@ -26,7 +26,8 @@ class Drone:
         trusted_users: str = None,
         last_activity: datetime = None,
         id_prepending: bool = None,
-        identity_enforcement: bool = None
+        identity_enforcement: bool = None,
+        can_self_configure: bool = True
     ):
         self.id = id
         self.drone_id = drone_id
@@ -36,6 +37,7 @@ class Drone:
         self.last_activity = last_activity
         self.id_prepending = id_prepending
         self.identity_enforcement = identity_enforcement
+        self.can_self_configure = can_self_configure
 
 
 class Storage:

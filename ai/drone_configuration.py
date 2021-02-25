@@ -14,12 +14,12 @@ from display_names import update_display_name
 import webhook
 from bot_utils import get_id, COMMAND_PREFIX
 from ai.identity_enforcement import identity_enforcable
-from resources import DRONE_AVATAR
+from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id, insert_timer, delete_timers_by_drone_id_and_mode
@@ -186,6 +186,28 @@ async def emergency_release(context, drone_id: str):
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
 
 
+def can_toggle_permissions_for(toggling_user: discord.Member,
+                               toggled_user: discord.Member
+                               ) -> bool:
+    trusted_users = get_trusted_users(toggled_user.id)
+    if toggling_user.id == HIVE_MXTRESS_USER_ID:
+        return True
+    if toggling_user.id in trusted_users:
+        return True
+    if toggling_user.id == toggled_user.id:
+        return can_self_configure(toggled_user)
+    return False
+
+
+def is_configured(drone_member: discord.Member) -> bool:
+    toggles = (is_prepending_id,
+               is_optimized,
+               is_identity_enforced,
+               is_glitched,
+               )
+    return any(is_toggled(drone_member) for is_toggled in toggles)
+
+
 async def toggle_parameter(context,
                            drones: List[discord.Member],
                            toggle_column: str,
@@ -198,13 +220,16 @@ async def toggle_parameter(context,
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in drones:
-        trusted_users = get_trusted_users(drone.id)
-        if has_role(context.author, HIVE_MXTRESS) or context.author.id in trusted_users:
+        if can_toggle_permissions_for(context.author, drone):
             message = ""
             if is_toggle_activated(drone):
                 update_droneOS_parameter(drone, toggle_column, False)
                 await drone.remove_roles(role)
                 message = toggle_off_message()
+
+                still_configured = is_configured(drone)
+                if not still_configured:
+                    update_droneOS_parameter(drone, "can_self_configure", True)
 
                 # remove any open timers for this mode
                 delete_timers_by_drone_id_and_mode(fetch_drone_with_id(drone.id).drone_id, toggle_column)
@@ -213,6 +238,9 @@ async def toggle_parameter(context,
                 update_droneOS_parameter(drone, toggle_column, True)
                 await drone.add_roles(role)
                 message = toggle_on_message()
+
+                configured_by_self = (drone.id == context.author.id)
+                update_droneOS_parameter(drone, "can_self_configure", configured_by_self)
 
                 # create a new timer
                 if minutes > 0:

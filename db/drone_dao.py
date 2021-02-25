@@ -104,6 +104,11 @@ def is_identity_enforced(drone: discord.Member) -> bool:
     return enforced_drone is not None and bool(enforced_drone['identity_enforcement'])
 
 
+def can_self_configure(drone: discord.Member) -> bool:
+    can_self_configure_drone = fetchone('SELECT can_self_configure FROM drone WHERE id = :discord', {'discord': drone.id})
+    return can_self_configure_drone is not None and bool(can_self_configure_drone['can_self_configure'])
+
+
 def get_trusted_users(discord_id: int) -> List[int]:
     trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
     if not trusted_users_text:
