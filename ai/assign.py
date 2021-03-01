@@ -57,7 +57,6 @@ async def create_drone(guild: discord.Guild,
     assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
     if assigned_id is not None:
         if assigned_id in used_ids:  # make sure display name number doesnt conflict
-            # TODO: how to handle this with temporary dronification?
             await feedback_channel.send(f'{target.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
             return True
     else:

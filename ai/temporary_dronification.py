@@ -39,7 +39,6 @@ class TemporaryDronificationCog(Cog):
 
     @tasks.loop(minutes=1)
     async def release_temporary_drones(self):
-        # TODO: handle dronification expiring
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
         for drone in fetch_all_elapsed_temporary_dronification():
@@ -48,6 +47,10 @@ class TemporaryDronificationCog(Cog):
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @Associate Beep 6')
     async def temporarily_dronify(self, context, target: discord.Member, hours: int):
+        if hours <= 0:
+            await context.reply("Hours must be greater than 0.")
+            return
+
         # exclude drones
         if is_drone(target):
             await context.reply(f"{target.display_name} is already a drone.")
@@ -69,10 +72,9 @@ class TemporaryDronificationCog(Cog):
             LOGGER.info(f"Message detected as response to a temporary dronification request {matching_request}")
             if message.content == "y":
                 LOGGER.info("Consent given for temporary dronification. Changing roles and writing to DB...")
-                dronification_until = datetime.now() + timedelta(hours=matching_request.hours)
                 self.dronfication_requests.remove(matching_request)
-                await message.reply(f"Consent noted. HexCorp dronification suite engaged until {dronification_until}.")
-                # TODO: does not put dronification_until properly
+                dronification_until = datetime.now() + timedelta(hours=matching_request.hours)
+                await message.reply(f"Consent noted. HexCorp dronification suite engaged for the next {matching_request.hours} hours.")
                 await create_drone(message.guild, message.author, message.channel, [str(matching_request.issuer.id)], dronification_until)
             elif message.content == "n":
                 LOGGER.info("Consent not given for temporary dronification. Removing the request.")
