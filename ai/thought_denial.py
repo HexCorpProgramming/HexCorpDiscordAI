@@ -5,7 +5,7 @@ from db.drone_dao import is_drone
 from discord.utils import get
 LOGGER = logging.getLogger("ai")
 
-banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+"]
+banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+", r"hunter2"]
 
 
 async def deny_thoughts(message: discord.Message, message_copy):
