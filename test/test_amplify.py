@@ -9,11 +9,12 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     The amplify command...
     '''
 
+    @patch("ai.amplify.identity_enforcable", return_value=False)
     @patch("ai.amplify.has_role", return_value=True)
     @patch("ai.amplify.webhook.get_webhook_for_channel")
     @patch("ai.amplify.id_converter.convert_ids_to_members")
     @patch("ai.amplify.webhook.proxy_message_by_webhook")
-    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role):
+    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable):
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
         '''
