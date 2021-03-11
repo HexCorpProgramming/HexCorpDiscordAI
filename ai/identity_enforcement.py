@@ -2,7 +2,6 @@ import logging
 import discord
 from channels import DRONE_HIVE_CHANNELS
 from resources import DRONE_AVATAR
-from roles import has_role, DRONE
 from db.drone_dao import is_identity_enforced, is_drone
 
 LOGGER = logging.getLogger('ai')
