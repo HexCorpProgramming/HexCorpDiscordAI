@@ -70,13 +70,13 @@ class TemporaryDronificationCog(Cog):
 
         if matching_request and message.reference.resolved == matching_request.question_message:
             LOGGER.info(f"Message detected as response to a temporary dronification request {matching_request}")
-            if message.content == "y":
+            if message.content.lower() == "y".lower():
                 LOGGER.info("Consent given for temporary dronification. Changing roles and writing to DB...")
                 self.dronfication_requests.remove(matching_request)
                 dronification_until = datetime.now() + timedelta(hours=matching_request.hours)
                 await message.reply(f"Consent noted. HexCorp dronification suite engaged for the next {matching_request.hours} hours.")
                 await create_drone(message.guild, message.author, message.channel, [str(matching_request.issuer.id)], dronification_until)
-            elif message.content == "n":
+            elif message.content.lower() == "n".lower():
                 LOGGER.info("Consent not given for temporary dronification. Removing the request.")
                 self.dronfication_requests.remove(matching_request)
                 await message.reply("Consent not given. Procedure aborted.")
