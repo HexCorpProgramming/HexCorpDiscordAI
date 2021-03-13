@@ -6,7 +6,7 @@ from db.database import fetchone, change, fetchall
 from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
-from db.data_objects import Drone, map_to_object
+from db.data_objects import Drone, map_to_object, map_to_objects
 from resources import HIVE_MXTRESS_USER_ID
 
 
@@ -26,21 +26,21 @@ def insert_drone(drone: Drone):
     '''
     Inserts the given drone into the table drone.
     '''
-    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity)', vars(drone))
+    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity, :temporary_until)', vars(drone))
 
 
 def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     '''
     Finds a drone with the given drone_id.
     '''
-    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, id_prepending, identity_enforcement, trusted_users, last_activity FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, id_prepending, identity_enforcement, trusted_users, last_activity, temporary_until FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
 def fetch_drone_with_id(discord_id: int) -> Drone:
     '''
     Finds a drone with the given discord_id.
     '''
-    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
 
 
 def rename_drone_in_db(old_id: str, new_id: str):
@@ -120,3 +120,7 @@ def get_trusted_users(discord_id: int) -> List[int]:
 def set_trusted_users(discord_id: int, trusted_users: List[int]):
     trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
     change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': discord_id})
+
+
+def fetch_all_elapsed_temporary_dronification() -> List[Drone]:
+    return map_to_objects(fetchall('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until FROM drone WHERE temporary_until < :now', {'now': datetime.now()}), Drone)

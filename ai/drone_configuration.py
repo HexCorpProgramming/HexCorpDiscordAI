@@ -47,7 +47,7 @@ class DroneConfigurationCog(Cog):
         '''
         Allows a drone to go back to the status of an Associate.
         '''
-        await unassign_drone(context)
+        await unassign_drone(context.bot.guilds[0].get_member(context.author.id))
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}rename 1234 3412', brief="Hive Mxtress")
@@ -143,22 +143,21 @@ async def rename_drone(context, old_id: str, new_id: str):
         await context.send(f"ID {new_id} already in use.")
 
 
-async def unassign_drone(context):
-    drone = fetch_drone_with_id(context.author.id)
+async def unassign_drone(target: discord.Member):
+    drone = fetch_drone_with_id(target.id)
+    guild = target.guild
     # check for existence
     if drone is None:
-        await context.send("You are not a drone. Can not unassign.")
+        await target.send("You are not a drone. Can not unassign.")
         return
 
-    guild = context.bot.guilds[0]
-    member = guild.get_member(context.author.id)
-    await member.edit(nick=None)
-    await member.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=GLITCHED), get(guild.roles, name=STORED))
-    await member.add_roles(get(guild.roles, name=ASSOCIATE))
+    await target.edit(nick=None)
+    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=GLITCHED), get(guild.roles, name=STORED))
+    await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
     remove_drone_from_db(drone.drone_id)
-    await context.send(f"Drone with ID {drone.drone_id} unassigned.")
+    await target.send(f"Drone with ID {drone.drone_id} unassigned.")
 
 
 def remove_drone_from_db(drone_id: str):

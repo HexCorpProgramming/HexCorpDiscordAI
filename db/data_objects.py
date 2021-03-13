@@ -27,7 +27,8 @@ class Drone:
         last_activity: datetime = None,
         id_prepending: bool = None,
         identity_enforcement: bool = None,
-        can_self_configure: bool = True
+        can_self_configure: bool = True,
+        temporary_until: datetime = None
     ):
         self.id = id
         self.drone_id = drone_id
@@ -38,6 +39,7 @@ class Drone:
         self.id_prepending = id_prepending
         self.identity_enforcement = identity_enforcement
         self.can_self_configure = can_self_configure
+        self.temporary_until = temporary_until
 
 
 class Storage:
