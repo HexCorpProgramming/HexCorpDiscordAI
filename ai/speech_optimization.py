@@ -63,7 +63,7 @@ def get_status_type(message: str):
             return (StatusType.ADDRESS_BY_ID_INFORMATIVE, code_match, address_match)
         else:
             return (StatusType.ADDRESS_BY_ID_PLAIN, code_match, address_match)
-    
+
     elif code_match.group(4) is not None:
         return (StatusType.INFORMATIVE, code_match, None)
     else:
