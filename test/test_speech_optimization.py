@@ -236,7 +236,7 @@ class TestBuildStatusMessage(unittest.TestCase):
 
         self.assertEqual(
             "5890 :: Code `110` :: Addressing: Drone #9813",
-            build_status_message(status_type, code_match, address_match)        
+            build_status_message(status_type, code_match, address_match)
         )
 
     def test_informative_address_message(self):
@@ -248,5 +248,5 @@ class TestBuildStatusMessage(unittest.TestCase):
 
         self.assertEqual(
             "5890 :: Code `110` :: Addressing: Drone #9813 :: Hello.",
-            build_status_message(status_type, code_match, address_match)        
+            build_status_message(status_type, code_match, address_match)
         )
