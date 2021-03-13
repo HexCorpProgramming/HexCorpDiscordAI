@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
-from ai.speech_optimization import StatusType, get_status_type, status_code_regex, build_status_message, optimize_speech
+from ai.speech_optimization import StatusType, get_status_type, build_status_message, optimize_speech
 from ai.data_objects import MessageCopy
 
 
