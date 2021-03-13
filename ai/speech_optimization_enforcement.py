@@ -1,5 +1,5 @@
 from db.drone_dao import is_optimized
-from ai.speech_optimization import status_code_regex, get_status_type, StatusType
+from ai.speech_optimization import get_status_type, StatusType
 from channels import ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY, REPETITIONS
 from ai.mantras import Mantra_Handler
 from bot_utils import get_id
