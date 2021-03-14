@@ -139,6 +139,8 @@ async def help(context):
     Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description="Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
     Hive_Mxtress_card.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
 
+    manual_card = discord.Embed(color=0xff66ff, title="User manual", description="The official user manual for the AI can be found at https://hexcorpprogramming.github.io/HexCorpDiscordAIManual/")
+
     for command in bot.commands:
 
         command_name = command.name
@@ -161,6 +163,7 @@ async def help(context):
     await context.author.send(embed=commands_card)
     await context.author.send(embed=droneOS_card)
     await context.author.send(embed=Hive_Mxtress_card)
+    await context.author.send(embed=manual_card)
 
 
 @bot.event
