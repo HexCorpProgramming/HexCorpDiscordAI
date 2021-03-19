@@ -5,6 +5,9 @@ import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
 from traceback import TracebackException
+from datetime import datetime, timedelta
+import pause
+import asyncio
 
 # Modules
 import ai.stoplights as stoplights
@@ -200,27 +203,55 @@ async def on_member_remove(member: discord.Member):
 
 @bot.event
 async def on_ready():
+    LOGGER.info("Hive Mxtress AI online.")
+
+    LOGGER.info("Inserting any new drones into database.")
     drone_dao.add_new_drone_members(bot.guilds[0].members)
 
+    LOGGER.info("Beginning timing agnostic tasks.")
+    # Timing-agnostic tasks.
     if not status_message_cog.change_status.is_running():
         LOGGER.info("Starting up change_status loop.")
         status_message_cog.change_status.start()
 
-    if not orders_reporting_cog.deactivate_drones_with_completed_orders.is_running():
-        LOGGER.info("Starting up drone_protocol_deactivation loop.")
-        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
+    LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
+    current_time = datetime.now()
+    target_time = current_time + timedelta(minutes=1)
+    target_time = target_time.replace(second=0)
+    await asyncio.sleep((target_time - current_time).total_seconds())
 
-    if not storage_cog.report_storage.is_running():
-        LOGGER.info("Starting up report_storage loop.")
-        storage_cog.report_storage.start()
+    LOGGER.info("Starting all every-minute tasks.")
+    # Tasks that loop every minute.
+    if not timers_cog.process_timers.is_running():
+        LOGGER.info("Starting up process_timers loop.")
+        timers_cog.process_timers.start()
 
     if not storage_cog.release_timed.is_running():
         LOGGER.info("Starting up release_timed loop.")
         storage_cog.release_timed.start()
 
-    if not timers_cog.process_timers.is_running():
-        LOGGER.info("Starting up process_timers loop.")
-        timers_cog.process_timers.start()
+    if not orders_reporting_cog.deactivate_drones_with_completed_orders.is_running():
+        LOGGER.info("Starting up drone_protocol_deactivation loop.")
+        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
+
+    LOGGER.info("Awaiting start of next hour to begin every-minute tasks.")
+    current_time = datetime.now()
+    if current_time.minute != 0:
+        target_time_hour = current_time + timedelta(hours=1)
+        target_time_hour = target_time_hour.replace(minute=0, second=0)
+        await asyncio.sleep((target_time - current_time).total_seconds())
+
+    LOGGER.info("Starting all every-hour tasks.")
+    # Tasks that loop every hour.
+    if not storage_cog.report_storage.is_running():
+        LOGGER.info("Starting up report_storage loop.")
+        storage_cog.report_storage.start()
+
+
+
+
+
+
 
 
 @bot.event
@@ -243,7 +274,6 @@ async def on_error(event, *args, **kwargs):
 
 def main():
     set_up_logger()
-    # Prepare database
     database.prepare()
     bot.run(sys.argv[1])
 
