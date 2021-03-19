@@ -25,6 +25,7 @@ import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
+import ai.battery as battery
 from ai.mantras import Mantra_Handler
 import ai.status_message as status_message
 import ai.thought_denial as thought_denial
@@ -69,12 +70,6 @@ intents.members = True
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents)
 bot.remove_command("help")
 
-# Run-forever checkers.
-checking_for_completed_orders = False
-reporting_storage = False
-checking_for_stored_drones_to_release = False
-checking_for_elapsed_timers = False
-
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
 
 # Register message listeners.
@@ -91,7 +86,6 @@ message_listeners = [
     respond.respond_to_question,
     storage.store_drone,
     temporary_dronification_cog.temporary_dronification_response
-
 ]
 
 # register message listeners that take messages sent by bots
