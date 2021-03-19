@@ -109,6 +109,11 @@ def can_self_configure(drone: discord.Member) -> bool:
     return can_self_configure_drone is not None and bool(can_self_configure_drone['can_self_configure'])
 
 
+def is_battery_powered(drone: discord.Member) -> bool:
+    # temporary hardcoded value.
+    return True
+
+
 def get_trusted_users(discord_id: int) -> List[int]:
     trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
     if not trusted_users_text:
