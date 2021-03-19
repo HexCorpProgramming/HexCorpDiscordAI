@@ -223,6 +223,7 @@ async def on_ready():
     current_time = datetime.now()
     target_time = current_time + timedelta(minutes=1)
     target_time = target_time.replace(second=0)
+    LOGGER.info(f"Scheduled to start minutely tasks at {target_time}")
     await asyncio.sleep((target_time - current_time).total_seconds())
 
     LOGGER.info("Starting all every-minute tasks.")
@@ -237,6 +238,7 @@ async def on_ready():
     if current_time.minute != 0:
         target_time = current_time + timedelta(hours=1)
         target_time = target_time.replace(minute=0, second=0)
+        LOGGER.info(f"Scheduled to start hourly tasks at {target_time}")
         await asyncio.sleep((target_time - current_time).total_seconds())
 
     LOGGER.info("Starting all every-hour tasks.")
