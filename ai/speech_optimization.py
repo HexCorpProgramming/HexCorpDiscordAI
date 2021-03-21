@@ -5,7 +5,6 @@ from bot_utils import get_id
 from db.drone_dao import is_drone
 from resources import code_map
 from enum import Enum
-from typing import Optional
 
 
 class StatusType(Enum):
@@ -38,7 +37,7 @@ Regex groups for full status code regex:
 5: Informative status text. ("Additional information")
 '''
 
-addressing_regex = re.compile(r'(\d{4})( :: (.*))?', re.DOTALL)
+address_by_id_regex = re.compile(r'(\d{4})( :: (.*))?', re.DOTALL)
 '''
 This regex is to be checked on the status regex's 5th group when the status code is 110 (addressing).
 0: Full match ("9813 :: Additional information")
@@ -48,54 +47,41 @@ This regex is to be checked on the status regex's 5th group when the status code
 '''
 
 
-def get_status_type(status: Optional[re.Match]):
-    '''
-    Identifying if a status is ADDRESS_BY_ID_PLAIN or INFORMATIVE:
-    An "address by ID" status must always use the "informative" field even if plain
-    in order to specify a target drone ID.
-    - If the informative field exactly matches 4 digits, it's a plain status code.
-    - Otherwise, it's an informative code.
-    '''
+def get_status_type(message: str):
 
-    if status is None:
-        return StatusType.NONE
-    elif status.group(3) == "110" and status.group(5) is not None:
-        # Handle 110 address-by-ID special case.
-        address_info = addressing_regex.match(status.group(5))
-        if address_info is None:
-            # If a target ID is not found then it's just an informative status code.
-            return StatusType.INFORMATIVE
-        elif address_info.group(1) is not None and address_info.group(2) is not None:
-            return StatusType.ADDRESS_BY_ID_INFORMATIVE
-        elif address_info.group(1) is not None and address_info.group(2) is None:
-            return StatusType.ADDRESS_BY_ID_PLAIN
-    elif status.group(5) is not None:
-        return StatusType.INFORMATIVE
-    elif status.group(5) is None:
-        return StatusType.PLAIN
+    code_match = status_code_regex.match(message)
+
+    if code_match is None:
+        return (StatusType.NONE, None, None)
+
+    # Special case handling for addressing by ID.
+    if code_match.group(3) == "110" and code_match.group(5) is not None:
+        address_match = address_by_id_regex.match(code_match.group(5))
+        if address_match is None:
+            return (StatusType.INFORMATIVE, code_match, None)
+        elif address_match.group(2) is not None:
+            return (StatusType.ADDRESS_BY_ID_INFORMATIVE, code_match, address_match)
+        else:
+            return (StatusType.ADDRESS_BY_ID_PLAIN, code_match, address_match)
+
+    elif code_match.group(4) is not None:
+        return (StatusType.INFORMATIVE, code_match, None)
     else:
-        return StatusType.NONE
+        return (StatusType.PLAIN, code_match, None)
 
 
-def build_status_message(status_type, status, drone_id):
+def build_status_message(status_type, code_match, address_match):
 
-    if status_type is StatusType.NONE or status is None:
-        return None
+    base_message = f"{code_match.group(2)} :: Code `{code_match.group(3)}` :: "
 
-    base_message = f"{drone_id} :: Code `{status.group(3)}` ::"
-
-    if status_type is StatusType.PLAIN:
-        return f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')}"
-    elif status_type is StatusType.INFORMATIVE:
-        return f"{base_message} {code_map.get(status.group(3), 'INVALID CODE')} :: {status.group(5)}"
-    elif status_type in (StatusType.ADDRESS_BY_ID_PLAIN, StatusType.ADDRESS_BY_ID_INFORMATIVE):
-        address_info = addressing_regex.match(status.group(5))
-        if status_type is StatusType.ADDRESS_BY_ID_PLAIN:
-            return f"{base_message} Addressing: Drone #{address_info.group(1)}"
-        elif status_type is StatusType.ADDRESS_BY_ID_INFORMATIVE:
-            return f"{base_message} Addressing: Drone #{address_info.group(1)} :: {address_info.group(3)}"
-    else:
-        return None
+    if status_type == StatusType.PLAIN:
+        return f"{base_message}{code_map.get(code_match.group(3), 'INVALID CODE')}"
+    elif status_type == StatusType.INFORMATIVE:
+        return f"{base_message}{code_map.get(code_match.group(3), 'INVALID CODE')}{code_match.group(4)}"
+    elif status_type == StatusType.ADDRESS_BY_ID_PLAIN:
+        return f"{base_message}Addressing: Drone #{address_match.group(1)}"
+    elif status_type == StatusType.ADDRESS_BY_ID_INFORMATIVE:
+        return f"{base_message}Addressing: Drone #{address_match.group(1)}{address_match.group(2)}"
 
 
 async def optimize_speech(message: discord.Message, message_copy):
@@ -110,26 +96,19 @@ async def optimize_speech(message: discord.Message, message_copy):
     if not is_drone(message.author):
         return False
 
-    # Attempt to find a status code message.
-    status = status_code_regex.match(message_copy.content)
-    if status is None:
+    # Determine message type
+    status_type, code_match, address_match = get_status_type(message_copy.content)
+
+    if status_type == StatusType.NONE:
         return False
 
-    LOGGER.info(f"Status message present: {status.group(0)}")
-
     # Confirm the status starts with the drone's ID
-    if status.group(2) != get_id(message.author.display_name):
+    if code_match.group(2) != get_id(message.author.display_name):
         LOGGER.info("Status did not match drone ID.")
         await message.delete()
         return True
 
-    # Determine status type
-    status_type = get_status_type(status)
-
     # Build message based on status type.
-    drone_id = get_id(message.author.display_name)
-
-    if (final_message := build_status_message(status=status, status_type=status_type, drone_id=drone_id)) is not None:
-        message_copy.content = final_message
+    message_copy.content = build_status_message(status_type, code_match, address_match)
 
     return False

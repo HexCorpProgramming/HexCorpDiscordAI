@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
-from ai.speech_optimization import StatusType, get_status_type, status_code_regex, build_status_message, optimize_speech
+from ai.speech_optimization import StatusType, get_status_type, build_status_message, optimize_speech
 from ai.data_objects import MessageCopy
 
 
@@ -9,18 +9,18 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     The optimize_speech function...
     '''
 
-    @patch("ai.speech_optimization.get_status_type")
+    @patch("ai.speech_optimization.get_status_type", return_value=(StatusType.PLAIN, Mock(), Mock()))
     @patch("ai.speech_optimization.is_drone", return_value=True)
     async def test_calls_get_status_type(self, is_drone, get_status_type):
         '''
         should call 'get_status_type' if author is drone, message IDs match, and the message is a status code.
         '''
-        message = Mock()
+        message = AsyncMock()
         message.author.display_name = "5890"
         message_copy = Mock()
         message_copy.content = "5890 :: 200"
 
-        self.assertFalse(await optimize_speech(message, message_copy))
+        self.assertTrue(await optimize_speech(message, message_copy))
         get_status_type.assert_called_once()
 
     @patch("ai.speech_optimization.build_status_message")
@@ -159,43 +159,43 @@ class TestGetStatusType(unittest.TestCase):
         '''
         returns NONE if status is None.
         '''
-        message = status_code_regex.match("hewwo!!!!!!!")
-        self.assertEqual(StatusType.NONE, get_status_type(message))
+        status_type, _, _ = get_status_type("hewwo!!!")
+        self.assertEqual(StatusType.NONE, status_type)
 
     def test_returns_informative_if_informative_text(self):
         '''
         returns INFORMATIVE if status has informative text group.
         '''
-        message = status_code_regex.match("5890 :: 050 :: It is a good drone.")
-        self.assertEqual(StatusType.INFORMATIVE, get_status_type(message))
+        status_type, _, _ = get_status_type("5890 :: 050 :: It is a good drone.")
+        self.assertEqual(StatusType.INFORMATIVE, status_type)
 
     def test_returns_informative_if_addr_regex_doesnt_match(self):
         '''
         returns INFORMATIVE if 110 status does not match addressing information regex.
         '''
-        message = status_code_regex.match("5890 :: 110 :: Hello there droney.")
-        self.assertEqual(StatusType.INFORMATIVE, get_status_type(message))
+        status_type, _, _ = get_status_type("5890 :: 110 :: Hello there, General kedroney.")
+        self.assertEqual(StatusType.INFORMATIVE, status_type)
 
     def test_returns_addr_by_id_info_if_addr_has_informative(self):
         '''
         returns ADDRESS_BY_ID_INFORMATIVE if 110 status matches addressing info regex and has informative text
         '''
-        message = status_code_regex.match("5890 :: 110 :: 9813 :: How are you today?")
-        self.assertEqual(StatusType.ADDRESS_BY_ID_INFORMATIVE, get_status_type(message))
+        status_type, _, _ = get_status_type("5890 :: 110 :: 9813 :: How are you today?")
+        self.assertEqual(StatusType.ADDRESS_BY_ID_INFORMATIVE, status_type)
 
     def test_returns_addr_by_id_plain_if_no_informative(self):
         '''
         returns ADDRESS_BY_ID_PLAIN if 110 status matches extra regex and has no informative text
         '''
-        message = status_code_regex.match("5890 :: 110 :: 9813")
-        self.assertEqual(StatusType.ADDRESS_BY_ID_PLAIN, get_status_type(message))
+        status_type, _, _ = get_status_type("5890 :: 110 :: 9813")
+        self.assertEqual(StatusType.ADDRESS_BY_ID_PLAIN, status_type)
 
     def test_returns_plain_if_no_informative_text(self):
         '''
         returns PLAIN if code has no informative text
         '''
-        message = status_code_regex.match("5890 :: 304")
-        self.assertEqual(StatusType.PLAIN, get_status_type(message))
+        status_type, _, _ = get_status_type("5890 :: 304")
+        self.assertEqual(StatusType.PLAIN, status_type)
 
 
 class TestBuildStatusMessage(unittest.TestCase):
@@ -207,44 +207,46 @@ class TestBuildStatusMessage(unittest.TestCase):
         '''
         returns a plain status message when given a plain status code.
         '''
-        status = status_code_regex.match("5890 :: 200")
+
+        status_type, code_match, address_match = get_status_type("5890 :: 200")
+
         self.assertEqual(
             "5890 :: Code `200` :: Response :: Affirmative.",
-            build_status_message(status_type=StatusType.PLAIN, status=status, drone_id="5890")
+            build_status_message(status_type, code_match, address_match)
         )
 
     def test_informative_message(self):
         '''
         returns an informative status message when given an informative status code.
         '''
-        status = status_code_regex.match("5890 :: 050 :: Goodbye.")
+
+        status_type, code_match, address_match = get_status_type("5890 :: 050 :: Goodbye.")
+
         self.assertEqual(
             "5890 :: Code `050` :: Statement :: Goodbye.",
-            build_status_message(status_type=StatusType.INFORMATIVE, status=status, drone_id="5890")
+            build_status_message(status_type, code_match, address_match)
         )
 
     def test_plain_address_message(self):
         '''
         returns a plain address by ID status message when a 110 code references a drone by ID.
         '''
-        status = status_code_regex.match("5890 :: 110 :: 9813")
+
+        status_type, code_match, address_match = get_status_type("5890 :: 110 :: 9813")
+
         self.assertEqual(
             "5890 :: Code `110` :: Addressing: Drone #9813",
-            build_status_message(status_type=StatusType.ADDRESS_BY_ID_PLAIN, status=status, drone_id="5890")
+            build_status_message(status_type, code_match, address_match)
         )
 
     def test_informative_address_message(self):
         '''
         returns an informative address by ID status message when a 110 code references a drone by ID with additional information.
         '''
-        status = status_code_regex.match("5890 :: 110 :: 9813 :: Hello.")
+
+        status_type, code_match, address_match = get_status_type("5890 :: 110 :: 9813 :: Hello.")
+
         self.assertEqual(
             "5890 :: Code `110` :: Addressing: Drone #9813 :: Hello.",
-            build_status_message(status_type=StatusType.ADDRESS_BY_ID_INFORMATIVE, status=status, drone_id="5890")
+            build_status_message(status_type, code_match, address_match)
         )
-
-    def test_none_message(self):
-        '''
-        returns None if all else fails, if status is None, or StatusType is NONE.
-        '''
-        self.assertIsNone(build_status_message(StatusType.NONE, None, "5890"))

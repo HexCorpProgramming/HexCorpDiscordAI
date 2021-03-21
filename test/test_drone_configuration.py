@@ -77,23 +77,15 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         member = AsyncMock()
         member.id = 2647623845
 
-        guild = AsyncMock()
-        guild.get_member = Mock(return_value=member)
-
-        context = AsyncMock()
-        context.bot.guilds = [guild]
-        context.author.id = member.id
-
         fetch_drone_with_id.return_value = drone
 
         # run
-        await drone_configuration.unassign_drone(context)
+        await drone_configuration.unassign_drone(member)
 
         # assert
-        guild.get_member.assert_called_once_with(context.author.id)
-        fetch_drone_with_id.assert_called_once_with(context.author.id)
+        fetch_drone_with_id.assert_called_once_with(member.id)
         remove_drone_from_db.assert_called_once_with(drone.drone_id)
-        context.send.assert_called_once_with(f"Drone with ID {drone.drone_id} unassigned.")
+        member.send.assert_called_once_with(f"Drone with ID {drone.drone_id} unassigned.")
 
     @patch("ai.drone_configuration.remove_drone_from_db")
     @patch("ai.drone_configuration.fetch_drone_with_id")
@@ -111,19 +103,15 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         guild = AsyncMock()
         guild.get_member = Mock(return_value=member)
 
-        context = AsyncMock()
-        context.bot.guilds = [guild]
-        context.author.id = member.id
-
         fetch_drone_with_id.return_value = None
 
         # run
-        await drone_configuration.unassign_drone(context)
+        await drone_configuration.unassign_drone(member)
 
         # assert
-        fetch_drone_with_id.assert_called_once_with(context.author.id)
+        fetch_drone_with_id.assert_called_once_with(member.id)
         remove_drone_from_db.assert_not_called()
-        context.send.assert_called_once_with('You are not a drone. Can not unassign.')
+        member.send.assert_called_once_with('You are not a drone. Can not unassign.')
 
     @patch("ai.drone_configuration.delete_timers_by_drone_id")
     @patch("ai.drone_configuration.delete_drone_order_by_drone_id")

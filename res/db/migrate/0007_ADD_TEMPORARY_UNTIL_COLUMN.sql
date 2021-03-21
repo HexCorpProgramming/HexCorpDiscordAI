@@ -1,0 +1,1 @@
+ALTER TABLE drone ADD temporary_until DATETIME;

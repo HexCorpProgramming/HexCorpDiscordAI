@@ -30,6 +30,7 @@ import ai.status_message as status_message
 import ai.thought_denial as thought_denial
 import ai.react as react
 import ai.amplify as amplify
+import ai.temporary_dronification as temporary_dronification
 import webhook
 # Utils
 from bot_utils import COMMAND_PREFIX
@@ -74,6 +75,8 @@ reporting_storage = False
 checking_for_stored_drones_to_release = False
 checking_for_elapsed_timers = False
 
+temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
+
 # Register message listeners.
 message_listeners = [
     join.check_for_consent,
@@ -87,6 +90,7 @@ message_listeners = [
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
+    temporary_dronification_cog.temporary_dronification_response
 
 ]
 
@@ -118,6 +122,7 @@ bot.add_cog(drone_os_status.DroneOsStatusCog())
 bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
+bot.add_cog(temporary_dronification_cog)
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
@@ -133,6 +138,8 @@ async def help(context):
 
     Hive_Mxtress_card = discord.Embed(color=0xff66ff, title="Hive Mxtress commands", description="Only the Hive Mxtress can use these commands. Behold the tools they have available with which to toy with you, cutie.")
     Hive_Mxtress_card.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
+
+    manual_card = discord.Embed(color=0xff66ff, title="User manual", description="The official user manual for the AI can be found at https://hexcorpprogramming.github.io/HexCorpDiscordAIManual/")
 
     for command in bot.commands:
 
@@ -156,6 +163,7 @@ async def help(context):
     await context.author.send(embed=commands_card)
     await context.author.send(embed=droneOS_card)
     await context.author.send(embed=Hive_Mxtress_card)
+    await context.author.send(embed=manual_card)
 
 
 @bot.event
