@@ -42,7 +42,7 @@ class TemporaryDronificationCog(Cog):
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
         for drone in fetch_all_elapsed_temporary_dronification():
-            unassign_drone(guild.get_member(drone.id))
+            await unassign_drone(guild.get_member(drone.id))
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @Associate Beep 6')

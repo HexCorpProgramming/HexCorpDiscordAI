@@ -69,12 +69,6 @@ intents.members = True
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents)
 bot.remove_command("help")
 
-# Run-forever checkers.
-checking_for_completed_orders = False
-reporting_storage = False
-checking_for_stored_drones_to_release = False
-checking_for_elapsed_timers = False
-
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
 
 # Register message listeners.
@@ -227,6 +221,14 @@ async def on_ready():
     if not timers_cog.process_timers.is_running():
         LOGGER.info("Starting up process_timers loop.")
         timers_cog.process_timers.start()
+
+    if not temporary_dronification_cog.release_temporary_drones.is_running():
+        LOGGER.info("Starting up release_temporary_drones loop.")
+        temporary_dronification_cog.release_temporary_drones.start()
+
+    if not temporary_dronification_cog.clean_dronification_requests.is_running():
+        LOGGER.info("Starting up clean_dronification_requests loop.")
+        temporary_dronification_cog.clean_dronification_requests.start()
 
 
 @bot.event
