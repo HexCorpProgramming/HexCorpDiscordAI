@@ -35,7 +35,7 @@ class TemporaryDronificationCog(Cog):
     @tasks.loop(minutes=1)
     async def clean_dronification_requests(self):
         now = datetime.now()
-        self.dronfication_requests = filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests)
+        self.dronfication_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests))
 
     @tasks.loop(minutes=1)
     async def release_temporary_drones(self):
