@@ -1,7 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, Mock
 from ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
+from roles import HIVE_MXTRESS
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -61,7 +62,34 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         # assert
         is_drone.assert_called_once_with(target)
         context.reply.assert_called_once_with(f"{target.display_name} is already a drone.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be exactly one dronification request.")
+        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification requests.")
+
+    @patch("ai.temporary_dronification.is_drone")
+    async def test_request_dronification_hive_mxtress(self, is_drone):
+        # init
+        question_message = AsyncMock()
+
+        context = AsyncMock()
+        context.reply.return_value = question_message
+
+        target = AsyncMock()
+        target.mention = "Target Associate"
+
+        hive_mxtress_role = Mock()
+        hive_mxtress_role.name = HIVE_MXTRESS
+        target.roles = [hive_mxtress_role]
+
+        hours = 4
+
+        is_drone.return_value = False
+
+        # run
+        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+
+        # assert
+        is_drone.assert_called_once_with(target)
+        context.reply.assert_called_once_with("The Hive Mxtress is not a valid target for temporary dronification.")
+        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
     @patch("ai.temporary_dronification.is_drone")
     async def test_request_dronification_hours_negative(self, is_drone):
