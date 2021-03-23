@@ -35,7 +35,7 @@ class TemporaryDronificationCog(Cog):
     @tasks.loop(minutes=1)
     async def clean_dronification_requests(self):
         now = datetime.now()
-        self.dronfication_requests = filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests)
+        self.dronfication_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests))
 
     @tasks.loop(minutes=1)
     async def release_temporary_drones(self):
@@ -68,7 +68,7 @@ class TemporaryDronificationCog(Cog):
                 matching_request = request
                 break
 
-        if matching_request and message.reference.resolved == matching_request.question_message:
+        if matching_request and message.reference and message.reference.resolved == matching_request.question_message:
             LOGGER.info(f"Message detected as response to a temporary dronification request {matching_request}")
             if message.content.lower() == "y".lower():
                 LOGGER.info("Consent given for temporary dronification. Changing roles and writing to DB...")
