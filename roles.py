@@ -20,7 +20,7 @@ MODERATION_ROLES = [ADMIN, MODERATION, HIVE_MXTRESS]
 
 VOICE = '⬡-Voice'
 
-NITRO_BOOSTER = '⬡-Battery'
+NITRO_BOOSTER = '⬡-Integrated'
 
 EVERYONE = '@everyone'
 
