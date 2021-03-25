@@ -123,7 +123,7 @@ bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed, battery.track_active_battery_drain]
+minute_tasks = [storage_cog.release_timed, battery.track_active_battery_drain, battery.track_drained_batteries]
 hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders, timers_cog.process_timers]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
