@@ -16,10 +16,11 @@ from bot_utils import get_id, COMMAND_PREFIX
 from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
+from battery import MAX_BATTERY_CAPACITY_MINS
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure, is_battery_powered
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure, is_battery_powered, set_battery_minutes_remaining
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id, insert_timer, delete_timers_by_drone_id_and_mode
@@ -134,6 +135,9 @@ class DroneConfigurationCog(Cog):
                                lambda minutes: f"Drone disconnected from HexCorp power grid for {minutes} minutes.",
                                lambda: "Drone reconnected to HexCorp power grid.",
                                minutes)
+        # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
+        for drone in drones:
+            set_battery_minutes_remaining(drone, MAX_BATTERY_CAPACITY_MINS)
 
 
 async def rename_drone(context, old_id: str, new_id: str):
