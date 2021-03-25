@@ -114,6 +114,13 @@ def is_battery_powered(drone: discord.Member) -> bool:
     return True
 
 
+def deincrement_battery_minutes_remaining(drone: discord.Member):
+    drone_record = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': drone.id})
+    if drone_record is None:
+        return
+    change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': drone.id})
+
+
 def set_battery_minutes_remaining(drone: discord.Member, minutes: int):
     change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': drone.id})
 
