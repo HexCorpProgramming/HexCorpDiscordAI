@@ -3,7 +3,7 @@ import logging
 import discord
 from discord.ext.commands import dm_only, Cog, command
 
-from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users
+from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from resources import DRONE_AVATAR
 from bot_utils import COMMAND_PREFIX
 
@@ -48,7 +48,7 @@ def get_status(drone_id: str, requesting_user: int) -> discord.Embed:
             .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.battery_powered))
 
         if boolean_to_enabled_disabled(drone.battery_powered):
-            embed.add_field(name="Battery percentage", value="100%")
+            embed.add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(drone)}%")
 
     return embed
 
