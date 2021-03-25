@@ -35,11 +35,10 @@ def get_status(drone_id: str, requesting_user: int) -> discord.Embed:
         .set_thumbnail(url=DRONE_AVATAR) \
         .set_footer(text="HexCorp DroneOS")
 
-    # if requesting_user not in get_trusted_users(drone.id):
-    if False:
+    if requesting_user not in get_trusted_users(drone.id) and requesting_user != drone.id:
         embed.description = "You are not registered as a trusted user of this drone."
     else:
-        embed.description = "You are registered as a trusted user of this drone and have access to its data."
+        embed.description = "You are registered as a trusted user of this drone and have access to its data." if requesting_user != drone.id else f"Welcome, ⬡-Drone #{drone_id}"
         embed = embed.set_thumbnail(url=DRONE_AVATAR) \
             .set_footer(text="HexCorp DroneOS") \
             .add_field(name="Optimized", value=boolean_to_enabled_disabled(drone.optimized)) \
