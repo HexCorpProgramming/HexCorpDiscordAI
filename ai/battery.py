@@ -1,8 +1,10 @@
 from bot_utils import get_id
 from discord.ext import tasks
-from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining
+from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_all_drone_batteries
 from id_converter import convert_id_to_member
 import logging
+from resources import MAX_BATTERY_CAPACITY_MINS
+from roles import has_role, BATTERY_POWERED, BATTERY_DRAINED
 
 draining_batteries = {}  # {drone_id: minutes of drain left}
 
@@ -22,7 +24,7 @@ async def start_battery_drain(message, message_copy=None):
     draining_batteries[drone_id] = 15
 
 
-@tasks.loop(seconds=1)
+@tasks.loop(minutes=1)
 async def track_active_battery_drain(bot):
     LOGGER.info("Draining battery from active drones.")
 
@@ -45,7 +47,14 @@ async def track_active_battery_drain(bot):
 
 @tasks.loop(minutes=1)
 async def track_drained_batteries(bot):
-    LOGGER.info("Tracking drained batteries.")
+    # Every drone has a battery. If battery_minutes = 0, give the Drained role.
+    # If battery_minutes > 0 and it has the Drained role, remove it.
+    for drone in get_all_drone_batteries():
+        # Intentionally different math b/c it always rounds down.
+        if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) == 0 and has_role(bot.guilds[0].get_member(drone.id), BATTERY_POWERED):
+            LOGGER.debug(f"Drone {drone.drone_id} is out of battery.")
+        elif (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) != 0 and has_role(bot.guilds[0].get_member(drone.id), BATTERY_DRAINED):
+            LOGGER.debug(f"Drone {drone.drone_id} has been recharged.")
 
 
 async def recharge_battery(drone):
