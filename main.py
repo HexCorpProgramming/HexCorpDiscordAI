@@ -80,6 +80,7 @@ message_listeners = [
     join.check_for_consent,
     assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
+    battery.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
@@ -122,7 +123,7 @@ bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed]
+minute_tasks = [storage_cog.release_timed, battery.track_active_battery_drain]
 hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders, timers_cog.process_timers]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
