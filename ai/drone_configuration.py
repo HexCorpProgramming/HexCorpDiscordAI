@@ -8,7 +8,7 @@ from uuid import uuid4
 import random
 from datetime import datetime, timedelta
 
-from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES
+from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED
 from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
@@ -19,7 +19,7 @@ from channels import OFFICE
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure, is_battery_powered
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id, insert_timer, delete_timers_by_drone_id_and_mode
@@ -134,7 +134,6 @@ class DroneConfigurationCog(Cog):
                                lambda minutes: f"Drone disconnected from HexCorp power grid for {minutes} minutes.",
                                lambda: "Drone reconnected to HexCorp power grid.",
                                minutes)
-
 
 
 async def rename_drone(context, old_id: str, new_id: str):
