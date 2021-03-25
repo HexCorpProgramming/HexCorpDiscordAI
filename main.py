@@ -249,6 +249,14 @@ async def on_ready():
         elif task.has_failed():
             task.restart()
 
+    if not temporary_dronification_cog.release_temporary_drones.is_running():
+        LOGGER.info("Starting up release_temporary_drones loop.")
+        temporary_dronification_cog.release_temporary_drones.start()
+
+    if not temporary_dronification_cog.clean_dronification_requests.is_running():
+        LOGGER.info("Starting up clean_dronification_requests loop.")
+        temporary_dronification_cog.clean_dronification_requests.start()
+
 
 @bot.event
 async def on_command_error(context, error):

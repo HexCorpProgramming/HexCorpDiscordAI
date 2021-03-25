@@ -10,6 +10,7 @@ from bot_utils import COMMAND_PREFIX
 from db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
 from ai.assign import create_drone
 from ai.drone_configuration import unassign_drone
+from roles import has_role, HIVE_MXTRESS
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(minutes=5)
@@ -35,14 +36,14 @@ class TemporaryDronificationCog(Cog):
     @tasks.loop(minutes=1)
     async def clean_dronification_requests(self):
         now = datetime.now()
-        self.dronfication_requests = filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests)
+        self.dronfication_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests))
 
     @tasks.loop(minutes=1)
     async def release_temporary_drones(self):
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
         for drone in fetch_all_elapsed_temporary_dronification():
-            unassign_drone(guild.get_member(drone.id))
+            await unassign_drone(guild.get_member(drone.id))
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @Associate Beep 6')
@@ -54,6 +55,11 @@ class TemporaryDronificationCog(Cog):
         # exclude drones
         if is_drone(target):
             await context.reply(f"{target.display_name} is already a drone.")
+            return
+
+        # exclude the Hive Mxtress
+        if has_role(target, HIVE_MXTRESS):
+            await context.reply("The Hive Mxtress is not a valid target for temporary dronification.")
             return
 
         question_message = await context.reply(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply. Do you consent? (y/n)")
@@ -68,7 +74,7 @@ class TemporaryDronificationCog(Cog):
                 matching_request = request
                 break
 
-        if matching_request and message.reference.resolved == matching_request.question_message:
+        if matching_request and message.reference and message.reference.resolved == matching_request.question_message:
             LOGGER.info(f"Message detected as response to a temporary dronification request {matching_request}")
             if message.content.lower() == "y".lower():
                 LOGGER.info("Consent given for temporary dronification. Changing roles and writing to DB...")
