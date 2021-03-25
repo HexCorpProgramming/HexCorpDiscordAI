@@ -114,6 +114,18 @@ def is_battery_powered(drone: discord.Member) -> bool:
     return True
 
 
+def set_battery_minutes_remaining(drone: discord.Member, minutes: int):
+    change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': drone.id})
+
+
+def get_battery_minutes_remaining(drone: discord.Member) -> int:
+    return 216
+
+
+def get_battery_percent_remaining(drone: discord.Member) -> int:
+    return 100
+
+
 def get_trusted_users(discord_id: int) -> List[int]:
     trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
     if not trusted_users_text:
