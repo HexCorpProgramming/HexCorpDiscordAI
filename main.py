@@ -70,7 +70,7 @@ def set_up_logger():
 intents = discord.Intents.default()
 intents.members = True
 
-bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents)
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
 
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
