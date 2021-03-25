@@ -1,11 +1,8 @@
 from bot_utils import get_id
 from discord.ext import tasks
-from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_minutes_remaining
+from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining
 from id_converter import convert_id_to_member
 import logging
-
-MAX_BATTERY_CAPACITY_HOURS = 8
-MAX_BATTERY_CAPACITY_MINS = 480
 
 draining_batteries = {}  # {drone_id: minutes of drain left}
 

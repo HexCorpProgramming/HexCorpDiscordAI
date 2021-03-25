@@ -7,7 +7,7 @@ from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
 from db.data_objects import Drone, map_to_object, map_to_objects
-from resources import HIVE_MXTRESS_USER_ID
+from resources import HIVE_MXTRESS_USER_ID, MAX_BATTERY_CAPACITY_MINS
 
 
 def add_new_drone_members(members: List[discord.Member]):
@@ -126,11 +126,16 @@ def set_battery_minutes_remaining(drone: discord.Member, minutes: int):
 
 
 def get_battery_minutes_remaining(drone: discord.Member) -> int:
-    return 216
+    battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': drone.id})['battery_minutes']
+    if battery_minutes is None:
+        return -1
+    else:
+        return battery_minutes
 
 
 def get_battery_percent_remaining(drone: discord.Member) -> int:
-    return 100
+    battery_minutes = get_battery_minutes_remaining(drone)
+    return round(battery_minutes // MAX_BATTERY_CAPACITY_MINS) * 100
 
 
 def get_trusted_users(discord_id: int) -> List[int]:

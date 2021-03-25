@@ -16,7 +16,7 @@ from bot_utils import get_id, COMMAND_PREFIX
 from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
-from ai.battery import MAX_BATTERY_CAPACITY_MINS
+from resources import MAX_BATTERY_CAPACITY_MINS
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 

@@ -12,6 +12,12 @@ BOT_IDS = [673470104519835659, 665846816121815071]
 HIVE_MXTRESS_USER_ID = "194126224828661760"
 
 # Speech optimization status codes.
+
+# Battery capacity
+MAX_BATTERY_CAPACITY_HOURS = 8
+MAX_BATTERY_CAPACITY_MINS = MAX_BATTERY_CAPACITY_HOURS * 60
+
+
 code_map = {
     '000': 'Statement :: Previous statement malformed/mistimed. Retracting and correcting.',
 
