@@ -230,7 +230,7 @@ async def on_ready():
     LOGGER.info("Starting all every-minute tasks.")
     for task in minute_tasks:
         if not task.is_running():
-            task.start()
+            task.start(bot)
         elif task.has_failed():
             task.restart()
 

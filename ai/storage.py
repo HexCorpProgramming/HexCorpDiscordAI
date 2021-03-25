@@ -75,7 +75,7 @@ class StorageCog(Cog):
             raise AttributeError("Could not find storage chambers channel.")
 
     @tasks.loop(minutes=1)
-    async def release_timed(self):
+    async def release_timed(self, bot):
 
         LOGGER.info("Releasing drones in storage.")
 
