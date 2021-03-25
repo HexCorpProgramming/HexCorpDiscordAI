@@ -122,6 +122,20 @@ class DroneConfigurationCog(Cog):
                                lambda: "Drone corruption at acceptable levels.",
                                minutes)
 
+    @guild_only()
+    @command(aliases=['battery', 'tbp'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
+    async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        await toggle_parameter(context,
+                               drones,
+                               "is_battery_powered",
+                               get(context.guild.roles, name=BATTERY_POWERED),
+                               is_battery_powered,
+                               lambda: "Drone disconnected from HexCorp power grid. Auxiliary power active.",
+                               lambda minutes: f"Drone disconnected from HexCorp power grid for {minutes} minutes.",
+                               lambda: "Drone reconnected to HexCorp power grid.",
+                               minutes)
+
+
 
 async def rename_drone(context, old_id: str, new_id: str):
     if len(old_id) != 4 or len(new_id) != 4:
