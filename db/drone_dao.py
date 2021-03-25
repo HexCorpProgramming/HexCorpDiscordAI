@@ -51,7 +51,7 @@ def get_all_drones() -> List[Drone]:
 
 
 def get_all_drone_batteries() -> List[Drone]:
-    return map_to_objects(fetchall('SELECT drone_id, battery_minutes FROM drone', {}), Drone)
+    return map_to_objects(fetchall('SELECT id, drone_id, battery_minutes FROM drone', {}), Drone)
 
 
 def rename_drone_in_db(old_id: str, new_id: str):
