@@ -18,8 +18,9 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
         message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.attachments = []
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url, message_original.attachments)
 
         await webhook_if_message_altered(message_original, message_copy)
 

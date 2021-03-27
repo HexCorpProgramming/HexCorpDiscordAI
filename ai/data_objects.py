@@ -1,3 +1,5 @@
+
+# TODO: add typing
 class MessageCopy:
     '''
     This class is instantiated at the start of the on_message chain in main.py.

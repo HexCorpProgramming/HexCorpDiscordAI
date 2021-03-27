@@ -4,12 +4,19 @@ from db.drone_dao import is_glitched, is_battery_powered, get_battery_percent_re
 import logging
 import math
 import re
+import glitch_this
+from PIL import Image
+import io
+from ai.data_objects import MessageCopy
+
+LOGGER = logging.getLogger("ai")
 
 diacritics = list(range(0x0300, 0x036F))
 DISCORD_CHAR_LIMIT = 2000
 MAX_GLITCH_AMOUNT = 30
 MAX_DIACRITICS_PER_MESSAGE = 60
 MAX_DIACRITICS_PER_CHAR = 1
+glitcher = glitch_this.ImageGlitcher()
 
 LOGGER = logging.getLogger('ai')
 
@@ -82,7 +89,7 @@ def glitch(message: str, glitch_amount=45):
     return "".join(message_list)
 
 
-async def glitch_if_applicable(message: discord.Message, message_copy):
+async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
     if is_glitched(message.author):
         glitch_amount = MAX_GLITCH_AMOUNT * 2
     elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
@@ -94,4 +101,25 @@ async def glitch_if_applicable(message: discord.Message, message_copy):
     LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
 
     message_copy.content = glitch(message_copy.content, glitch_amount)
+
+    # glitch attached images
+    # the data flow is:
+    # CDN -> raw bytes -> BytesIO -> PIL Image -> glitch_this -> PIL Image -> BytesIO -> CDN
+    processed_attachments = []
+    for attachment in message.attachments:
+        # only images have dimensions
+        if attachment.height is not None:
+            attachment_bytes = io.BytesIO(await attachment.read())
+            pillow = Image.open(attachment_bytes)
+            glitched_pillow = glitcher.glitch_image(pillow, min(0.1, glitch_amount / 10))
+            glitched_bytes = io.BytesIO()
+            glitched_pillow.save(glitched_bytes, "PNG")
+            glitched_bytes.seek(0)
+            glitched_attachment = discord.File(glitched_bytes, filename=attachment.filename)
+            processed_attachments.append(glitched_attachment)
+        else:
+            processed_attachments.append(attachment)
+
+    message_copy.attachments = processed_attachments
+
     return False
