@@ -1,12 +1,14 @@
-import discord
 import random
 from db.drone_dao import is_glitched, is_battery_powered, get_battery_percent_remaining
 import logging
 import math
 import re
+import io
+
+import discord
 import glitch_this
 from PIL import Image
-import io
+
 from ai.data_objects import MessageCopy
 
 LOGGER = logging.getLogger("ai")
