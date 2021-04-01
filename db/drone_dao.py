@@ -121,8 +121,8 @@ def can_self_configure(drone: discord.Member) -> bool:
 
 
 def is_battery_powered(drone: discord.Member) -> bool:
-    # temporary hardcoded value.
-    return True
+    battery_powered_drone = fetchone('SELECT is_battery_powered FROM drone WHERE id = :discord', {'discord': drone.id})
+    return battery_powered_drone is not None and bool(battery_powered_drone['is_battery_powered'])
 
 
 def deincrement_battery_minutes_remaining(drone: discord.Member):
