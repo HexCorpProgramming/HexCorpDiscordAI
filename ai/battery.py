@@ -9,8 +9,6 @@ from discord.utils import get
 import webhook
 from ai.identity_enforcement import identity_enforcable
 
-draining_batteries = {}  # {drone_id: minutes of drain left}
-
 LOGGER = logging.getLogger('ai')
 
 
@@ -18,6 +16,8 @@ class BatteryCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.draining_batteries = {}  # {drone_id: minutes of drain left}
+        self.low_battery_drones = []  # [drone_id]
 
     @commands.command()
     async def energize(self, context, *drone_ids):
@@ -51,7 +51,7 @@ class BatteryCog(commands.Cog):
             return False
 
         drone_id = get_id(message.author.display_name)
-        draining_batteries[drone_id] = 15
+        self.draining_batteries[drone_id] = 15
 
     @tasks.loop(minutes=1)
     async def track_active_battery_drain(self):
@@ -59,19 +59,19 @@ class BatteryCog(commands.Cog):
 
         inactive_drones = []
 
-        for drone, remaining_minutes in draining_batteries.items():
+        for drone, remaining_minutes in self.draining_batteries.items():
             if remaining_minutes == 0:
                 LOGGER.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
                 # Cannot alter list while iterating, so add drone to list of drones to pop after the loop.
                 inactive_drones.append(drone)
             else:
                 print(f"Draining 1 minute worth of charge from {drone}")
-                draining_batteries[drone] = remaining_minutes - 1
+                self.draining_batteries[drone] = remaining_minutes - 1
                 deincrement_battery_minutes_remaining(convert_id_to_member(self.bot.guilds[0], drone))
 
         for inactive_drone in inactive_drones:
             LOGGER.info(f"Removing {inactive_drone} from drain list.")
-            draining_batteries.pop(inactive_drone)
+            self.draining_batteries.pop(inactive_drone)
 
     @tasks.loop(minutes=1)
     async def track_drained_batteries(self):
@@ -90,6 +90,23 @@ class BatteryCog(commands.Cog):
             elif (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) != 0 and has_role(member_drone, BATTERY_DRAINED):
                 LOGGER.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
+
+    @tasks.loop(minutes=1)
+    async def warn_low_battery_drones(self):
+        '''
+        DMs any drone below 30% battery to remind them to charge.
+        The drone will be added to a list so the AI does not forget.
+        Drones will be removed from the list once their battery is greater than 30% again.
+        '''
+
+        for drone in get_all_drone_batteries():
+
+            if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) < 30:
+                # Warn user and add them to list.
+                continue
+            else:
+                # Attempt to remove them from the list of warned users.
+                continue
 
     def recharge_battery(self, storage_record):
         try:
