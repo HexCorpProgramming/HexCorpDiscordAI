@@ -6,7 +6,6 @@ from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
 from traceback import TracebackException
 from datetime import datetime, timedelta
-import pause
 import asyncio
 
 # Modules
