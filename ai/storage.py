@@ -17,6 +17,7 @@ from db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
 from discord.utils import get
 from id_converter import convert_id_to_member
 from bot_utils import COMMAND_PREFIX
+import ai.battery as battery
 
 LOGGER = logging.getLogger('ai')
 
@@ -66,6 +67,8 @@ class StorageCog(Cog):
                 else:
                     await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
+                battery.recharge_battery(stored)
+
     @report_storage.before_loop
     async def get_storage_channel(self):
         LOGGER.info("Getting storage channel")
@@ -75,7 +78,7 @@ class StorageCog(Cog):
             raise AttributeError("Could not find storage chambers channel.")
 
     @tasks.loop(minutes=1)
-    async def release_timed(self, bot):
+    async def release_timed(self):
 
         LOGGER.info("Releasing drones in storage.")
 
