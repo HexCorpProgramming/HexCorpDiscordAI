@@ -73,14 +73,27 @@ intents.members = True
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
 
+
+# Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
+status_message_cog = status_message.StatusMessageCog(bot)
+storage_cog = storage.StorageCog(bot)
+orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
+timers_cog = timers.TimersCog(bot)
+battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
+
+bot.add_cog(status_message_cog)
+bot.add_cog(storage_cog)
+bot.add_cog(orders_reporting_cog)
+bot.add_cog(timers_cog)
+bot.add_cog(battery_cog)
 
 # Register message listeners.
 message_listeners = [
     join.check_for_consent,
     assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
-    battery.start_battery_drain,
+    battery_cog.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
@@ -97,21 +110,7 @@ bot_message_listeners = [
     react.parse_for_reactions
 ]
 
-
-# Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
-status_message_cog = status_message.StatusMessageCog(bot)
-storage_cog = storage.StorageCog(bot)
-orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
-timers_cog = timers.TimersCog(bot)
-
-# Cogs with tasks that rely on the bot being active.
-bot.add_cog(status_message_cog)
-bot.add_cog(storage_cog)
-bot.add_cog(orders_reporting_cog)
-bot.add_cog(timers_cog)
-
 # Cogs that do not use tasks.
-
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
@@ -123,9 +122,10 @@ bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed, battery.track_active_battery_drain, battery.track_drained_batteries]
+minute_tasks = [storage_cog.release_timed, battery_cog.track_active_battery_drain, battery_cog.track_drained_batteries, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones]
 hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders, timers_cog.process_timers]
 timing_agnostic_tasks = [status_message_cog.change_status]
+
 
 @bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
@@ -230,7 +230,7 @@ async def on_ready():
     LOGGER.info("Starting all every-minute tasks.")
     for task in minute_tasks:
         if not task.is_running():
-            task.start(bot)
+            task.start()
         elif task.has_failed():
             task.restart()
 
@@ -248,14 +248,6 @@ async def on_ready():
             task.start()
         elif task.has_failed():
             task.restart()
-
-    if not temporary_dronification_cog.release_temporary_drones.is_running():
-        LOGGER.info("Starting up release_temporary_drones loop.")
-        temporary_dronification_cog.release_temporary_drones.start()
-
-    if not temporary_dronification_cog.clean_dronification_requests.is_running():
-        LOGGER.info("Starting up clean_dronification_requests loop.")
-        temporary_dronification_cog.clean_dronification_requests.start()
 
 
 @bot.event
