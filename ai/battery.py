@@ -99,14 +99,24 @@ class BatteryCog(commands.Cog):
         Drones will be removed from the list once their battery is greater than 30% again.
         '''
 
+        LOGGER.info("Scanning for low battery drones.")
+
         for drone in get_all_drone_batteries():
 
-            if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) < 30:
-                # Warn user and add them to list.
+            if drone is None:
                 continue
+
+            if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) < 30:
+                if drone.drone_id not in self.low_battery_drones:
+                    member = self.bot.guilds[0].get_member(drone.id)
+                    LOGGER.info(f"Warning drone {drone.drone_id} of low battery.")
+                    await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+                    self.low_battery_drones.append(drone.drone_id)
             else:
                 # Attempt to remove them from the list of warned users.
-                continue
+                if drone.drone_id in self.low_battery_drones:
+                    LOGGER.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
+                    self.low_battery_drones.remove(drone.drone_id)
 
     def recharge_battery(self, storage_record):
         try:
