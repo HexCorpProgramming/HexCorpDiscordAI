@@ -66,7 +66,12 @@ def glitch(message: str, glitch_amount=45):
 
     # Add custom emojis back in
     for custom_emoji, reinsertion_index in custom_emojis:
-        message_list[reinsertion_index] = custom_emoji + message_list[reinsertion_index]
+        try:
+            message_list[reinsertion_index:reinsertion_index] = list(custom_emoji)
+        except IndexError:
+            LOGGER.warn(f"Bad index. Desired: {reinsertion_index} Length: {len(message_list)}")
+
+    LOGGER.debug(f"Final glitched message list: {message_list}")
 
     return "".join(message_list)
 
