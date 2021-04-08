@@ -145,22 +145,28 @@ class BatteryCog(commands.Cog):
 
         battery_percentage = get_battery_percent_remaining(message.author)
 
-        if battery_percentage > 75:
+        LOGGER.debug(f"Battery percentage: {battery_percentage}")
+
+        if battery_percentage <= 100 and battery_percentage >= 75:
             battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_FULL)
-        elif battery_percentage > 50:
+        elif battery_percentage <= 75 and battery_percentage >= 25:
             battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_MID)
-        elif battery_percentage > 25:
+        elif battery_percentage <= 24 and battery_percentage >= 10:
             battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_LOW)
-        elif battery_percentage <= 10:
+        elif battery_percentage <= 9:
             battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_EMPTY)
         else:
-            LOGGER.warn(f"Couldn't get a battery icon. Battery percent: {battery_percentage}")
+            battery_emoji = "[BATTERY ERROR]"
 
         id_prepending_message = id_prepending_regex.match(message_copy.content)
 
         if id_prepending_message:
+            LOGGER.debug("Drone is ID prepending.")
             message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} :: {id_prepending_message.group(2)}"
         else:
+            LOGGER.debug("Drone is NOT ID prepending.")
+            LOGGER.debug(str(battery_emoji))
+            LOGGER.debug(message_copy.content)
             message_copy.content = f"{str(battery_emoji)} :: {message_copy.content}"
 
         return False
