@@ -1,6 +1,6 @@
 from bot_utils import get_id
 from discord.ext import tasks, commands
-from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_all_drone_batteries, fetch_drone_with_drone_id, get_battery_minutes_remaining, set_battery_minutes_remaining
+from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, fetch_drone_with_drone_id, get_battery_minutes_remaining, set_battery_minutes_remaining
 from id_converter import convert_id_to_member, convert_ids_to_members
 import logging
 from resources import MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR
@@ -8,6 +8,8 @@ from roles import has_role, BATTERY_POWERED, BATTERY_DRAINED, HIVE_MXTRESS
 from discord.utils import get
 import webhook
 from ai.identity_enforcement import identity_enforcable
+import emoji
+import re
 
 LOGGER = logging.getLogger('ai')
 
@@ -18,6 +20,7 @@ class BatteryCog(commands.Cog):
         self.bot = bot
         self.draining_batteries = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones = []  # [drone_id]
+        self.id_prepending_regex = re.compile(r'(\d{4} :: )(.+)')
 
     @commands.command()
     async def energize(self, context, *drone_ids):
@@ -131,7 +134,30 @@ class BatteryCog(commands.Cog):
 
     async def append_battery_indicator(self, message, message_copy):
         '''
-        Appends battery icon to messages either by prepending message content,
-        or by appending display name. (e.g ⬡-Drone #0001 [|||]-)
+        Prepends battery indicator emoji to drone's message if they are
+        battery powered. The indicator is placed after the ID prepend
+        if the message includes it
         '''
+
+        if not is_battery_powered(message.author):
+            return False
+
+        battery_percentage = get_battery_percent_remaining(message.author)
+
+        if battery_percentage > 75:
+            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_FULL)
+        elif battery_percentage > 50:
+            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_MID)
+        elif battery_percentage > 25:
+            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_LOW)
+        elif battery_percentage > 10:
+            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_EMPTY)
+
+        id_prepending_message = self.id_prepending_regex.match(message_copy.content)
+
+        if id_prepending_message:
+            message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} :: {id_prepending_message.group(2)}"
+        else:
+            message_copy.content = f"{str(battery_emoji)} :: {message_copy.content}"
+
         return False
