@@ -20,7 +20,6 @@ class BatteryCog(commands.Cog):
         self.bot = bot
         self.draining_batteries = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones = []  # [drone_id]
-        self.id_prepending_regex = re.compile(r'(\d{4} :: )(.+)')
 
     @commands.command()
     async def energize(self, context, *drone_ids):
@@ -142,18 +141,22 @@ class BatteryCog(commands.Cog):
         if not is_battery_powered(message.author):
             return False
 
+        id_prepending_regex = re.compile(r'(\d{4} ::)(.+)')
+
         battery_percentage = get_battery_percent_remaining(message.author)
 
         if battery_percentage > 75:
-            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_FULL)
+            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_FULL)
         elif battery_percentage > 50:
-            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_MID)
+            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_MID)
         elif battery_percentage > 25:
-            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_LOW)
-        elif battery_percentage > 10:
-            battery_emoji = get(self.bot.guilds[0].emoji, name=emoji.BATTERY_EMPTY)
+            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_LOW)
+        elif battery_percentage <= 10:
+            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_EMPTY)
+        else:
+            LOGGER.warn(f"Couldn't get a battery icon. Battery percent: {battery_percentage}")
 
-        id_prepending_message = self.id_prepending_regex.match(message_copy.content)
+        id_prepending_message = id_prepending_regex.match(message_copy.content)
 
         if id_prepending_message:
             message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} :: {id_prepending_message.group(2)}"

@@ -98,6 +98,7 @@ message_listeners = [
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
     thought_denial.deny_thoughts,
+    battery_cog.append_battery_indicator,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
