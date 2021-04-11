@@ -86,8 +86,7 @@ async def glitch_if_applicable(message: discord.Message, message_copy):
         LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
         return False
 
-    LOGGER.info(f"Glitching message for {message.author.display_name}")
-    LOGGER.debug(f"Glitch amount: {glitch_amount}")
+    LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
 
     message_copy.content = glitch(message_copy.content, glitch_amount)
 

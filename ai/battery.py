@@ -32,7 +32,7 @@ class BatteryCog(commands.Cog):
 
         LOGGER.info("Energize command envoked.")
 
-        for drone in set(context.message.mentions) | convert_ids_to_members(self.bot.guilds[0], drone_ids):
+        for drone in set(context.message.mentions) | convert_ids_to_members(context.guild, drone_ids):
 
             LOGGER.info(f"Energizing {drone.display_name}")
 
@@ -120,17 +120,6 @@ class BatteryCog(commands.Cog):
                     LOGGER.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
                     self.low_battery_drones.remove(drone.drone_id)
 
-    def recharge_battery(self, storage_record):
-        try:
-            drone = fetch_drone_with_drone_id(storage_record.target_id)
-            member = self.bot.guilds[0].get_member(drone.id)
-            current_minutes_remaining = get_battery_minutes_remaining(member)
-            set_battery_minutes_remaining(member, max(MAX_BATTERY_CAPACITY_MINS, current_minutes_remaining + (60 * 4)))
-            return True
-        except Exception as e:
-            LOGGER.error(f"Something went wrong with recharging drone: {e}")
-            return False
-
     async def append_battery_indicator(self, message, message_copy):
         '''
         Prepends battery indicator emoji to drone's message if they are
@@ -170,3 +159,12 @@ class BatteryCog(commands.Cog):
             message_copy.content = f"{str(battery_emoji)} :: {message_copy.content}"
 
         return False
+
+    def recharge_battery(self, storage_record):
+        try:
+            current_minutes_remaining = get_battery_minutes_remaining(drone_id=storage_record.target_id)
+            set_battery_minutes_remaining(drone_id=storage_record.target_id, minutes=max(MAX_BATTERY_CAPACITY_MINS, current_minutes_remaining + (60 * 4)))
+            return True
+        except Exception as e:
+            LOGGER.error(f"Something went wrong with recharging drone: {e}")
+            return False

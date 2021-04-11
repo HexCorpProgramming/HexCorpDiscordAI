@@ -132,25 +132,42 @@ def deincrement_battery_minutes_remaining(drone: discord.Member):
     change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': drone.id})
 
 
-def set_battery_minutes_remaining(drone: discord.Member, minutes: int):
-    change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': drone.id})
+def set_battery_minutes_remaining(member: discord.Member = None, drone_id: str = None, minutes: int = 0):
+    if member is not None:
+        change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
+    elif drone_id is not None:
+        change('UPDATE drone SET battery_minutes = :minutes WHERE drone_id = :drone_id', {'minutes': max(0, minutes), 'drone_id': drone_id})
+    else:
+        raise ValueError("Could not set drone battery minutes remaining. No Discord member or drone ID provided in function call.")
 
 
-def get_battery_minutes_remaining(drone: discord.Member) -> int:
+def get_battery_minutes_remaining(member: discord.Member = None, drone_id: str = None) -> int:
     '''
     Gets value of battery_minutes from drone table based on a given drone's Discord ID.
     Returns -1 if drone is not found.
     '''
-    battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': drone.id})['battery_minutes']
-    if battery_minutes is None:
-        return -1
+    if member is not None:
+        battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': member.id})['battery_minutes']
+        if battery_minutes is None:
+            return -1
+        else:
+            return battery_minutes
+    elif drone_id is not None:
+        battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})['battery_minutes']
+        if battery_minutes is None:
+            return -1
+        else:
+            return battery_minutes
+
+
+def get_battery_percent_remaining(drone: discord.Member = None, battery_minutes: int = None) -> int:
+    if battery_minutes is not None:
+        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
+    elif drone is not None:
+        battery_minutes = get_battery_minutes_remaining(drone)
+        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
     else:
-        return battery_minutes
-
-
-def get_battery_percent_remaining(drone: discord.Member) -> int:
-    battery_minutes = get_battery_minutes_remaining(drone)
-    return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
+        raise ValueError("No valid parameters given to get_battery_percent_remaining()")
 
 
 def get_trusted_users(discord_id: int) -> List[int]:
