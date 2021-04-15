@@ -66,10 +66,7 @@ class StorageCog(Cog):
                     await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
                 else:
                     await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
-
-                # This is really hacky and shouldn't be done. See issue #249 for future fix.
-                battery_cog = battery.BatteryCog(self.bot)
-                battery_cog.recharge_battery(stored)
+                battery.recharge_battery(stored)
 
     @report_storage.before_loop
     async def get_storage_channel(self):

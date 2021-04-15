@@ -78,27 +78,25 @@ status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
 orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 timers_cog = timers.TimersCog(bot)
-battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
 
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(orders_reporting_cog)
 bot.add_cog(timers_cog)
-bot.add_cog(battery_cog)
 
 # Register message listeners.
 message_listeners = [
     join.check_for_consent,
     assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
-    battery_cog.start_battery_drain,
+    battery.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
     thought_denial.deny_thoughts,
-    battery_cog.append_battery_indicator,
+    battery.append_battery_indicator,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
@@ -122,7 +120,7 @@ bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed, battery_cog.track_active_battery_drain, battery_cog.track_drained_batteries, battery_cog.warn_low_battery_drones, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones]
+minute_tasks = [storage_cog.release_timed, battery.track_active_battery_drain, battery.track_drained_batteries, battery.warn_low_battery_drones, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones]
 hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders, timers_cog.process_timers]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
