@@ -15,11 +15,13 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         bot = AsyncMock()
 
-        battery.draining_batteries = {'5890': 10}
+        battery_cog = battery.BatteryCog(bot)
 
-        battery.track_active_battery_drain.start(bot)
-        battery.track_active_battery_drain.stop()
-        await battery.track_active_battery_drain.get_task()
+        battery_cog.draining_batteries = {'5890': 10}
+
+        battery_cog.track_active_battery_drain.start()
+        battery_cog.track_active_battery_drain.stop()
+        await battery_cog.track_active_battery_drain.get_task()
 
         deincrement.assert_called_once()
-        self.assertEqual(battery.draining_batteries['5890'], 9)
+        self.assertEqual(battery_cog.draining_batteries.get('5890', None), 9)
