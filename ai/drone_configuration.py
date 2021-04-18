@@ -152,7 +152,7 @@ async def unassign_drone(target: discord.Member):
         return
 
     await target.edit(nick=None)
-    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=GLITCHED), get(guild.roles, name=STORED))
+    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT))
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
