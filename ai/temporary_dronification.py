@@ -50,6 +50,7 @@ class TemporaryDronificationCog(Cog):
     async def temporarily_dronify(self, context, target: discord.Member, hours: int):
         '''
         Temporarily dronifies an associate for a certain amount of time.
+        Associate must have been on the server for more than 24 hours.
         Requires confirmation from the associate to proceed.
         '''
         if hours <= 0:
