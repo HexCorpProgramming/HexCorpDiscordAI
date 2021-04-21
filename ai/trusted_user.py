@@ -5,7 +5,7 @@ import discord
 from discord.ext.commands import Cog, command, dm_only
 
 from bot_utils import COMMAND_PREFIX
-from db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone
+from db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
 from resources import HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
@@ -91,6 +91,16 @@ def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> disc
 
     drone = get_discord_id_of_drone(id)
     if drone is not None:
-        return guild.get_member(drone.id)
+        return guild.get_member(drone)
 
     return None
+
+
+def remove_trusted_user_on_all(trusted_user_id: int):
+    '''
+    Removes the trusted user with the given discord ID from all trusted_users lists of all drones.
+    '''
+    for drone in fetch_all_drones_with_trusted_user(trusted_user_id):
+        trusted_users = parse_trusted_users_text(drone.trusted_users)
+        trusted_users.remove(trusted_user_id)
+        set_trusted_users(drone.id, trusted_users)
