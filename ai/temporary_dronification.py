@@ -46,8 +46,12 @@ class TemporaryDronificationCog(Cog):
             await unassign_drone(guild.get_member(drone.id))
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @Associate Beep 6')
+    @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @AssociateName 6')
     async def temporarily_dronify(self, context, target: discord.Member, hours: int):
+        '''
+        Temporarily dronifies an associate for a certain amount of time.
+        Requires confirmation from the associate to proceed.
+        '''
         if hours <= 0:
             await context.reply("Hours must be greater than 0.")
             return
@@ -62,7 +66,7 @@ class TemporaryDronificationCog(Cog):
             await context.reply("The Hive Mxtress is not a valid target for temporary dronification.")
             return
 
-        question_message = await context.reply(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply. Do you consent? (y/n)")
+        question_message = await context.reply(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
         request = DronificationRequest(target, context.author, hours, question_message)
         LOGGER.info(f"Adding a new request for temporary dronification: {request}")
         self.dronfication_requests.append(request)
