@@ -24,6 +24,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         target = AsyncMock()
         target.mention = "Target Associate"
+        target.joined_at = datetime.now() - timedelta(hours=48)
 
         hours = 4
 
@@ -111,7 +112,31 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         # assert
         context.reply.assert_called_once_with("Hours must be greater than 0.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be exactly one dronification request.")
+        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
+
+    @patch("ai.temporary_dronification.is_drone")
+    async def test_request_not_24_hours(self, is_drone):
+        # init
+        question_message = AsyncMock()
+
+        context = AsyncMock()
+        context.reply.return_value = question_message
+
+        target = AsyncMock()
+        target.mention = "Target Associate"
+        target.joined_at = datetime.now() - timedelta(hours=16)
+
+        hours = 4
+
+        is_drone.return_value = False
+
+        # run
+        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+
+        # assert
+        is_drone.assert_called_once_with(target)
+        context.reply.assert_called_once_with("Target has not been on the server for more than 24 hours. Can not temporarily dronify.")
+        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
     @patch("ai.temporary_dronification.create_drone")
     async def test_temporary_dronification_response(self, create_drone):
