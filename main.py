@@ -197,6 +197,9 @@ async def on_member_remove(member: discord.Member):
     if drone:
         drone_configuration.remove_drone_from_db(drone.drone_id)
 
+    # remove the user from all trusted user lists
+    trusted_user.remove_trusted_user_on_all(member.id)
+
 
 @bot.event
 async def on_ready():
