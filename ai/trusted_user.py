@@ -91,7 +91,7 @@ def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> disc
 
     drone = get_discord_id_of_drone(id)
     if drone is not None:
-        return guild.get_member(drone.id)
+        return guild.get_member(drone)
 
     return None
 

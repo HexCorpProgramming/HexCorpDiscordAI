@@ -1,5 +1,5 @@
 import discord
-from typing import List
+from typing import List, Optional
 
 from db.database import fetchone, change, fetchall
 
@@ -57,12 +57,12 @@ def delete_drone_by_drone_id(drone_id: str):
     change('DELETE FROM drone WHERE drone_id=:drone_id', {'drone_id': drone_id})
 
 
-def get_discord_id_of_drone(drone_id: str) -> str:
+def get_discord_id_of_drone(drone_id: str) -> Optional[int]:
     '''
     Returns the discord ID associated with a given drone
     '''
-    # TODO: needs to be reworked; does not do what it says on the tin
-    return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+    id = fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})
+    return id['id'] if id else None
 
 
 def get_used_drone_ids() -> List[str]:
