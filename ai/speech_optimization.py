@@ -1,3 +1,4 @@
+from channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 import logging
 import re
 import discord
@@ -94,6 +95,10 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Do not attempt to optimize non-drones.
     if not is_drone(message.author):
+        return False
+
+    # No optimization in the moderation channels
+    if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         return False
 
     # Determine message type

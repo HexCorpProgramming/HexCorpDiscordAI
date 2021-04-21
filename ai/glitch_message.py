@@ -3,6 +3,8 @@ import random
 from db.drone_dao import is_glitched
 import re
 
+from channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
+
 combining_characters = list(range(0x0300, 0x036F))
 
 
@@ -21,7 +23,7 @@ glitch_template = re.compile(r'(\d{4} :: )(.*)')
 
 
 async def glitch_if_applicable(message: discord.Message, message_copy):
-    if is_glitched(message.author):
+    if is_glitched(message.author) and message.channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         template_match = glitch_template.match(message_copy.content)
         if template_match:
             message_copy.content = template_match.group(1) + glitch(template_match.group(2))  # If a drone is using an op code, only glitch the part after its ID.

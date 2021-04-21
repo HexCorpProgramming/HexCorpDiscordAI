@@ -1,4 +1,5 @@
 # HexCorp Control Tower
+HEXCORP_CONTROL_TOWER_CATEGORY = 'HexCorp Control Tower'
 OFFICE = 'hex-office'
 MODERATION_CHANNEL = 'moderation-channel'
 
