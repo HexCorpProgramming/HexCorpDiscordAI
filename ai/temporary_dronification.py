@@ -66,6 +66,11 @@ class TemporaryDronificationCog(Cog):
             await context.reply("The Hive Mxtress is not a valid target for temporary dronification.")
             return
 
+        # target has to have been on the server for more than 24 hours
+        if target.joined_at > (datetime.now() - timedelta(hours=24)):
+            await context.reply("Target has not been on the server for more than 24 hours. Can not temporarily dronify.")
+            return
+
         question_message = await context.reply(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
         request = DronificationRequest(target, context.author, hours, question_message)
         LOGGER.info(f"Adding a new request for temporary dronification: {request}")
