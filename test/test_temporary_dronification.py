@@ -35,7 +35,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         # assert
         is_drone.assert_called_once_with(target)
-        context.reply.assert_called_once_with(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply. Do you consent? (y/n)")
+        context.reply.assert_called_once_with(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
         self.assertEqual(1, len(self.cog.dronfication_requests), "There must be exactly one dronification request.")
         self.assertEqual(target, self.cog.dronfication_requests[0].target)
         self.assertEqual(context.author, self.cog.dronfication_requests[0].issuer)
