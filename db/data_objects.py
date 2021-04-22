@@ -44,10 +44,9 @@ class DroneOrder:
     finish_time: datetime = None
 
 
+@dataclass
 class Timer:
-
-    def __init__(self, id: str = None, drone_id: str = None, mode: str = None, end_time: datetime = None):
-        self.id = id
-        self.drone_id = drone_id
-        self.mode = mode
-        self.end_time = end_time
+    id: str = None
+    drone_id: str = None
+    mode: str = None
+    end_time: datetime = None
