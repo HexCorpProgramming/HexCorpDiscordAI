@@ -24,6 +24,8 @@ class Drone:
     glitched: bool = None
     trusted_users: str = None
     last_activity: datetime = None
+    id_prepending: bool = None
+    identity_enforcement: bool = None
 
 
 @dataclass
