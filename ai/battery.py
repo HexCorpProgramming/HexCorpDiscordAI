@@ -153,7 +153,7 @@ class BatteryCog(commands.Cog):
         id_prepending_message = id_prepending_regex.match(message_copy.content)
 
         if id_prepending_message:
-            message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} :: {id_prepending_message.group(2)}"
+            message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} ::{id_prepending_message.group(2)}"
         else:
             message_copy.content = f"{str(battery_emoji)} :: {message_copy.content}"
 
