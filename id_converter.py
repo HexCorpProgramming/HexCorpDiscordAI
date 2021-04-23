@@ -30,7 +30,7 @@ def convert_id_to_member(guild: discord.Guild, drone_id: str) -> Optional[discor
     if (drone_from_db := get_discord_id_of_drone(drone_id)) is None:
         return None  # Drone not present in DB.
 
-    drone_member = guild.get_member(drone_from_db.id)
+    drone_member = guild.get_member(drone_from_db)
     if drone_member is None:
         return None  # Drone was present in DB, but is somehow not present in server.
 
