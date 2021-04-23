@@ -118,7 +118,10 @@ class BatteryCog(commands.Cog):
                 # Attempt to remove them from the list of warned users.
                 if drone.drone_id in self.low_battery_drones:
                     LOGGER.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
-                    self.low_battery_drones.remove(drone.drone_id)
+                    try:
+                        self.low_battery_drones.remove(drone.drone_id)
+                    except ValueError:
+                        continue
 
     async def append_battery_indicator(self, message, message_copy):
         '''
