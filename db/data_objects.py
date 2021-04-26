@@ -26,6 +26,7 @@ class Drone:
     last_activity: datetime = None
     id_prepending: bool = None
     identity_enforcement: bool = None
+    temporary_until: datetime = None
 
 
 @dataclass
