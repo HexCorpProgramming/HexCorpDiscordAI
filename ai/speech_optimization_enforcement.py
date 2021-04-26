@@ -1,5 +1,5 @@
 from db.drone_dao import is_optimized
-from ai.speech_optimization import status_code_regex, get_status_type, StatusType
+from ai.speech_optimization import get_status_type, StatusType
 from channels import ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY, REPETITIONS
 from ai.mantras import Mantra_Handler
 from bot_utils import get_id
@@ -37,17 +37,10 @@ async def enforce_speech_optimization(message, message_copy):
     # Strip message attachments of optimized drone.
     message_copy.attachments = []
 
-    # Check for status message.
-    status_message = status_code_regex.match(message_copy.content)
+    status_type, _, _ = get_status_type(message_copy.content)
 
-    if status_message is None:
-        # Optimized drone has posted a non-status message. Delete.
-        LOGGER.info("Optimized drone posted non-status code message. Deleting.")
-        await message.delete()
-        return True
-
-    if get_status_type(status_message) not in (StatusType.PLAIN, StatusType.ADDRESS_BY_ID_PLAIN):
-        LOGGER.info("Optimized drone has posted an informative status message. Deleting.")
+    if status_type not in (StatusType.PLAIN, StatusType.ADDRESS_BY_ID_PLAIN) or status_type == StatusType.NONE:
+        LOGGER.info("Optimized drone has posted an informative or otherwise inappropriate status message. Deleting.")
         # Optimized drone posted an informative status message. Delete.
         await message.delete()
         return True
