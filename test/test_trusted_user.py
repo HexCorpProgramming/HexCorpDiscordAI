@@ -55,7 +55,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         set_trusted_users.assert_called_once_with(self.context.author.id,
                                                   [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id])
         self.context.send.assert_called_once_with(
-            f"Successfully added trusted user \"{self.trusted_user_member.display_name}\"")
+            f"Successfully added trusted user \"{self.trusted_user_member.name}\"")
         self.context.bot.guilds[0].get_member.assert_called_once_with(self.drone_member.id)
         self.trusted_user_member.send.assert_called_once_with(
             f"You were added as a trusted user by \"{self.drone_member.display_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
