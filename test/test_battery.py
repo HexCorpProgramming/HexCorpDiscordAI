@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch, Mock
 import ai.battery as battery
 import emoji
 
+
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
     @patch("ai.battery.deincrement_battery_minutes_remaining")
@@ -129,7 +130,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_cog.warn_low_battery_drones.start()
         battery_cog.warn_low_battery_drones.stop()
         await battery_cog.warn_low_battery_drones.get_task()
-        
+
         member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
         self.assertTrue('5890' in battery_cog.low_battery_drones)
 
@@ -158,7 +159,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_cog.warn_low_battery_drones.start()
         battery_cog.warn_low_battery_drones.stop()
         await battery_cog.warn_low_battery_drones.get_task()
-    
+
         member.send.assert_not_called()
 
     @patch("ai.battery.get_all_drone_batteries")
@@ -185,7 +186,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_cog.warn_low_battery_drones.start()
         battery_cog.warn_low_battery_drones.stop()
         await battery_cog.warn_low_battery_drones.get_task()
-    
+
         member.send.assert_not_called()
         self.assertTrue('5890' not in battery_cog.low_battery_drones)
 
@@ -209,7 +210,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         When passed a message by a battery powered drone, should append
         a battery emoji to the start of their message ([++-]- :: Hello.)
         '''
-        
+
         message = Mock()
         message_copy = Mock()
         original_message = "Hello."
@@ -248,7 +249,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery indicator emoji after the drone ID and before the message
         content (5890 :: [++-]- :: Hello.)
         '''
-        
+
         message = Mock()
         message_copy = Mock()
         original_message = "5890 :: Hello."
@@ -282,7 +283,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
     @patch("ai.battery.set_battery_minutes_remaining")
     async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
         '''
-        The recharge battery function should call the 
+        The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
