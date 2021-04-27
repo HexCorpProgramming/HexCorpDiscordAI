@@ -3,7 +3,7 @@ from discord.ext import tasks, commands
 from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, get_battery_minutes_remaining, set_battery_minutes_remaining
 from id_converter import convert_id_to_member, convert_ids_to_members
 import logging
-from resources import MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR
+from resources import MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR, HOURS_OF_RECHARGE_PER_HOUR
 from roles import has_role, BATTERY_POWERED, BATTERY_DRAINED, HIVE_MXTRESS
 from discord.utils import get
 import webhook
@@ -163,7 +163,7 @@ class BatteryCog(commands.Cog):
 def recharge_battery(storage_record):
     try:
         current_minutes_remaining = get_battery_minutes_remaining(drone_id=storage_record.target_id)
-        set_battery_minutes_remaining(drone_id=storage_record.target_id, minutes=max(MAX_BATTERY_CAPACITY_MINS, current_minutes_remaining + (60 * 4)))
+        set_battery_minutes_remaining(drone_id=storage_record.target_id, minutes=min(MAX_BATTERY_CAPACITY_MINS, current_minutes_remaining + (60 * HOURS_OF_RECHARGE_PER_HOUR)))
         return True
     except Exception as e:
         LOGGER.error(f"Something went wrong with recharging drone: {e}")

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
 import ai.battery as battery
-
+import emoji
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
@@ -189,21 +189,32 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member.send.assert_not_called()
         self.assertTrue('5890' not in battery_cog.low_battery_drones)
 
+    def battery_emoji_getter(self, whatever, name):
+        if name == emoji.BATTERY_FULL:
+            return "FULLBATTERYEMOJI"
+        elif name == emoji.BATTERY_MID:
+            return "MIDBATTERYEMOJI"
+        elif name == emoji.BATTERY_LOW:
+            return "LOWBATTERYEMOJI"
+        elif name == emoji.BATTERY_EMPTY:
+            return "EMPTYBATTERYEMOJI"
+        else:
+            return "SHOULDNTHAPPEN"
+
     @patch("ai.battery.get")
     @patch("ai.battery.get_battery_percent_remaining")
     @patch("ai.battery.is_battery_powered", return_value=True)
     async def test_append_battery_indicator(self, battery_powered, battery_percentage, discord_get):
+        '''
+        When passed a message by a battery powered drone, should append
+        a battery emoji to the start of their message ([++-]- :: Hello.)
+        '''
         
         message = Mock()
         message_copy = Mock()
         original_message = "Hello."
 
-        battery_high = Mock()
-        battery_mid = Mock()
-        battery_low = Mock()
-        battery_empty = Mock()
-
-        discord_get.side_effect = [battery_high, battery_mid, battery_low, battery_empty]
+        discord_get.side_effect = self.battery_emoji_getter
 
         bot = Mock()
         battery_cog = battery.BatteryCog(bot)
@@ -211,39 +222,38 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_percentage.return_value = 100
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"{str(battery_high)} :: {original_message}")
+        self.assertEqual(message_copy.content, f"FULLBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"{str(battery_mid)} :: {original_message}")
+        self.assertEqual(message_copy.content, f"MIDBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"{str(battery_low)} :: {original_message}")
+        self.assertEqual(message_copy.content, f"LOWBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"{str(battery_empty)} :: {original_message}")
-
+        self.assertEqual(message_copy.content, f"EMPTYBATTERYEMOJI :: {original_message}")
 
     @patch("ai.battery.get")
     @patch("ai.battery.get_battery_percent_remaining", return_value=100)
     @patch("ai.battery.is_battery_powered", return_value=True)
     async def test_append_battery_indicator_with_prepending(self, battery_powered, battery_percentage, discord_get):
+        '''
+        When passed a message by a battery powered drone, should append a
+        battery indicator emoji after the drone ID and before the message
+        content (5890 :: [++-]- :: Hello.)
+        '''
         
         message = Mock()
         message_copy = Mock()
         original_message = "5890 :: Hello."
 
-        battery_high = Mock()
-        battery_mid = Mock()
-        battery_low = Mock()
-        battery_empty = Mock()
-
-        discord_get.side_effect = [battery_high, battery_mid, battery_low, battery_empty]
+        discord_get.side_effect = self.battery_emoji_getter
 
         bot = Mock()
         battery_cog = battery.BatteryCog(bot)
@@ -251,19 +261,50 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_percentage.return_value = 100
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"5890 :: {str(battery_high)} :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"5890 :: {str(battery_mid)} :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"5890 :: {str(battery_low)} :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, f"5890 :: {str(battery_empty)} :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.")
+
+    @patch("ai.battery.get_battery_minutes_remaining", return_value=20)
+    @patch("ai.battery.set_battery_minutes_remaining")
+    async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
+        '''
+        The recharge battery function should call the 
+        set_battery_minutes_remaining() function with an accurate amount
+        of minutes of recharge (4 hours of charge for every hour in storage)
+        '''
+
+        storage_record = Mock()
+        storage_record.target_id = 5890
+
+        battery.recharge_battery(storage_record)
+
+        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
+
+    @patch("ai.battery.get_battery_minutes_remaining", return_value=500)
+    @patch("ai.battery.set_battery_minutes_remaining")
+    async def test_recharge_battery_no_overcharge(self, set_bat_mins, get_bat_mins):
+        '''
+        The recharge battery function should not call
+        set_battery_minutes_remaining with more than the maximum capacity (480)
+        '''
+
+        storage_record = Mock()
+        storage_record.target_id = 5890
+
+        battery.recharge_battery(storage_record)
+
+        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)
