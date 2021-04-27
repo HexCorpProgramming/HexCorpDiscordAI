@@ -104,7 +104,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
     @patch("ai.trusted_user.set_trusted_users")
-    async def test_successful_remove(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
+    async def test_successful_remove_by_display_name(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
         # setup
         get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id]
 
@@ -114,6 +114,21 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         # assert
         set_trusted_users.assert_called_once_with(self.context.author.id, [HIVE_MXTRESS_USER_ID])
         self.context.send.assert_called_once_with(f"Successfully removed trusted user \"{self.trusted_user_member.display_name}\"")
+
+    @patch("ai.trusted_user.get_discord_id_of_drone")
+    @patch("ai.trusted_user.get_trusted_users")
+    @patch("ai.trusted_user.set_trusted_users")
+    async def test_successful_remove_by_user_name(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
+        # setup
+        get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id]
+
+        # run
+        await remove_trusted_user(self.context, self.trusted_user_member.name)
+
+        # assert
+        set_trusted_users.assert_called_once_with(self.context.author.id, [HIVE_MXTRESS_USER_ID])
+        self.context.send.assert_called_once_with(
+            f"Successfully removed trusted user \"{self.trusted_user_member.name}\"")
 
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
