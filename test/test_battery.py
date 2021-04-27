@@ -6,6 +6,37 @@ import emoji
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
+    @patch("ai.battery.get_battery_minutes_remaining", return_value=20)
+    @patch("ai.battery.set_battery_minutes_remaining")
+    async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
+        '''
+        The recharge battery function should call the
+        set_battery_minutes_remaining() function with an accurate amount
+        of minutes of recharge (4 hours of charge for every hour in storage)
+        '''
+
+        storage_record = Mock()
+        storage_record.target_id = 5890
+
+        battery.recharge_battery(storage_record)
+
+        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
+
+    @patch("ai.battery.get_battery_minutes_remaining", return_value=500)
+    @patch("ai.battery.set_battery_minutes_remaining")
+    async def test_recharge_battery_no_overcharge(self, set_bat_mins, get_bat_mins):
+        '''
+        The recharge battery function should not call
+        set_battery_minutes_remaining with more than the maximum capacity (480)
+        '''
+
+        storage_record = Mock()
+        storage_record.target_id = 5890
+
+        battery.recharge_battery(storage_record)
+
+        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)
+
     @patch("ai.battery.deincrement_battery_minutes_remaining")
     async def test_track_active_battery_drain(self, deincrement):
         '''
@@ -278,34 +309,3 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.")
-
-    @patch("ai.battery.get_battery_minutes_remaining", return_value=20)
-    @patch("ai.battery.set_battery_minutes_remaining")
-    async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
-        '''
-        The recharge battery function should call the
-        set_battery_minutes_remaining() function with an accurate amount
-        of minutes of recharge (4 hours of charge for every hour in storage)
-        '''
-
-        storage_record = Mock()
-        storage_record.target_id = 5890
-
-        battery.recharge_battery(storage_record)
-
-        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
-
-    @patch("ai.battery.get_battery_minutes_remaining", return_value=500)
-    @patch("ai.battery.set_battery_minutes_remaining")
-    async def test_recharge_battery_no_overcharge(self, set_bat_mins, get_bat_mins):
-        '''
-        The recharge battery function should not call
-        set_battery_minutes_remaining with more than the maximum capacity (480)
-        '''
-
-        storage_record = Mock()
-        storage_record.target_id = 5890
-
-        battery.recharge_battery(storage_record)
-
-        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)

@@ -69,7 +69,7 @@ class BatteryCog(commands.Cog):
             else:
                 LOGGER.info(f"Draining 1 minute worth of charge from {drone}")
                 self.draining_batteries[drone] = remaining_minutes - 1
-                deincrement_battery_minutes_remaining(convert_id_to_member(self.bot.guilds[0], drone))
+                deincrement_battery_minutes_remaining(drone_id=drone)
 
         for inactive_drone in inactive_drones:
             LOGGER.info(f"Removing {inactive_drone} from drain list.")
