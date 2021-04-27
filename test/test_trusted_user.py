@@ -18,6 +18,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.trusted_user_member = AsyncMock()
         self.trusted_user_member.id = "872635821"
         self.trusted_user_member.display_name = "⬡-Drone #9813"
+        self.trusted_user_member.name = "Drone"
 
         self.context = AsyncMock()
         self.context.bot.guilds[0].members = [self.drone_member, self.trusted_user_member, self.hive_mxtress]
@@ -27,7 +28,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
     @patch("ai.trusted_user.set_trusted_users")
-    async def test_successful_add(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
+    async def test_successful_add_by_display_name(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
         # setup
         get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID]
 
@@ -39,6 +40,25 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.context.send.assert_called_once_with(f"Successfully added trusted user \"{self.trusted_user_member.display_name}\"")
         self.context.bot.guilds[0].get_member.assert_called_once_with(self.drone_member.id)
         self.trusted_user_member.send.assert_called_once_with(f"You were added as a trusted user by \"{self.drone_member.display_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
+
+    @patch("ai.trusted_user.get_discord_id_of_drone")
+    @patch("ai.trusted_user.get_trusted_users")
+    @patch("ai.trusted_user.set_trusted_users")
+    async def test_successful_add_by_user_name(self, set_trusted_users, get_trusted_users, get_discord_id_of_drone):
+        # setup
+        get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID]
+
+        # run
+        await add_trusted_user(self.context, self.trusted_user_member.name)
+
+        # assert
+        set_trusted_users.assert_called_once_with(self.context.author.id,
+                                                  [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id])
+        self.context.send.assert_called_once_with(
+            f"Successfully added trusted user \"{self.trusted_user_member.display_name}\"")
+        self.context.bot.guilds[0].get_member.assert_called_once_with(self.drone_member.id)
+        self.trusted_user_member.send.assert_called_once_with(
+            f"You were added as a trusted user by \"{self.drone_member.display_name}\".\nIf you believe this to be a mistake contact the drone in question or the moderation team.")
 
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
