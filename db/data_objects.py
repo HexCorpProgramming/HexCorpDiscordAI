@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 import logging
 
@@ -15,61 +16,40 @@ def map_to_object(row, constructor):
     return constructor(**row)
 
 
+@dataclass
 class Drone:
-
-    def __init__(
-        self,
-        id: str = None,
-        drone_id: str = None,
-        optimized: bool = None,
-        glitched: bool = None,
-        trusted_users: str = None,
-        last_activity: datetime = None,
-        id_prepending: bool = None,
-        identity_enforcement: bool = None,
-        can_self_configure: bool = True,
-        temporary_until: datetime = None,
-        battery_powered: bool = False,
-        battery_minutes: int = 0
-    ):
-        self.id = id
-        self.drone_id = drone_id
-        self.optimized = optimized
-        self.glitched = glitched
-        self.trusted_users = trusted_users
-        self.last_activity = last_activity
-        self.id_prepending = id_prepending
-        self.identity_enforcement = identity_enforcement
-        self.can_self_configure = can_self_configure
-        self.temporary_until = temporary_until
-        self.battery_powered = battery_powered
-        self.battery_minutes = battery_minutes
+    id: str = None
+    drone_id: str = None
+    optimized: bool = None
+    glitched: bool = None
+    trusted_users: str = None
+    last_activity: datetime = None
+    id_prepending: bool = None
+    identity_enforcement: bool = None
+    temporary_until: datetime = None
 
 
+@dataclass
 class Storage:
-
-    def __init__(self, id: str, stored_by: str, target_id: str, purpose: str, roles: str, release_time: datetime):
-        self.id = id
-        self.stored_by = stored_by
-        self.target_id = target_id
-        self.purpose = purpose
-        self.roles = roles
-        self.release_time = release_time
+    id: str
+    stored_by: str
+    target_id: str
+    purpose: str
+    roles: str
+    release_time: datetime
 
 
+@dataclass
 class DroneOrder:
-
-    def __init__(self, id: str = None, drone_id: str = None, protocol: str = None, finish_time: datetime = None):
-        self.id = id
-        self.drone_id = drone_id
-        self.protocol = protocol
-        self.finish_time = finish_time
+    id: str = None
+    drone_id: str = None
+    protocol: str = None
+    finish_time: datetime = None
 
 
+@dataclass
 class Timer:
-
-    def __init__(self, id: str = None, drone_id: str = None, mode: str = None, end_time: datetime = None):
-        self.id = id
-        self.drone_id = drone_id
-        self.mode = mode
-        self.end_time = end_time
+    id: str = None
+    drone_id: str = None
+    mode: str = None
+    end_time: datetime = None

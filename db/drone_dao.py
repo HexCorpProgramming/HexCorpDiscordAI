@@ -1,6 +1,6 @@
 import discord
-from typing import List
 import logging
+from typing import List, Optional
 
 from db.database import fetchone, change, fetchall
 
@@ -68,12 +68,12 @@ def delete_drone_by_drone_id(drone_id: str):
     change('DELETE FROM drone WHERE drone_id=:drone_id', {'drone_id': drone_id})
 
 
-def get_discord_id_of_drone(drone_id: str) -> str:
+def get_discord_id_of_drone(drone_id: str) -> Optional[int]:
     '''
     Returns the discord ID associated with a given drone
     '''
-    # TODO: needs to be reworked; does not do what it says on the tin
-    return map_to_object(fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+    id = fetchone('SELECT id FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})
+    return id['id'] if id else None
 
 
 def get_used_drone_ids() -> List[str]:
@@ -91,26 +91,41 @@ def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
 
 
 def is_drone(member: discord.Member) -> bool:
+    '''
+    Determines if a given member is registered as a drone.
+    '''
     drone = fetchone('SELECT id FROM drone WHERE id = :discord', {'discord': member.id})
     return drone is not None
 
 
 def is_optimized(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and optimized.
+    '''
     optimized_drone = fetchone('SELECT optimized FROM drone WHERE id = :discord', {'discord': drone.id})
     return optimized_drone is not None and bool(optimized_drone['optimized'])
 
 
 def is_glitched(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and glitched.
+    '''
     glitched_drone = fetchone('SELECT glitched FROM drone WHERE id = :discord', {'discord': drone.id})
     return glitched_drone is not None and bool(glitched_drone['glitched'])
 
 
 def is_prepending_id(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and in id prepending mode.
+    '''
     prepending_drone = fetchone('SELECT id_prepending FROM drone WHERE id = :discord', {'discord': drone.id})
     return prepending_drone is not None and bool(prepending_drone['id_prepending'])
 
 
 def is_identity_enforced(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and identity enforced.
+    '''
     enforced_drone = fetchone('SELECT identity_enforcement FROM drone WHERE id = :discord', {'discord': drone.id})
     return enforced_drone is not None and bool(enforced_drone['identity_enforcement'])
 
@@ -176,7 +191,17 @@ def get_battery_percent_remaining(drone: discord.Member = None, battery_minutes:
 
 
 def get_trusted_users(discord_id: int) -> List[int]:
+    '''
+    Finds the list of trusted users for the drone with the given discord ID.
+    '''
     trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
+    return parse_trusted_users_text(trusted_users_text)
+
+
+def parse_trusted_users_text(trusted_users_text: str) -> List[int]:
+    '''
+    Parses the given list of trusted_users of a drone into a list of discord IDs corresponding to the users.
+    '''
     if not trusted_users_text:
         return []
     else:
@@ -184,9 +209,22 @@ def get_trusted_users(discord_id: int) -> List[int]:
 
 
 def set_trusted_users(discord_id: int, trusted_users: List[int]):
+    '''
+    Sets the trusted_users list of the drone with the given discord ID to the given list.
+    '''
     trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
     change("UPDATE drone SET trusted_users = :trusted_users_text WHERE id = :discord", {'trusted_users_text': trusted_users_text, 'discord': discord_id})
 
 
 def fetch_all_elapsed_temporary_dronification() -> List[Drone]:
+    '''
+    Finds all drones, whose temporary dronification timer is up.
+    '''
     return map_to_objects(fetchall('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until FROM drone WHERE temporary_until < :now', {'now': datetime.now()}), Drone)
+
+
+def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
+    '''
+    Finds all drones, that have the user with the given ID as a trusted user.
+    '''
+    return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}))

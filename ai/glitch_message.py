@@ -89,5 +89,4 @@ async def glitch_if_applicable(message: discord.Message, message_copy):
     LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
 
     message_copy.content = glitch(message_copy.content, glitch_amount)
-
     return False

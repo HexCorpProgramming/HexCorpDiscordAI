@@ -169,7 +169,7 @@ async def unassign_drone(target: discord.Member):
         return
 
     await target.edit(nick=None)
-    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=GLITCHED), get(guild.roles, name=STORED))
+    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT))
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
@@ -271,5 +271,5 @@ async def toggle_parameter(context,
                 drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, context=context) else DRONE_AVATAR,
+                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
