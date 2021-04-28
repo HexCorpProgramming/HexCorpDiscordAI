@@ -136,8 +136,10 @@ class DroneConfigurationCog(Cog):
                                lambda: "Drone reconnected to HexCorp power grid.",
                                minutes)
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
+        # And remove drained role if added.
         for drone in drones:
             set_battery_minutes_remaining(drone, MAX_BATTERY_CAPACITY_MINS)
+            await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 
 async def rename_drone(context, old_id: str, new_id: str):
