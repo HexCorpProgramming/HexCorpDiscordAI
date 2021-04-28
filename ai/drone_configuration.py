@@ -8,7 +8,7 @@ from uuid import uuid4
 import random
 from datetime import datetime, timedelta
 
-from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED
+from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED, BATTERY_DRAINED
 from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
@@ -169,7 +169,7 @@ async def unassign_drone(target: discord.Member):
         return
 
     await target.edit(nick=None)
-    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED))
+    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED), get(guild.roles, name=BATTERY_DRAINED))
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
