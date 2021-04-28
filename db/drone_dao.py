@@ -140,7 +140,7 @@ def is_battery_powered(drone: discord.Member) -> bool:
     return battery_powered_drone is not None and bool(battery_powered_drone['is_battery_powered'])
 
 
-def deincrement_battery_minutes_remaining(member: discord.Member = None, drone_id: str = None):
+def deincrement_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None):
     if member is not None:
         drone_record = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': member.id})
         change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': member.id})
@@ -151,7 +151,7 @@ def deincrement_battery_minutes_remaining(member: discord.Member = None, drone_i
         raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
 
 
-def set_battery_minutes_remaining(member: discord.Member = None, drone_id: str = None, minutes: int = 0):
+def set_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None, minutes: int = 0):
     if member is not None:
         change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
     elif drone_id is not None:
@@ -160,7 +160,7 @@ def set_battery_minutes_remaining(member: discord.Member = None, drone_id: str =
         raise ValueError("Could not set drone battery minutes remaining. No Discord member or drone ID provided in function call.")
 
 
-def get_battery_minutes_remaining(member: discord.Member = None, drone_id: str = None) -> int:
+def get_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None) -> int:
     '''
     Gets value of battery_minutes from drone table based on a given drone's Discord ID.
     Returns -1 if drone is not found.
@@ -179,7 +179,7 @@ def get_battery_minutes_remaining(member: discord.Member = None, drone_id: str =
             return battery_minutes
 
 
-def get_battery_percent_remaining(drone: discord.Member = None, battery_minutes: int = None) -> int:
+def get_battery_percent_remaining(drone: Optional[discord.Member] = None, battery_minutes: Optional[int] = None) -> int:
     if battery_minutes is not None:
         return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
     elif drone is not None:
