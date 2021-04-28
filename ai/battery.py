@@ -10,7 +10,7 @@ import webhook
 from ai.identity_enforcement import identity_enforcable
 import emoji
 import re
-from typing import Dict
+from typing import Dict, List
 
 LOGGER = logging.getLogger('ai')
 
@@ -20,7 +20,7 @@ class BatteryCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
-        self.low_battery_drones = []  # [drone_id]
+        self.low_battery_drones: List[str] = []  # [drone_id]
 
     @commands.command()
     async def energize(self, context, *drone_ids):
