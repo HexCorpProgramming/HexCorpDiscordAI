@@ -87,10 +87,10 @@ class BatteryCog(commands.Cog):
             if member_drone is None:
                 LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
-            if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) == 0 and has_role(member_drone, BATTERY_POWERED):
+            if get_battery_percent_remaining(battery_minutes=drone.battery_minutes) == 0 and has_role(member_drone, BATTERY_POWERED):
                 LOGGER.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
                 await member_drone.add_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
-            elif (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) != 0 and has_role(member_drone, BATTERY_DRAINED):
+            elif get_battery_percent_remaining(battery_minutes=drone.battery_minutes) != 0 and has_role(member_drone, BATTERY_DRAINED):
                 LOGGER.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
 
