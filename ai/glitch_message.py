@@ -39,7 +39,7 @@ def glitch(message: str, glitch_amount=45):
 
     message_length_without_emoji: int = len(message_list)
 
-    added_diacritics: int = 0 
+    added_diacritics: int = 0
     # Count diacritics so message length != >2000 when custom emojis readded.
 
     LOGGER.debug(f"Message list without custom emojis: {message_list}")
