@@ -105,7 +105,7 @@ class BatteryCog(commands.Cog):
         LOGGER.info("Scanning for low battery drones.")
 
         for drone in get_all_drone_batteries():
-            if (drone.battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100) < 30:
+            if get_battery_percent_remaining(battery_minutes=drone.battery_minutes) < 30:
                 if drone.drone_id not in self.low_battery_drones:
                     member = self.bot.guilds[0].get_member(drone.id)
                     LOGGER.info(f"Warning drone {drone.drone_id} of low battery.")
