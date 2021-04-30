@@ -309,3 +309,45 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.")
+
+    @patch("ai.battery.is_drone", return_value=True)
+    @patch("ai.battery.is_battery_powered", return_value=True)
+    async def test_start_battery_drain(self, bat_pow, is_drn):
+        '''
+        Battery powered drones should have their active tracking minutes
+        set to 15 when they first send a message.
+        '''
+
+        message = Mock()
+        message.author.display_name = "HexDrone 5890"
+
+        message_copy = Mock()
+
+        bot = Mock()
+        battery_cog = battery.BatteryCog(bot)
+
+        await battery_cog.start_battery_drain(message, message_copy)
+
+        self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)
+
+    @patch("ai.battery.is_drone", return_value=True)
+    @patch("ai.battery.is_battery_powered", return_value=True)
+    async def test_restart_battery_drain(self, bat_pow, is_drn):
+        '''
+        Drones that are currently being tracked for battery drain should have
+        their minutes reset to 15 if they send another message.
+        '''
+
+        message = Mock()
+        message.author.display_name = "HexDrone 5890"
+
+        message_copy = Mock()
+
+        bot = Mock()
+        battery_cog = battery.BatteryCog(bot)
+
+        battery_cog.draining_batteries['5890'] = 6
+
+        await battery_cog.start_battery_drain(message, message_copy)
+
+        self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)

@@ -47,7 +47,7 @@ class BatteryCog(commands.Cog):
     async def start_battery_drain(self, message, message_copy=None):
         '''
         If message author has battery DroneOS config enabled, begin or restart
-        the task to drain 1 minute of battery per minute, for 15 minutes.
+        tracking them for 15 minutes worth of battery drain per message sent.
         '''
 
         if not is_drone(message.author) or not is_battery_powered(message.author):
