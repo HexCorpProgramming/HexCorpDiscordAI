@@ -24,7 +24,7 @@ def glitch(message: str, glitch_amount=45):
 
     LOGGER.debug(f"Glitching/case flipping {glitch_percentage * 100}% of characters (aprox {math.ceil(len(message) * glitch_percentage)} characters)")
 
-    full_message_length = len(message)
+    message_length_with_emoji: int = len(message)
 
     custom_emojis = []
 
@@ -37,6 +37,11 @@ def glitch(message: str, glitch_amount=45):
 
     message_list = list(message)
 
+    message_length_without_emoji: int = len(message_list)
+
+    added_diacritics: int = 0 
+    # Count diacritics so message length != >2000 when custom emojis readded.
+
     LOGGER.debug(f"Message list without custom emojis: {message_list}")
 
     if message_list == []:
@@ -45,7 +50,7 @@ def glitch(message: str, glitch_amount=45):
 
     # Flip case
     for i in range(0, math.ceil(len(message_list) * glitch_percentage)):
-        index = random.randint(0, len(message_list) - 1)
+        index = random.randint(0, message_length_without_emoji - 1)
         try:
             if message_list[index].isupper():
                 message_list[index] = message_list[index].lower()
@@ -57,12 +62,13 @@ def glitch(message: str, glitch_amount=45):
     # Add diacritics
     max_characters_to_glitch = min(math.ceil(len(message) * glitch_percentage), MAX_DIACRITICS_PER_MESSAGE)
     LOGGER.debug(f"Adding diacritics to {max_characters_to_glitch} characters.")
-    for i in range(0, min(int(max_characters_to_glitch), DISCORD_CHAR_LIMIT - full_message_length)):
-        if len("".join(message_list)) >= DISCORD_CHAR_LIMIT:
+    for i in range(0, min(int(max_characters_to_glitch), DISCORD_CHAR_LIMIT - message_length_with_emoji)):
+        if added_diacritics + message_length_with_emoji >= DISCORD_CHAR_LIMIT:
             break
         index = random.randint(0, len(message_list) - 1)
         if len(message_list[index]) - 1 < MAX_DIACRITICS_PER_CHAR:
             message_list[index] += chr(random.choice(diacritics))
+            added_diacritics += 1
 
     # Add custom emojis back in
     for custom_emoji, reinsertion_index in custom_emojis:
