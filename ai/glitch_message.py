@@ -80,8 +80,7 @@ async def glitch_if_applicable(message: discord.Message, message_copy):
     if is_glitched(message.author):
         glitch_amount = MAX_GLITCH_AMOUNT * 2
     elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
-        glitch_amount = MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)
-        glitch_amount *= 2
+        glitch_amount = (MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)) * 2
     else:
         LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
         return False
