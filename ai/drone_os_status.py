@@ -12,7 +12,6 @@ LOGGER = logging.getLogger('ai')
 
 class DroneOsStatusCog(Cog):
 
-    @dm_only()
     @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief="DroneOS")
     async def drone_status(self, context, drone_id: str):
         '''
