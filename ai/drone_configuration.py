@@ -126,6 +126,9 @@ class DroneConfigurationCog(Cog):
     @guild_only()
     @command(aliases=['battery', 'tbp'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
     async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered or not.
+        '''
         await toggle_parameter(context,
                                drones,
                                "is_battery_powered",
