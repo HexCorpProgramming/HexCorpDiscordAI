@@ -113,7 +113,7 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
         if attachment.height is not None:
             attachment_bytes = io.BytesIO(await attachment.read())
             pillow = Image.open(attachment_bytes)
-            glitched_pillow = glitcher.glitch_image(pillow, min(0.1, glitch_amount / 10))
+            glitched_pillow = glitcher.glitch_image(pillow, max(0.1, glitch_amount / 10))
             glitched_bytes = io.BytesIO()
             glitched_pillow.save(glitched_bytes, "PNG")
             glitched_bytes.seek(0)
