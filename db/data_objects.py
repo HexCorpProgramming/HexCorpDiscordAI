@@ -27,6 +27,8 @@ class Drone:
     id_prepending: bool = None
     identity_enforcement: bool = None
     temporary_until: datetime = None
+    battery_minutes: int = None
+    is_battery_powered: bool = None
 
 
 @dataclass
