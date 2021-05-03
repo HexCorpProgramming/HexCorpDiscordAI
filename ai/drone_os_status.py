@@ -44,10 +44,8 @@ def get_status(drone_id: str, requesting_user: int) -> discord.Embed:
             .add_field(name="Glitched", value=boolean_to_enabled_disabled(drone.glitched)) \
             .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
             .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
-            .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.battery_powered))
-
-        if boolean_to_enabled_disabled(drone.battery_powered):
-            embed.add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
+            .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
+            .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
 
     return embed
 
