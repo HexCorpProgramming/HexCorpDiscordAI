@@ -127,7 +127,7 @@ class DroneConfigurationCog(Cog):
     @command(aliases=['battery', 'tbp'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
     async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
-        Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered or not.
+        Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered.
         '''
         await toggle_parameter(context,
                                drones,
@@ -141,7 +141,7 @@ class DroneConfigurationCog(Cog):
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
         # And remove drained role if added.
         for drone in drones:
-            set_battery_minutes_remaining(drone, MAX_BATTERY_CAPACITY_MINS)
+            set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
             await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 

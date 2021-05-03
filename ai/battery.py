@@ -81,6 +81,9 @@ class BatteryCog(commands.Cog):
         # Every drone has a battery. If battery_minutes = 0, give the Drained role.
         # If battery_minutes > 0 and it has the Drained role, remove it.
         # Since this is independent of having the Battery role, this should work even if the config is disabled.
+
+        LOGGER.info("Checking for drones with drained battery.")
+
         for drone in get_all_drone_batteries():
             # Intentionally different math to that in DAO b/c it always rounds down.
             member_drone = self.bot.guilds[0].get_member(drone.id)
