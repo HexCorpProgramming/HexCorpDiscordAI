@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord.ext.commands import dm_only, Cog, command
+from discord.ext.commands import Cog, command
 
 from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from resources import DRONE_AVATAR
