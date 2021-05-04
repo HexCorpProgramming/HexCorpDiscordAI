@@ -1,4 +1,5 @@
 import discord
+import logging
 from typing import List, Optional
 
 from db.database import fetchone, change, fetchall
@@ -7,7 +8,9 @@ from roles import DRONE, STORED, has_any_role
 from bot_utils import get_id
 from datetime import datetime
 from db.data_objects import Drone, map_to_object, map_to_objects
-from resources import HIVE_MXTRESS_USER_ID
+from resources import HIVE_MXTRESS_USER_ID, MAX_BATTERY_CAPACITY_MINS
+
+LOGGER = logging.getLogger('ai')
 
 
 def add_new_drone_members(members: List[discord.Member]):
@@ -33,7 +36,7 @@ def fetch_drone_with_drone_id(drone_id: str) -> Drone:
     '''
     Finds a drone with the given drone_id.
     '''
-    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, id_prepending, identity_enforcement, trusted_users, last_activity, temporary_until FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
+    return map_to_object(fetchone('SELECT * FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
 def fetch_drone_with_id(discord_id: int) -> Drone:
@@ -41,6 +44,14 @@ def fetch_drone_with_id(discord_id: int) -> Drone:
     Finds a drone with the given discord_id.
     '''
     return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
+
+
+def get_all_drones() -> List[Drone]:
+    return map_to_objects(fetchall('SELECT * FROM drone', {}), Drone)
+
+
+def get_all_drone_batteries() -> List[Drone]:
+    return map_to_objects(fetchall('SELECT id, drone_id, battery_minutes FROM drone', {}), Drone)
 
 
 def rename_drone_in_db(old_id: str, new_id: str):
@@ -122,6 +133,60 @@ def is_identity_enforced(drone: discord.Member) -> bool:
 def can_self_configure(drone: discord.Member) -> bool:
     can_self_configure_drone = fetchone('SELECT can_self_configure FROM drone WHERE id = :discord', {'discord': drone.id})
     return can_self_configure_drone is not None and bool(can_self_configure_drone['can_self_configure'])
+
+
+def is_battery_powered(drone: discord.Member) -> bool:
+    battery_powered_drone = fetchone('SELECT is_battery_powered FROM drone WHERE id = :discord', {'discord': drone.id})
+    return battery_powered_drone is not None and bool(battery_powered_drone['is_battery_powered'])
+
+
+def deincrement_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None):
+    if member is not None:
+        drone_record = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': member.id})
+        change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': member.id})
+    elif drone_id is not None:
+        drone_record = fetchone('SELECT battery_minutes FROM drone WHERE drone_id = :drone', {'drone': drone_id})
+        change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': drone_id})
+    else:
+        raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
+
+
+def set_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None, minutes: int = 0):
+    if member is not None:
+        change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
+    elif drone_id is not None:
+        change('UPDATE drone SET battery_minutes = :minutes WHERE drone_id = :drone_id', {'minutes': max(0, minutes), 'drone_id': drone_id})
+    else:
+        raise ValueError("Could not set drone battery minutes remaining. No Discord member or drone ID provided in function call.")
+
+
+def get_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None) -> int:
+    '''
+    Gets value of battery_minutes from drone table based on a given drone's Discord ID.
+    Returns -1 if drone is not found.
+    '''
+    if member is not None:
+        battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': member.id})['battery_minutes']
+        if battery_minutes is None:
+            return -1
+        else:
+            return battery_minutes
+    elif drone_id is not None:
+        battery_minutes = fetchone('SELECT battery_minutes FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})['battery_minutes']
+        if battery_minutes is None:
+            return -1
+        else:
+            return battery_minutes
+
+
+def get_battery_percent_remaining(drone: Optional[discord.Member] = None, battery_minutes: Optional[int] = None) -> int:
+    if battery_minutes is not None:
+        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
+    elif drone is not None:
+        battery_minutes = get_battery_minutes_remaining(drone)
+        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
+    else:
+        raise ValueError("No valid parameters given to get_battery_percent_remaining()")
 
 
 def get_trusted_users(discord_id: int) -> List[int]:

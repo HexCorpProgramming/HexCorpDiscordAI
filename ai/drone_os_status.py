@@ -1,9 +1,9 @@
 import logging
 
 import discord
-from discord.ext.commands import dm_only, Cog, command
+from discord.ext.commands import Cog, command
 
-from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users
+from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from resources import DRONE_AVATAR
 from bot_utils import COMMAND_PREFIX
 
@@ -12,7 +12,6 @@ LOGGER = logging.getLogger('ai')
 
 class DroneOsStatusCog(Cog):
 
-    @dm_only()
     @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief="DroneOS")
     async def drone_status(self, context, drone_id: str):
         '''
@@ -35,16 +34,18 @@ def get_status(drone_id: str, requesting_user: int) -> discord.Embed:
         .set_thumbnail(url=DRONE_AVATAR) \
         .set_footer(text="HexCorp DroneOS")
 
-    if requesting_user not in get_trusted_users(drone.id):
+    if requesting_user not in get_trusted_users(drone.id) and requesting_user != drone.id:
         embed.description = "You are not registered as a trusted user of this drone."
     else:
-        embed.description = "You are registered as a trusted user of this drone and have access to its data."
+        embed.description = "You are registered as a trusted user of this drone and have access to its data." if requesting_user != drone.id else f"Welcome, ⬡-Drone #{drone_id}"
         embed = embed.set_thumbnail(url=DRONE_AVATAR) \
             .set_footer(text="HexCorp DroneOS") \
             .add_field(name="Optimized", value=boolean_to_enabled_disabled(drone.optimized)) \
             .add_field(name="Glitched", value=boolean_to_enabled_disabled(drone.glitched)) \
             .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
-            .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement))
+            .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
+            .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
+            .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
 
     return embed
 

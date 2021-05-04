@@ -5,6 +5,8 @@ import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
 from traceback import TracebackException
+from datetime import datetime, timedelta
+import asyncio
 
 # Modules
 import ai.stoplights as stoplights
@@ -25,6 +27,7 @@ import ai.add_voice as add_voice
 import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
+import ai.battery as battery
 from ai.mantras import Mantra_Handler
 import ai.status_message as status_message
 import ai.thought_denial as thought_denial
@@ -66,32 +69,8 @@ def set_up_logger():
 intents = discord.Intents.default()
 intents.members = True
 
-bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents)
+bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
-
-temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
-
-# Register message listeners.
-message_listeners = [
-    join.check_for_consent,
-    assign.check_for_assignment_message,
-    stoplights.check_for_stoplights,
-    id_prepending.check_if_prepending_necessary,
-    speech_optimization_enforcement.enforce_speech_optimization,
-    speech_optimization.optimize_speech,
-    identity_enforcement.enforce_identity,
-    thought_denial.deny_thoughts,
-    glitch_message.glitch_if_applicable,
-    respond.respond_to_question,
-    storage.store_drone,
-    temporary_dronification_cog.temporary_dronification_response
-
-]
-
-# register message listeners that take messages sent by bots
-bot_message_listeners = [
-    react.parse_for_reactions
-]
 
 
 # Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
@@ -99,15 +78,39 @@ status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
 orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 timers_cog = timers.TimersCog(bot)
+battery_cog = battery.BatteryCog(bot)
+temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
 
-# Cogs with tasks that rely on the bot being active.
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(orders_reporting_cog)
 bot.add_cog(timers_cog)
+bot.add_cog(battery_cog)
+
+# Register message listeners.
+message_listeners = [
+    join.check_for_consent,
+    assign.check_for_assignment_message,
+    stoplights.check_for_stoplights,
+    battery_cog.start_battery_drain,
+    id_prepending.check_if_prepending_necessary,
+    speech_optimization_enforcement.enforce_speech_optimization,
+    speech_optimization.optimize_speech,
+    identity_enforcement.enforce_identity,
+    thought_denial.deny_thoughts,
+    battery_cog.append_battery_indicator,
+    glitch_message.glitch_if_applicable,
+    respond.respond_to_question,
+    storage.store_drone,
+    temporary_dronification_cog.temporary_dronification_response
+]
+
+# register message listeners that take messages sent by bots
+bot_message_listeners = [
+    react.parse_for_reactions
+]
 
 # Cogs that do not use tasks.
-
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
@@ -117,6 +120,11 @@ bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
+
+# Categorize which tasks run at which intervals
+minute_tasks = [storage_cog.release_timed, battery_cog.track_active_battery_drain, battery_cog.track_drained_batteries, battery_cog.warn_low_battery_drones, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones]
+hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders, timers_cog.process_timers]
+timing_agnostic_tasks = [status_message_cog.change_status]
 
 
 @bot.command(usage=f'{bot.command_prefix}help')
@@ -203,35 +211,46 @@ async def on_member_remove(member: discord.Member):
 
 @bot.event
 async def on_ready():
+    LOGGER.info("Hive Mxtress AI online.")
+
+    LOGGER.info("Inserting any new drones into database.")
     drone_dao.add_new_drone_members(bot.guilds[0].members)
 
-    if not status_message_cog.change_status.is_running():
-        LOGGER.info("Starting up change_status loop.")
-        status_message_cog.change_status.start()
+    LOGGER.info("Starting timing agnostic tasks.")
+    for task in timing_agnostic_tasks:
+        if not task.is_running():
+            task.start()
+        elif task.has_failed():
+            task.restart()
 
-    if not orders_reporting_cog.deactivate_drones_with_completed_orders.is_running():
-        LOGGER.info("Starting up drone_protocol_deactivation loop.")
-        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
+    LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
+    current_time = datetime.now()
+    target_time = current_time + timedelta(minutes=1)
+    target_time = target_time.replace(second=0)
+    LOGGER.info(f"Scheduled to start minutely tasks at {target_time}")
+    await asyncio.sleep((target_time - current_time).total_seconds())
 
-    if not storage_cog.report_storage.is_running():
-        LOGGER.info("Starting up report_storage loop.")
-        storage_cog.report_storage.start()
+    LOGGER.info("Starting all every-minute tasks.")
+    for task in minute_tasks:
+        if not task.is_running():
+            task.start()
+        elif task.has_failed():
+            task.restart()
 
-    if not storage_cog.release_timed.is_running():
-        LOGGER.info("Starting up release_timed loop.")
-        storage_cog.release_timed.start()
+    LOGGER.info("Awaiting start of next hour to begin every-hour tasks.")
+    current_time = datetime.now()
+    if current_time.minute != 0:
+        target_time = current_time + timedelta(hours=1)
+        target_time = target_time.replace(minute=0, second=0)
+        LOGGER.info(f"Scheduled to start hourly tasks at {target_time}")
+        await asyncio.sleep((target_time - current_time).total_seconds())
 
-    if not timers_cog.process_timers.is_running():
-        LOGGER.info("Starting up process_timers loop.")
-        timers_cog.process_timers.start()
-
-    if not temporary_dronification_cog.release_temporary_drones.is_running():
-        LOGGER.info("Starting up release_temporary_drones loop.")
-        temporary_dronification_cog.release_temporary_drones.start()
-
-    if not temporary_dronification_cog.clean_dronification_requests.is_running():
-        LOGGER.info("Starting up clean_dronification_requests loop.")
-        temporary_dronification_cog.clean_dronification_requests.start()
+    LOGGER.info("Starting all every-hour tasks.")
+    for task in hour_tasks:
+        if not task.is_running():
+            task.start()
+        elif task.has_failed():
+            task.restart()
 
 
 @bot.event
@@ -254,7 +273,6 @@ async def on_error(event, *args, **kwargs):
 
 def main():
     set_up_logger()
-    # Prepare database
     database.prepare()
     bot.run(sys.argv[1])
 

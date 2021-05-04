@@ -45,6 +45,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         drone.optimized = True
         drone.glitched = False
         drone.id_prepending = False
+        drone.battery_minutes = 300
 
         fetch_drone_with_drone_id.return_value = drone
         requesting_user_id = 782638723
