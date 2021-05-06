@@ -39,7 +39,11 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     This function calls the proxy_message_by_webhook function if the message copy
     has been altered in any way by the on_message event listeners in main.py
     '''
-    if original.content != copy.content or original.author.display_name != copy.display_name or original.author.avatar_url != copy.avatar_url or original.attachments != copy.attachments:
+    content_differs = original.content != copy.content
+    display_name_differs = original.author.display_name != copy.display_name
+    avatar_differs = original.author.avatar_url != copy.avatar_url
+    attachments_differ = original.attachments != copy.attachments
+    if any([content_differs, display_name_differs, avatar_differs, attachments_differ]):
         LOGGER.info("Proxying altered message.")
 
         LOGGER.info("Converting all attachments")
