@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Iterable, Optional
 from discord import Attachment
 
 
@@ -11,10 +11,10 @@ class MessageCopy:
     '''
     def __init__(
         self,
-        content: str = None,
-        display_name: str = None,
-        avatar_url: Any = None,
-        attachments: List[Attachment] = []
+        content: Optional[str] = None,
+        display_name: Optional[str] = None,
+        avatar_url: Optional[str] = None,
+        attachments: Iterable[Attachment] = []
     ):
         self.content = content
         self.display_name = display_name
