@@ -1,4 +1,5 @@
 import random
+from typing import List, Union
 from db.drone_dao import is_glitched, is_battery_powered, get_battery_percent_remaining
 import logging
 import math
@@ -25,7 +26,7 @@ LOGGER = logging.getLogger('ai')
 custom_emoji_regex = re.compile(r'<:(.*?):\d{18}>')
 
 
-def glitch(message: str, glitch_amount=45):
+def glitch_text(message: str, glitch_amount=45) -> str:
 
     LOGGER.info(f"Glitching message: {message}")
 
@@ -91,24 +92,12 @@ def glitch(message: str, glitch_amount=45):
     return "".join(message_list)
 
 
-async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
-    if is_glitched(message.author):
-        glitch_amount = MAX_GLITCH_AMOUNT * 2
-    elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
-        glitch_amount = (MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)) * 2
-    else:
-        LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
-        return False
-
-    LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
-
-    message_copy.content = glitch(message_copy.content, glitch_amount)
-
+async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45) -> List[Union[discord.Attachment, discord.File]]:
     # glitch attached images
     # the data flow is:
     # CDN -> raw bytes -> BytesIO -> PIL Image -> glitch_this -> PIL Image -> BytesIO -> CDN
     processed_attachments = []
-    for attachment in message.attachments:
+    for attachment in attachments:
         # only images have dimensions
         if attachment.height is not None:
             attachment_bytes = io.BytesIO(await attachment.read())
@@ -122,6 +111,22 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
         else:
             processed_attachments.append(attachment)
 
-    message_copy.attachments = processed_attachments
+    return processed_attachments
+
+
+async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
+    if is_glitched(message.author):
+        glitch_amount = MAX_GLITCH_AMOUNT * 2
+    elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
+        glitch_amount = (MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)) * 2
+    else:
+        LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
+        return False
+
+    LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
+
+    message_copy.content = glitch_text(message_copy.content, glitch_amount)
+
+    message_copy.attachments = await glitch_images(message.attachments, glitch_amount)
 
     return False
