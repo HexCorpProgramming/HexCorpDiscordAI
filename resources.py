@@ -23,6 +23,7 @@ code_map = {
     '002': 'Signal :: [Yellow light]',
     '003': 'Signal :: [Green light]',
     '007': 'Beep.',
+    '008': 'Boop.',
     '050': 'Statement',
     '051': 'Commentary',
     '052': 'Query',
