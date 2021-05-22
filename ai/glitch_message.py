@@ -1,3 +1,4 @@
+from channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 import random
 from typing import List, Union
 from db.drone_dao import is_glitched, is_battery_powered, get_battery_percent_remaining
@@ -115,6 +116,10 @@ async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45)
 
 
 async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
+    # No glitching in the moderation channels
+    if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
+        return False
+
     if is_glitched(message.author):
         glitch_amount = MAX_GLITCH_AMOUNT * 2
     elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
