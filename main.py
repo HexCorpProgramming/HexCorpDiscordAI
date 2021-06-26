@@ -68,6 +68,7 @@ def set_up_logger():
 # Setup bot
 intents = discord.Intents.default()
 intents.members = True
+intents.reactions = True
 
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
@@ -269,6 +270,11 @@ async def on_error(event, *args, **kwargs):
     LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
     error, value, tb = sys.exc_info()
     LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
+
+
+@bot.event
+async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
+    await react.delete_marked_message(reaction, user)
 
 
 def main():
