@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog, command, dm_only
 
 from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from resources import DRONE_AVATAR
@@ -12,6 +12,7 @@ LOGGER = logging.getLogger('ai')
 
 class DroneOsStatusCog(Cog):
 
+    @dm_only()
     @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief="DroneOS")
     async def drone_status(self, context, drone_id: str):
         '''
