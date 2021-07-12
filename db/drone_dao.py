@@ -146,7 +146,7 @@ def deincrement_battery_minutes_remaining(member: Optional[discord.Member] = Non
         change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': member.id})
     elif drone_id is not None:
         drone_record = fetchone('SELECT battery_minutes FROM drone WHERE drone_id = :drone', {'drone': drone_id})
-        change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': drone_id})
+        change('UPDATE drone SET battery_minutes = :minutes WHERE drone_id = :drone_id', {'minutes': drone_record['battery_minutes'] - 1, 'drone_id': drone_id})
     else:
         raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
 
