@@ -226,4 +226,4 @@ def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
     '''
     Finds all drones, that have the user with the given ID as a trusted user.
     '''
-    return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}))
+    return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}), Drone)
