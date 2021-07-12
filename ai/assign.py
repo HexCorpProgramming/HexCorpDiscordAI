@@ -77,6 +77,6 @@ async def create_drone(guild: discord.Guild,
         trusted_users.remove(target.id)
 
     # add new drone to DB
-    new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until)
+    new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until, can_self_configure=True)
     insert_drone(new_drone)
     await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')
