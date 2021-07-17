@@ -10,6 +10,7 @@ from db.data_objects import Timer
 
 class TimersTest(unittest.IsolatedAsyncioTestCase):
 
+    @patch("ai.timers.set_can_self_configure")
     @patch("ai.timers.update_display_name")
     @patch("ai.timers.convert_id_to_member")
     @patch("ai.timers.update_droneOS_parameter")
@@ -22,7 +23,8 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
                                   fetch_drone_with_drone_id,
                                   update_droneOS_parameter,
                                   convert_id_to_member,
-                                  update_display_name):
+                                  update_display_name,
+                                  set_can_self_configure):
         # setup
         optimized_role = Mock()
         optimized_role.name = roles.SPEECH_OPTIMIZATION
@@ -54,3 +56,4 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         drone_member.remove_roles.assert_called_once_with(optimized_role)
         delete_timer.assert_called_once_with(timer_id)
         update_display_name.assert_called_once_with(drone_member)
+        set_can_self_configure.assert_called_once_with(drone_member)

@@ -248,9 +248,7 @@ async def toggle_parameter(context,
                 await drone.remove_roles(role)
                 message = toggle_off_message()
 
-                still_configured = is_configured(drone)
-                if not still_configured:
-                    update_droneOS_parameter(drone, "can_self_configure", True)
+                set_can_self_configure(drone)
 
                 # remove any open timers for this mode
                 delete_timers_by_drone_id_and_mode(fetch_drone_with_id(drone.id).drone_id, toggle_column)
@@ -278,3 +276,9 @@ async def toggle_parameter(context,
                                                    message_username=drone.display_name,
                                                    message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
+
+
+def set_can_self_configure(drone: discord.Member):
+    still_configured = is_configured(drone)
+    if not still_configured:
+        update_droneOS_parameter(drone, "can_self_configure", True)
