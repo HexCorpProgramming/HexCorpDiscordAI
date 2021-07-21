@@ -7,6 +7,8 @@ from discord.ext import commands, tasks
 from db.timer_dao import get_timers_elapsed_before, delete_timer
 from db.drone_dao import fetch_drone_with_drone_id, update_droneOS_parameter
 
+from ai.drone_configuration import set_can_self_configure
+
 from roles import GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION
 from id_converter import convert_id_to_member
 from display_names import update_display_name
@@ -41,4 +43,5 @@ class TimersCog(commands.Cog):
             delete_timer(elapsed_timer.id)
             await drone_member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[elapsed_timer.mode]))
             await update_display_name(drone_member)
+            set_can_self_configure(drone_member)
             LOGGER.info(f"Elapsed timer for {drone_member.display_name}; toggled off {elapsed_timer.mode}")
