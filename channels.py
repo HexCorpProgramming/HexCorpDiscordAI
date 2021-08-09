@@ -4,7 +4,7 @@ OFFICE = 'hex-office'
 MODERATION_CHANNEL = 'moderation-channel'
 
 # Moderation
-MODERATION_CATEGORY = 'moderation'
+MODERATION_CATEGORY = 'Moderation'
 MODERATION_LOG = 'moderation-log'
 
 # HexCorp-Induction

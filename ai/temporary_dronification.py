@@ -90,7 +90,8 @@ class TemporaryDronificationCog(Cog):
                 LOGGER.info("Consent given for temporary dronification. Changing roles and writing to DB...")
                 self.dronfication_requests.remove(matching_request)
                 dronification_until = datetime.now() + timedelta(hours=matching_request.hours)
-                await message.reply(f"Consent noted. HexCorp dronification suite engaged for the next {matching_request.hours} hours.")
+                plural = "hour" if int(matching_request.hours) == 1 else "hours"
+                await message.reply(f"Consent noted. HexCorp dronification suite engaged for the next {matching_request.hours} {plural}.")
                 await create_drone(message.guild, message.author, message.channel, [str(matching_request.issuer.id)], dronification_until)
             elif message.content.lower() == "n".lower():
                 LOGGER.info("Consent not given for temporary dronification. Removing the request.")

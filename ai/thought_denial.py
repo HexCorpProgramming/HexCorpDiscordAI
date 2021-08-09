@@ -3,6 +3,7 @@ import discord
 import re
 from db.drone_dao import is_drone
 from discord.utils import get
+from emoji import DRONE_EMOJI
 LOGGER = logging.getLogger("ai")
 
 banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+"]
@@ -13,7 +14,7 @@ async def deny_thoughts(message: discord.Message, message_copy):
     if not is_drone(message.author):  # Associates are allowed to think.
         return
 
-    emoji_replacement = get(message.guild.emojis, name="hexdroneemoji")
+    emoji_replacement = get(message.guild.emojis, name=DRONE_EMOJI)
 
     LOGGER.info("Expunging all thoughts.")
     for banned_word in banned_words:

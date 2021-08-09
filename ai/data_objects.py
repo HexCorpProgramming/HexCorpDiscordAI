@@ -1,3 +1,7 @@
+from typing import Iterable, Optional
+from discord import Attachment
+
+
 class MessageCopy:
     '''
     This class is instantiated at the start of the on_message chain in main.py.
@@ -7,10 +11,10 @@ class MessageCopy:
     '''
     def __init__(
         self,
-        content=None,
-        display_name=None,
-        avatar_url=None,
-        attachments=[]
+        content: Optional[str] = None,
+        display_name: Optional[str] = None,
+        avatar_url: Optional[str] = None,
+        attachments: Iterable[Attachment] = []
     ):
         self.content = content
         self.display_name = display_name

@@ -1,32 +1,137 @@
-import discord
-import random
-from db.drone_dao import is_glitched
-import re
-
 from channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
+import random
+from typing import List, Union
+from db.drone_dao import is_glitched, is_battery_powered, get_battery_percent_remaining
+import logging
+import math
+import re
+import io
 
-combining_characters = list(range(0x0300, 0x036F))
+import discord
+import glitch_this
+from PIL import Image
+
+from ai.data_objects import MessageCopy
+
+LOGGER = logging.getLogger("ai")
+
+diacritics = list(range(0x0300, 0x036F))
+DISCORD_CHAR_LIMIT = 2000
+MAX_GLITCH_AMOUNT = 30
+MAX_DIACRITICS_PER_MESSAGE = 60
+MAX_DIACRITICS_PER_CHAR = 1
+glitcher = glitch_this.ImageGlitcher()
+
+LOGGER = logging.getLogger('ai')
+
+custom_emoji_regex = re.compile(r'<:(.*?):\d{18}>')
 
 
-def glitch(text: str):
-    glitched_text = ""
+def glitch_text(message: str, glitch_amount=45) -> str:
 
-    for c in text:
-        glitched_text += c
-        for _ in range(0, random.randint(0, 20)):
-            glitched_text += chr(random.choice(combining_characters))
+    LOGGER.info(f"Glitching message: {message}")
 
-    return glitched_text
+    glitch_percentage = glitch_amount / 100
+
+    LOGGER.debug(f"Glitching/case flipping {glitch_percentage * 100}% of characters (aprox {math.ceil(len(message) * glitch_percentage)} characters)")
+
+    message_length_with_emoji: int = len(message)
+
+    custom_emojis = []
+
+    # Temporarily remove custom emojis
+    for custom_emoji in re.finditer(custom_emoji_regex, message):
+        LOGGER.debug(f"Custom emoji found at position {custom_emoji.start()}: {custom_emoji}")
+        custom_emojis.append((custom_emoji.group(), max(0, custom_emoji.start())))
+        message = re.sub(pattern=custom_emoji_regex, repl='', string=message, count=1)
+        LOGGER.debug(f"Custom emoji removed. Current message: {message}")
+
+    message_list = list(message)
+
+    message_length_without_emoji: int = len(message_list)
+
+    # Count diacritics so message length != >2000 when custom emojis readded.
+    added_diacritics: int = 0
+
+    LOGGER.debug(f"Message list without custom emojis: {message_list}")
+
+    if message_list == []:
+        LOGGER.info("Not glitching message (message empty).")
+        return ''.join(emoji for emoji, index in custom_emojis)
+
+    # Flip case
+    for i in range(0, math.ceil(len(message_list) * glitch_percentage)):
+        index = random.randint(0, message_length_without_emoji - 1)
+        try:
+            if message_list[index].isupper():
+                message_list[index] = message_list[index].lower()
+            else:
+                message_list[index] = message_list[index].upper()
+        except IndexError:
+            LOGGER.warn(f"Index error. Length of list: {len(message_list)} Index: {index}")
+
+    # Add diacritics
+    max_characters_to_glitch = min(math.ceil(len(message) * glitch_percentage), MAX_DIACRITICS_PER_MESSAGE)
+    LOGGER.debug(f"Adding diacritics to {max_characters_to_glitch} characters.")
+    for i in range(0, min(int(max_characters_to_glitch), DISCORD_CHAR_LIMIT - message_length_with_emoji)):
+        if added_diacritics + message_length_with_emoji >= DISCORD_CHAR_LIMIT:
+            break
+        index = random.randint(0, len(message_list) - 1)
+        if len(message_list[index]) - 1 < MAX_DIACRITICS_PER_CHAR:
+            message_list[index] += chr(random.choice(diacritics))
+            added_diacritics += 1
+
+    # Add custom emojis back in
+    for custom_emoji, reinsertion_index in custom_emojis:
+        try:
+            message_list[reinsertion_index:reinsertion_index] = list(custom_emoji)
+        except IndexError:
+            LOGGER.warn(f"Bad index. Desired: {reinsertion_index} Length: {len(message_list)}")
+
+    LOGGER.debug(f"Final glitched message list: {message_list}")
+
+    return "".join(message_list)
 
 
-glitch_template = re.compile(r'(\d{4} :: )(.*)')
-
-
-async def glitch_if_applicable(message: discord.Message, message_copy):
-    if is_glitched(message.author) and message.channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
-        template_match = glitch_template.match(message_copy.content)
-        if template_match:
-            message_copy.content = template_match.group(1) + glitch(template_match.group(2))  # If a drone is using an op code, only glitch the part after its ID.
+async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45) -> List[Union[discord.Attachment, discord.File]]:
+    # glitch attached images
+    # the data flow is:
+    # CDN -> raw bytes -> BytesIO -> PIL Image -> glitch_this -> PIL Image -> BytesIO -> CDN
+    processed_attachments = []
+    for attachment in attachments:
+        # only images have dimensions
+        if attachment.height is not None:
+            attachment_bytes = io.BytesIO(await attachment.read())
+            pillow = Image.open(attachment_bytes)
+            glitched_pillow = glitcher.glitch_image(pillow, max(0.1, glitch_amount / 10))
+            glitched_bytes = io.BytesIO()
+            glitched_pillow.save(glitched_bytes, "PNG")
+            glitched_bytes.seek(0)
+            glitched_attachment = discord.File(glitched_bytes, filename=attachment.filename)
+            processed_attachments.append(glitched_attachment)
         else:
-            message_copy.content = glitch(message_copy.content)  # Otherwise, glitch the whole message.
+            processed_attachments.append(attachment)
+
+    return processed_attachments
+
+
+async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
+    # No glitching in the moderation channels
+    if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
+        return False
+
+    if is_glitched(message.author):
+        glitch_amount = MAX_GLITCH_AMOUNT * 2
+    elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
+        glitch_amount = (MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)) * 2
+    else:
+        LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
+        return False
+
+    LOGGER.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")
+
+    message_copy.content = glitch_text(message_copy.content, glitch_amount)
+
+    message_copy.attachments = await glitch_images(message.attachments, glitch_amount)
+
     return False

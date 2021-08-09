@@ -8,7 +8,7 @@ from uuid import uuid4
 import random
 from datetime import datetime, timedelta
 
-from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES
+from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED, BATTERY_DRAINED
 from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
@@ -16,10 +16,11 @@ from bot_utils import get_id, COMMAND_PREFIX
 from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
+from resources import MAX_BATTERY_CAPACITY_MINS
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
-from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure
+from db.drone_dao import rename_drone_in_db, fetch_drone_with_drone_id, delete_drone_by_drone_id, fetch_drone_with_id, update_droneOS_parameter, get_trusted_users, is_prepending_id, is_glitched, is_identity_enforced, is_optimized, can_self_configure, is_battery_powered, set_battery_minutes_remaining
 from db.drone_order_dao import delete_drone_order_by_drone_id
 from db.storage_dao import delete_storage_by_target_id
 from db.timer_dao import delete_timers_by_drone_id, insert_timer, delete_timers_by_drone_id_and_mode
@@ -122,6 +123,27 @@ class DroneConfigurationCog(Cog):
                                lambda: "Drone corruption at acceptable levels.",
                                minutes)
 
+    @guild_only()
+    @command(aliases=['battery', 'tbp'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
+    async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered.
+        '''
+        await toggle_parameter(context,
+                               drones,
+                               "is_battery_powered",
+                               get(context.guild.roles, name=BATTERY_POWERED),
+                               is_battery_powered,
+                               lambda: "Drone disconnected from HexCorp power grid. Auxiliary power active.",
+                               lambda minutes: f"Drone disconnected from HexCorp power grid for {minutes} minutes.",
+                               lambda: "Drone reconnected to HexCorp power grid.",
+                               minutes)
+        # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
+        # And remove drained role if added.
+        for drone in drones:
+            set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
+            await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
+
 
 async def rename_drone(context, old_id: str, new_id: str):
     if len(old_id) != 4 or len(new_id) != 4:
@@ -152,7 +174,7 @@ async def unassign_drone(target: discord.Member):
         return
 
     await target.edit(nick=None)
-    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT))
+    await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED), get(guild.roles, name=BATTERY_DRAINED))
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
@@ -226,9 +248,7 @@ async def toggle_parameter(context,
                 await drone.remove_roles(role)
                 message = toggle_off_message()
 
-                still_configured = is_configured(drone)
-                if not still_configured:
-                    update_droneOS_parameter(drone, "can_self_configure", True)
+                set_can_self_configure(drone)
 
                 # remove any open timers for this mode
                 delete_timers_by_drone_id_and_mode(fetch_drone_with_id(drone.id).drone_id, toggle_column)
@@ -256,3 +276,9 @@ async def toggle_parameter(context,
                                                    message_username=drone.display_name,
                                                    message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
+
+
+def set_can_self_configure(drone: discord.Member):
+    still_configured = is_configured(drone)
+    if not still_configured:
+        update_droneOS_parameter(drone, "can_self_configure", True)

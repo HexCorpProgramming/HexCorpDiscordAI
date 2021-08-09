@@ -86,6 +86,9 @@ async def remove_trusted_user(context, trusted_user_name: str):
 def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> discord.Member:
     user = get(guild.members, display_name=id)
 
+    if user is None:
+        user = get(guild.members, name=id)
+
     if user is not None:
         return user
 

@@ -17,6 +17,7 @@ from db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
 from discord.utils import get
 from id_converter import convert_id_to_member
 from bot_utils import COMMAND_PREFIX
+from ai.battery import recharge_battery
 
 LOGGER = logging.getLogger('ai')
 
@@ -65,6 +66,7 @@ class StorageCog(Cog):
                     await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
                 else:
                     await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                recharge_battery(stored)
 
     @report_storage.before_loop
     async def get_storage_channel(self):
