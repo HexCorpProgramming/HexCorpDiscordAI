@@ -63,7 +63,7 @@ class BatteryCog(commands.Cog):
         inactive_drones = []
 
         for drone, remaining_minutes in self.draining_batteries.items():
-            if remaining_minutes == 0:
+            if remaining_minutes <= 0:
                 LOGGER.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
                 # Cannot alter list while iterating, so add drone to list of drones to pop after the loop.
                 inactive_drones.append(drone)
