@@ -6,7 +6,7 @@ from discord.utils import get
 from emoji import DRONE_EMOJI
 LOGGER = logging.getLogger("ai")
 
-banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+"]
+banned_words = [r"t+h+i+n+k+", r"t+h+o+u+g+h+t+", r"m+o+r+n+i+n+g+"]
 
 
 async def deny_thoughts(message: discord.Message, message_copy):
