@@ -28,7 +28,6 @@ import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
 import ai.battery as battery
-from ai.mantras import Mantra_Handler
 import ai.status_message as status_message
 import ai.thought_denial as thought_denial
 import ai.react as react
@@ -117,7 +116,6 @@ bot.add_cog(add_voice.AddVoiceCog(bot))
 bot.add_cog(trusted_user.TrustedUserCog())
 bot.add_cog(drone_os_status.DroneOsStatusCog())
 bot.add_cog(status.StatusCog(message_listeners))
-bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
