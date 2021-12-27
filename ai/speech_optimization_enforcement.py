@@ -1,7 +1,7 @@
 from db.drone_dao import is_optimized
 from ai.speech_optimization import get_status_type, StatusType
 from channels import ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, MODERATION_CATEGORY, REPETITIONS
-from ai.mantras import Mantra_Handler
+from resources import HEXCORP_MANTRA
 from bot_utils import get_id
 import logging
 
@@ -25,7 +25,7 @@ async def enforce_speech_optimization(message, message_copy):
 
     # Check if message is in any blacklists (specific channels + mantra channel if message is correct mantra).
     drone_id = get_id(message.author.display_name)
-    acceptable_mantra = f"{drone_id} :: {Mantra_Handler.current_mantra}"
+    acceptable_mantra = f"{drone_id} :: {HEXCORP_MANTRA}"
     if any([
         (message.channel.name == REPETITIONS and message_copy.content == acceptable_mantra),
         (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),

@@ -66,15 +66,11 @@ class TestSpeechOptimizationEnforcement(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await enforce_speech_optimization(message, message_copy))
         message.delete.assert_called_once()
 
-    @patch("ai.speech_optimization_enforcement.Mantra_Handler")
     @patch("ai.speech_optimization_enforcement.is_optimized", return_value=True)
-    async def test_optimized_drone_mantra(self, optimized, mantra_handler):
+    async def test_optimized_drone_mantra(self, optimized):
         '''
         should return false and not delete message if message is correct mantra in appropriate channel.
         '''
-
-        mantra_handler.current_mantra = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
-
         message = AsyncMock()
         message.content = "5890 :: Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
         message.channel.name = REPETITIONS
