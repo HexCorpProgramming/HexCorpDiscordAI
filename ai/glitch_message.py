@@ -24,7 +24,20 @@ glitcher = glitch_this.ImageGlitcher()
 
 LOGGER = logging.getLogger('ai')
 
-custom_emoji_regex = re.compile(r'<:(.*?):\d{18}>')
+protected_text_regex = re.compile(r'(<:(.*?):\d{18}>)|(\|\|.*\|\|)|(https?://\S+)')
+
+
+def escape_characters(message: str, characters_regex):
+    escaped_characters = []
+    modified_message = message
+
+    for custom_emoji in re.finditer(characters_regex, message):
+        LOGGER.debug(f"Custom emoji found at position {custom_emoji.start()}: {custom_emoji}")
+        escaped_characters.append((custom_emoji.group(), max(0, custom_emoji.start())))
+        modified_message = re.sub(pattern=characters_regex, repl='', string=modified_message, count=1)
+        LOGGER.debug(f"Custom emoji removed. Current message: {message}")
+
+    return escaped_characters, modified_message
 
 
 def glitch_text(message: str, glitch_amount=45) -> str:
@@ -37,16 +50,10 @@ def glitch_text(message: str, glitch_amount=45) -> str:
 
     message_length_with_emoji: int = len(message)
 
-    custom_emojis = []
+    # Temporarily remove custom emojis, spoilered text and hyperlinks
+    escaped_characters, modified_message = escape_characters(message, protected_text_regex)
 
-    # Temporarily remove custom emojis
-    for custom_emoji in re.finditer(custom_emoji_regex, message):
-        LOGGER.debug(f"Custom emoji found at position {custom_emoji.start()}: {custom_emoji}")
-        custom_emojis.append((custom_emoji.group(), max(0, custom_emoji.start())))
-        message = re.sub(pattern=custom_emoji_regex, repl='', string=message, count=1)
-        LOGGER.debug(f"Custom emoji removed. Current message: {message}")
-
-    message_list = list(message)
+    message_list = list(modified_message)
 
     message_length_without_emoji: int = len(message_list)
 
@@ -57,7 +64,7 @@ def glitch_text(message: str, glitch_amount=45) -> str:
 
     if message_list == []:
         LOGGER.info("Not glitching message (message empty).")
-        return ''.join(emoji for emoji, index in custom_emojis)
+        return ''.join(emoji for emoji, index in escaped_characters)
 
     # Flip case
     for i in range(0, math.ceil(len(message_list) * glitch_percentage)):
@@ -71,7 +78,7 @@ def glitch_text(message: str, glitch_amount=45) -> str:
             LOGGER.warn(f"Index error. Length of list: {len(message_list)} Index: {index}")
 
     # Add diacritics
-    max_characters_to_glitch = min(math.ceil(len(message) * glitch_percentage), MAX_DIACRITICS_PER_MESSAGE)
+    max_characters_to_glitch = min(math.ceil(len(modified_message) * glitch_percentage), MAX_DIACRITICS_PER_MESSAGE)
     LOGGER.debug(f"Adding diacritics to {max_characters_to_glitch} characters.")
     for i in range(0, min(int(max_characters_to_glitch), DISCORD_CHAR_LIMIT - message_length_with_emoji)):
         if added_diacritics + message_length_with_emoji >= DISCORD_CHAR_LIMIT:
@@ -82,7 +89,7 @@ def glitch_text(message: str, glitch_amount=45) -> str:
             added_diacritics += 1
 
     # Add custom emojis back in
-    for custom_emoji, reinsertion_index in custom_emojis:
+    for custom_emoji, reinsertion_index in escaped_characters:
         try:
             message_list[reinsertion_index:reinsertion_index] = list(custom_emoji)
         except IndexError:
