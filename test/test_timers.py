@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import roles
 from ai.timers import TimersCog
 from db.data_objects import Timer
+import test.test_utils as test_utils
 
 
 class TimersTest(unittest.IsolatedAsyncioTestCase):
@@ -47,9 +48,7 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.return_value = drone
 
         # run
-        timer_cog.process_timers.start()
-        timer_cog.process_timers.stop()
-        await timer_cog.process_timers.get_task()
+        await test_utils.start_and_await_loop(timer_cog.process_timers)
 
         # assert
         convert_id_to_member.assert_called_once_with(bot.guilds[0], timer.drone_id)
