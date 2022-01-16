@@ -24,7 +24,7 @@ glitcher = glitch_this.ImageGlitcher()
 
 LOGGER = logging.getLogger('ai')
 
-protected_text_regex = re.compile(r'(<:(.*?):\d{18}>)|(\|\|.*\|\|)|((?:https?)://\S+)')
+protected_text_regex = re.compile(r'(<:(.*?):\d{18}>)|(\|\|.*\|\|)|(https?://\S+)')
 
 
 def escape_characters(message: str, characters_regex):
