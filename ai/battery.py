@@ -133,7 +133,7 @@ class BatteryCog(commands.Cog):
         if not is_battery_powered(message.author):
             return False
 
-        id_prepending_regex = re.compile(r'(\d{4} ::)(.+)')
+        id_prepending_regex = re.compile(r'(\d{4} ::)(.+)', re.DOTALL)
 
         battery_percentage = get_battery_percent_remaining(message.author)
 

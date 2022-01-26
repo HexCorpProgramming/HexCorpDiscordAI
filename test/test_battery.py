@@ -270,7 +270,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         message = Mock()
         message_copy = Mock()
-        original_message = "5890 :: Hello."
+        original_message = "5890 :: Hello.\nBeep boop."
 
         discord_get.side_effect = self.battery_emoji_getter
 
@@ -280,22 +280,22 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_percentage.return_value = 100
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.\nBeep boop.")
 
     @patch("ai.battery.is_drone", return_value=True)
     @patch("ai.battery.is_battery_powered", return_value=True)
