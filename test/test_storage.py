@@ -252,7 +252,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         delete_storage.assert_called_once_with('elapse_storage_id')
 
     async def test_release_unauthorized(self):
-        for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.ADMIN, roles.MODERATION, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER]:
+        for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER]:
             # setup
             role_mock = Mock()
             role_mock.name = role
@@ -279,22 +279,30 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.storage.convert_id_to_member")
     @patch("ai.storage.delete_storage")
     async def test_release(self, delete_storage, convert_id_to_member, fetch_storage_by_target_id):
-        # setup
-        context = AsyncMock()
-        context.channel.name = channels.STORAGE_FACILITY
-        context.author.roles = [hive_mxtress_role]
-        context.guild = bot.guilds[0]
+        for role in roles.MODERATION_ROLES:
+            # setup
+            role_mock = Mock()
+            role_mock.name = role
 
-        stored_member = AsyncMock()
-        bot.guilds[0].get_member.return_value = stored_member
+            context = AsyncMock()
+            context.channel.name = channels.STORAGE_FACILITY
+            context.author.roles = [role_mock]
+            context.guild = bot.guilds[0]
 
-        convert_id_to_member.return_value = stored_member
+            stored_member = AsyncMock()
+            bot.guilds[0].get_member.return_value = stored_member
 
-        # run
-        self.assertTrue(await storage.release(context, '3287'))
+            convert_id_to_member.return_value = stored_member
 
-        # assert
-        convert_id_to_member.assert_called_once_with(bot.guilds[0], '3287')
-        stored_member.remove_roles.assert_called_once_with(stored_role)
-        stored_member.add_roles.assert_called_once_with(drone_role, development_role)
-        delete_storage.assert_called_once_with('elapse_storage_id')
+            # run
+            self.assertTrue(await storage.release(context, '3287'))
+
+            # assert
+            convert_id_to_member.assert_called_once_with(bot.guilds[0], '3287')
+            stored_member.remove_roles.assert_called_once_with(stored_role)
+            stored_member.add_roles.assert_called_once_with(drone_role, development_role)
+            delete_storage.assert_called_once_with('elapse_storage_id')
+
+            convert_id_to_member.reset_mock()
+            stored_member.reset_mock()
+            delete_storage.reset_mock()
