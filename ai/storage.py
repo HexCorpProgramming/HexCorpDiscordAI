@@ -46,8 +46,7 @@ class StorageCog(Cog):
         '''
         Allows the Hive Mxtress to release a drone from storage.
         '''
-        if roles.has_role(context.author, roles.HIVE_MXTRESS):
-            await release(context, drone)
+        await release(context, drone)
 
     @tasks.loop(hours=1)
     async def report_storage(self):
@@ -105,7 +104,7 @@ async def store_drone(message: discord.Message, message_copy=None):
 
     # parse message
     if not re.match(MESSAGE_FORMAT, message.content):
-        if roles.has_role(message.author, roles.HIVE_MXTRESS):
+        if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
         await message.channel.send(REJECT_MESSAGE)
         return True
@@ -164,7 +163,7 @@ async def release(context, stored_drone):
     '''
     Relase a drone from storage on command.
     '''
-    if not roles.has_role(context.author, roles.HIVE_MXTRESS) or context.channel.name != STORAGE_FACILITY:
+    if not roles.has_any_role(context.author, roles.MODERATION_ROLES) or context.channel.name != STORAGE_FACILITY:
         return False
 
     if type(store_drone) is not discord.Member:
@@ -183,7 +182,7 @@ async def release(context, stored_drone):
         delete_storage(stored_drone_data.id)
         LOGGER.debug(
             f"Drone with ID {release_id} released from storage.")
-        await context.send(f"{stored_drone.display_name} has been released from storage by the Hive Mxtress.")
+        await context.send(f"{stored_drone.display_name} has been released from storage.")
     return True
 
 
