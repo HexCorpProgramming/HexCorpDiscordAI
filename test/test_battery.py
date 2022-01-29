@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 import ai.battery as battery
 import emoji
+import test.test_utils as test_utils
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
@@ -51,9 +52,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_cog.draining_batteries = {'5890': 10}
 
-        battery_cog.track_active_battery_drain.start()
-        battery_cog.track_active_battery_drain.stop()
-        await battery_cog.track_active_battery_drain.get_task()
+        await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
 
         deincrement.assert_called_once()
         self.assertEqual(battery_cog.draining_batteries.get('5890', None), 9)
@@ -70,9 +69,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_cog.draining_batteries = {'9813': 0}
 
-        battery_cog.track_active_battery_drain.start()
-        battery_cog.track_active_battery_drain.stop()
-        await battery_cog.track_active_battery_drain.get_task()
+        await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
 
         self.assertIsNone(battery_cog.draining_batteries.get('9813', None))
 
@@ -101,9 +98,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_cog = battery.BatteryCog(bot)
 
-        battery_cog.track_drained_batteries.start()
-        battery_cog.track_drained_batteries.stop()
-        await battery_cog.track_drained_batteries.get_task()
+        await test_utils.start_and_await_loop(battery_cog.track_drained_batteries)
 
         member.add_roles.assert_called_once_with(drained_role)
 
@@ -132,9 +127,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_cog = battery.BatteryCog(bot)
 
-        battery_cog.track_drained_batteries.start()
-        battery_cog.track_drained_batteries.stop()
-        await battery_cog.track_drained_batteries.get_task()
+        await test_utils.start_and_await_loop(battery_cog.track_drained_batteries)
 
         member.remove_roles.assert_called_once_with(drained_role)
 
@@ -158,9 +151,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_cog = battery.BatteryCog(bot)
 
-        battery_cog.warn_low_battery_drones.start()
-        battery_cog.warn_low_battery_drones.stop()
-        await battery_cog.warn_low_battery_drones.get_task()
+        await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
 
         member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
         self.assertTrue('5890' in battery_cog.low_battery_drones)
@@ -187,9 +178,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_cog = battery.BatteryCog(bot)
         battery_cog.low_battery_drones = ['5890']
 
-        battery_cog.warn_low_battery_drones.start()
-        battery_cog.warn_low_battery_drones.stop()
-        await battery_cog.warn_low_battery_drones.get_task()
+        await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
 
         member.send.assert_not_called()
 
@@ -214,9 +203,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_cog = battery.BatteryCog(bot)
         battery_cog.low_battery_drones = ['5890']
 
-        battery_cog.warn_low_battery_drones.start()
-        battery_cog.warn_low_battery_drones.stop()
-        await battery_cog.warn_low_battery_drones.get_task()
+        await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
 
         member.send.assert_not_called()
         self.assertTrue('5890' not in battery_cog.low_battery_drones)
@@ -283,7 +270,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         message = Mock()
         message_copy = Mock()
-        original_message = "5890 :: Hello."
+        original_message = "5890 :: Hello.\nBeep boop."
 
         discord_get.side_effect = self.battery_emoji_getter
 
@@ -293,22 +280,22 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery_percentage.return_value = 100
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
         await battery_cog.append_battery_indicator(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.")
+        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.\nBeep boop.")
 
     @patch("ai.battery.is_drone", return_value=True)
     @patch("ai.battery.is_battery_powered", return_value=True)

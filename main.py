@@ -28,7 +28,6 @@ import ai.trusted_user as trusted_user
 import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
 import ai.battery as battery
-from ai.mantras import Mantra_Handler
 import ai.status_message as status_message
 import ai.thought_denial as thought_denial
 import ai.react as react
@@ -68,6 +67,7 @@ def set_up_logger():
 # Setup bot
 intents = discord.Intents.default()
 intents.members = True
+intents.reactions = True
 
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
@@ -117,7 +117,6 @@ bot.add_cog(add_voice.AddVoiceCog(bot))
 bot.add_cog(trusted_user.TrustedUserCog())
 bot.add_cog(drone_os_status.DroneOsStatusCog())
 bot.add_cog(status.StatusCog(message_listeners))
-bot.add_cog(Mantra_Handler(bot))
 bot.add_cog(amplify.AmplificationCog())
 bot.add_cog(temporary_dronification_cog)
 
@@ -269,6 +268,11 @@ async def on_error(event, *args, **kwargs):
     LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
     error, value, tb = sys.exc_info()
     LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
+
+
+@bot.event
+async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
+    await react.delete_marked_message(reaction, user)
 
 
 def main():

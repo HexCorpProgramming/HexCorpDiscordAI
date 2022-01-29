@@ -16,6 +16,8 @@ MAX_BATTERY_CAPACITY_HOURS = 8
 MAX_BATTERY_CAPACITY_MINS = MAX_BATTERY_CAPACITY_HOURS * 60
 HOURS_OF_RECHARGE_PER_HOUR = 4
 
+HEXCORP_MANTRA = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
+
 # Speech optimization status codes (V2).
 code_map = {
     '000': 'Statement :: Previous statement malformed. Retracting and correcting.',

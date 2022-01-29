@@ -7,6 +7,7 @@ import roles
 import channels
 import ai.orders_reporting as orders_reporting
 from db.data_objects import DroneOrder
+import test.test_utils as test_utils
 
 drone_role = Mock()
 drone_role.name = roles.DRONE
@@ -42,9 +43,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
         # run
-        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
-        orders_reporting_cog.deactivate_drones_with_completed_orders.stop()
-        await orders_reporting_cog.deactivate_drones_with_completed_orders.get_task()
+        await test_utils.start_and_await_loop(orders_reporting_cog.deactivate_drones_with_completed_orders)
 
         # assert
         convert_id_to_member.assert_called_once_with(bot.guilds[0], '5890')
@@ -57,9 +56,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
         # run
-        orders_reporting_cog.deactivate_drones_with_completed_orders.start()
-        orders_reporting_cog.deactivate_drones_with_completed_orders.stop()
-        await orders_reporting_cog.deactivate_drones_with_completed_orders.get_task()
+        await test_utils.start_and_await_loop(orders_reporting_cog.deactivate_drones_with_completed_orders)
 
         # assert
         orders_reporting_channel.send.assert_not_called()
