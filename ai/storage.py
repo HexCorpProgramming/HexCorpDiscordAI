@@ -159,16 +159,15 @@ async def store_drone(message: discord.Message, message_copy=None):
     return False
 
 
-async def release(context, stored_drone):
+async def release(context, stored_drone: str):
     '''
     Relase a drone from storage on command.
     '''
-    if not roles.has_any_role(context.author, roles.MODERATION_ROLES) or context.channel.name != STORAGE_FACILITY:
+    if not roles.has_any_role(context.author, roles.MODERATION_ROLES):
         return False
 
-    if type(store_drone) is not discord.Member:
-        release_id = stored_drone
-        stored_drone = convert_id_to_member(context.guild, stored_drone)
+    release_id = stored_drone
+    stored_drone = convert_id_to_member(context.guild, stored_drone)
 
     if stored_drone is None:
         return True

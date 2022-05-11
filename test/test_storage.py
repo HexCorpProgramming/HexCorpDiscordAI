@@ -263,18 +263,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             # run & assert
             self.assertFalse(await storage.release(context, None))
 
-    async def test_release_wrong_channel(self):
-        # setup
-        channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
-        channels_to_test.remove(channels.STORAGE_FACILITY)
-        for channel in channels_to_test:
-            context = Mock()
-            context.channel.name = channel
-            context.author.roles = [hive_mxtress_role]
-
-            # run & assert
-            self.assertFalse(await storage.release(context, None))
-
     @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
     @patch("ai.storage.convert_id_to_member")
     @patch("ai.storage.delete_storage")
