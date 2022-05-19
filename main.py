@@ -174,7 +174,7 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
-    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
+    message_copy = MessageCopy(message.content, message.author.display_name, message.author.display_avatar, message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
     # use the listeners for bot messages or user messages
