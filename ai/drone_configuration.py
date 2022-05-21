@@ -17,6 +17,7 @@ from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
 from resources import MAX_BATTERY_CAPACITY_MINS
+from ai.storage import release
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
@@ -196,6 +197,8 @@ async def emergency_release(context, drone_id: str):
     if drone_member is None:
         await context.channel.send(f"No drone with ID {drone_id} found.")
         return
+
+    await release(context, drone_id)
 
     update_droneOS_parameter(drone_member, "id_prepending", False)
     update_droneOS_parameter(drone_member, "optimized", False)
