@@ -59,7 +59,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         message.channel.send.assert_called_once_with(storage.REJECT_MESSAGE)
 
     @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
@@ -71,7 +71,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
 
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("3287 is already in storage.")
@@ -85,7 +85,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
 
@@ -98,7 +98,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('0006')
         message.channel.send.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
