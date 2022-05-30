@@ -56,3 +56,9 @@ class Timer:
     drone_id: str = None
     mode: str = None
     end_time: datetime = None
+
+
+@dataclass
+class ForbiddenWord:
+    id: str = None
+    regex: str = None
