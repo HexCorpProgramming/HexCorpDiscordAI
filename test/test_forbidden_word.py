@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import patch, Mock
-from ai.thought_denial import deny_thoughts
+from ai.forbidden_word import deny_thoughts
 from ai.data_objects import MessageCopy
 
 
 class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
-    @patch("ai.thought_denial.get")
-    @patch("ai.thought_denial.is_drone")
+    @patch("ai.forbidden_word.get")
+    @patch("ai.forbidden_word.is_drone")
     async def test_remove_short_thought_from_message(self, is_drone, emoji_get):
         """
         deny_thoughts should replace the word 'thoughts' with '\_\_\_\_\_\_\_s'. If the user is a drone.
@@ -26,8 +26,8 @@ class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(message_copy.content, "I love to have \_\_\_\_\_\_\_s.")
 
-    @patch("ai.thought_denial.get")
-    @patch("ai.thought_denial.is_drone")
+    @patch("ai.forbidden_word.get")
+    @patch("ai.forbidden_word.is_drone")
     async def test_remove_long_thought_from_message(self, is_drone, emoji_get):
         """
         deny_thoughts should replace 'thouuuugghhhhtttts' with '\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_s'. If the user is a drone.
@@ -46,8 +46,8 @@ class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(message_copy.content, "I love to have \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_s.")
 
-    @patch("ai.thought_denial.get")
-    @patch("ai.thought_denial.is_drone")
+    @patch("ai.forbidden_word.get")
+    @patch("ai.forbidden_word.is_drone")
     async def test_remove_short_think_from_message(self, is_drone, emoji_get):
         """
         deny_thoughts should replace the word 'think' with '\_\_\_\_\_' if the user is a drone.
@@ -65,8 +65,8 @@ class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(message_copy.content, "I love to \_\_\_\_\_.")
 
-    @patch("ai.thought_denial.get")
-    @patch("ai.thought_denial.is_drone")
+    @patch("ai.forbidden_word.get")
+    @patch("ai.forbidden_word.is_drone")
     async def test_remove_long_think_from_message(self, is_drone, emoji_get):
         """
         deny_thoughts should replace 'thiiiiiiiiinkkkk' with '\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_' if the user is a drone.
@@ -85,8 +85,8 @@ class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(message_copy.content, "I love to \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_.")
 
-    @patch("ai.thought_denial.is_drone")
-    async def test_thought_denial_ignores_non_drones(self, is_drone):
+    @patch("ai.forbidden_word.is_drone")
+    async def test_forbidden_word_ignores_non_drones(self, is_drone):
         """
         The thought denial module should have no effect on the messages of any non-drone (associate or Hive Mxtress).
         """
@@ -102,8 +102,8 @@ class ThoughtDenialTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(message.content, message_copy.content)
 
-    @patch("ai.thought_denial.get")
-    @patch("ai.thought_denial.is_drone")
+    @patch("ai.forbidden_word.get")
+    @patch("ai.forbidden_word.is_drone")
     async def test_replace_thinking_emoji_with_custom(self, is_drone, emoji_get):
         """
         deny_thoughts should replace all instances of the thinking emoji (🤔) in a drone's message with the custom :programmedHexDrone: emoji.

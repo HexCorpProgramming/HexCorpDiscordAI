@@ -29,7 +29,7 @@ import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
 import ai.battery as battery
 import ai.status_message as status_message
-import ai.thought_denial as thought_denial
+import ai.forbidden_word as forbidden_word
 import ai.react as react
 import ai.amplify as amplify
 import ai.temporary_dronification as temporary_dronification
@@ -97,7 +97,7 @@ message_listeners = [
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
-    thought_denial.deny_thoughts,
+    forbidden_word.deny_thoughts,
     battery_cog.append_battery_indicator,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
