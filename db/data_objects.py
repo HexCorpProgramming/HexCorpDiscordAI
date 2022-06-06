@@ -58,7 +58,7 @@ class Timer:
     end_time: datetime = None
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class ForbiddenWord:
     id: str = None
     regex: str = None
