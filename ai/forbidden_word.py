@@ -40,6 +40,9 @@ class ForbiddenWordCog(Cog):
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}add_forbidden_word name pattern', brief="Hive Mxtress")
     async def add_forbidden_word(self, context: Context, id: str, pattern: str):
+        '''
+        Lets the Hive Mxtress add a word to the list of forbidden words. The pattern is a regular expression.
+        '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
             insert_forbidden_word(ForbiddenWord(id, pattern))
             await context.send(f"Successfully added forbidden word `{id}` with pattern `{pattern}`.")
@@ -49,6 +52,9 @@ class ForbiddenWordCog(Cog):
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}list_forbidden_words', brief="Hive Mxtress")
     async def list_forbidden_words(self, context: Context):
+        '''
+        List the currently configured forbidden words.
+        '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
             card = discord.Embed(color=0xff66ff, title="Forbidden words", description="These are the currently configured forbidden words.")
             for forbidden_word in get_all_forbidden_words():
@@ -61,8 +67,11 @@ class ForbiddenWordCog(Cog):
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}remove_forbidden_word name', brief="Hive Mxtress")
     async def remove_forbidden_word(self, context: Context, id: str):
+        '''
+        Remove one of the forbidden words.
+        '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
             delete_forbidden_word_by_id(id)
-            await context.send(f"Successfully removed forbidden word with id `{id}`.")
+            await context.send(f"Successfully removed forbidden word with name `{id}`.")
         else:
             await context.send("This command can only be used by the Hive Mxtress in their office.")
