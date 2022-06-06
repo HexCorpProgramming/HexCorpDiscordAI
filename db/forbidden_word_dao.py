@@ -24,3 +24,10 @@ def get_all_forbidden_words() -> List[ForbiddenWord]:
     Finds all forbidden words.
     '''
     return map_to_objects(fetchall('SELECT * FROM forbidden_word', {}), ForbiddenWord)
+
+
+def delete_forbidden_word_by_id(id: str):
+    '''
+    Deletes the forbidden word with the given ID.
+    '''
+    change('DELETE FROM forbidden_word WHERE id = :id', {'id': id})

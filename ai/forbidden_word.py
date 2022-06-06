@@ -6,7 +6,7 @@ import re
 from channels import OFFICE
 from db.data_objects import ForbiddenWord
 from db.drone_dao import is_drone
-from db.forbidden_word_dao import get_all_forbidden_words, insert_forbidden_word
+from db.forbidden_word_dao import get_all_forbidden_words, insert_forbidden_word, delete_forbidden_word_by_id
 from discord.utils import get
 from bot_utils import COMMAND_PREFIX
 from emoji import DRONE_EMOJI
@@ -55,5 +55,14 @@ class ForbiddenWordCog(Cog):
                 card.add_field(name=forbidden_word.id, value=f"Pattern: `{forbidden_word.regex}`", inline=False)
 
             await context.send(embed=card)
+        else:
+            await context.send("This command can only be used by the Hive Mxtress in their office.")
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}remove_forbidden_word name', brief="Hive Mxtress")
+    async def remove_forbidden_word(self, context: Context, id: str):
+        if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+            delete_forbidden_word_by_id(id)
+            await context.send(f"Successfully removed forbidden word with id `{id}`.")
         else:
             await context.send("This command can only be used by the Hive Mxtress in their office.")
