@@ -80,12 +80,14 @@ orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 timers_cog = timers.TimersCog(bot)
 battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
+forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
 
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(orders_reporting_cog)
 bot.add_cog(timers_cog)
 bot.add_cog(battery_cog)
+bot.add_cog(forbidden_word_cog)
 
 # Register message listeners.
 message_listeners = [
