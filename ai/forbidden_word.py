@@ -45,3 +45,15 @@ class ForbiddenWordCog(Cog):
             await context.send(f"Successfully added forbidden word `{id}` with pattern `{pattern}`.")
         else:
             await context.send("This command can only be used by the Hive Mxtress in their office.")
+
+    @guild_only()
+    @command(usage=f'{COMMAND_PREFIX}list_forbidden_words', brief="Hive Mxtress")
+    async def list_forbidden_words(self, context: Context):
+        if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
+            card = discord.Embed(color=0xff66ff, title="Forbidden words", description="These are the currently configured forbidden words.")
+            for forbidden_word in get_all_forbidden_words():
+                card.add_field(name=forbidden_word.id, value=f"Pattern: `{forbidden_word.regex}`", inline=False)
+
+            await context.send(embed=card)
+        else:
+            await context.send("This command can only be used by the Hive Mxtress in their office.")
