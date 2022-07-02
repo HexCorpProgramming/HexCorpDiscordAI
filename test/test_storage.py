@@ -59,7 +59,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         message.channel.send.assert_called_once_with(storage.REJECT_MESSAGE)
 
     @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
@@ -71,7 +71,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
 
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("3287 is already in storage.")
@@ -85,7 +85,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
 
@@ -98,7 +98,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.author.roles = [drone_role]
 
         # run & assert
-        self.assertTrue(await storage.store_drone(message))
+        self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('0006')
         message.channel.send.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
@@ -259,18 +259,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
             context = Mock()
             context.author.roles = [role_mock]
-
-            # run & assert
-            self.assertFalse(await storage.release(context, None))
-
-    async def test_release_wrong_channel(self):
-        # setup
-        channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
-        channels_to_test.remove(channels.STORAGE_FACILITY)
-        for channel in channels_to_test:
-            context = Mock()
-            context.channel.name = channel
-            context.author.roles = [hive_mxtress_role]
 
             # run & assert
             self.assertFalse(await storage.release(context, None))

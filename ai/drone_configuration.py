@@ -17,6 +17,7 @@ from ai.identity_enforcement import identity_enforcable
 from resources import DRONE_AVATAR, HIVE_MXTRESS_USER_ID
 from channels import OFFICE
 from resources import MAX_BATTERY_CAPACITY_MINS
+from ai.storage import release
 
 from ai.commands import DroneMemberConverter, NamedParameterConverter
 
@@ -197,6 +198,8 @@ async def emergency_release(context, drone_id: str):
         await context.channel.send(f"No drone with ID {drone_id} found.")
         return
 
+    await release(context, drone_id)
+
     update_droneOS_parameter(drone_member, "id_prepending", False)
     update_droneOS_parameter(drone_member, "optimized", False)
     update_droneOS_parameter(drone_member, "identity_enforcement", False)
@@ -275,7 +278,7 @@ async def toggle_parameter(context,
                 drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.avatar.url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
 
 
