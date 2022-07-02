@@ -17,10 +17,10 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original = Mock()
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.display_avatar.url = "[link to a pretty avatar]"
         message_original.attachments = []
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url, message_original.attachments)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar, message_original.attachments)
 
         await webhook_if_message_altered(message_original, message_copy)
 
@@ -37,10 +37,10 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Some channel"
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.display_avatar.url = "[link to a pretty avatar]"
         message_original.reference = None
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar)
         message_copy.content = "This is NOT the original message."
 
         await webhook_if_message_altered(message_original, message_copy)
@@ -48,7 +48,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.delete.assert_called_once()
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
-                                             message_avatar=message_copy.avatar_url,
+                                             message_avatar=message_copy.avatar.url,
                                              message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None,
@@ -64,18 +64,18 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Some channel"
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.display_avatar.url = "[link to a pretty avatar]"
         message_original.reference = None
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
-        message_copy.avatar_url = "[link to an even prettier avatar]"
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar)
+        message_copy.avatar.url = "[link to an even prettier avatar]"
 
         await webhook_if_message_altered(message_original, message_copy)
 
         message_original.delete.assert_called_once()
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
-                                             message_avatar=message_copy.avatar_url,
+                                             message_avatar=message_copy.avatar.url,
                                              message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None,
@@ -91,10 +91,10 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Some channel"
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.display_avatar.url = "[link to a pretty avatar]"
         message_original.reference = None
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar)
         message_copy.display_name = "5890 the all powerful droney woney."
 
         await webhook_if_message_altered(message_original, message_copy)
@@ -102,7 +102,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.delete.assert_called_once()
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
-                                             message_avatar=message_copy.avatar_url,
+                                             message_avatar=message_copy.avatar.url,
                                              message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None,
@@ -121,9 +121,9 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Some channel"
         message_original.content = "Beep boop."
         message_original.author.display_name = "5890"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.display_avatar.url = "[link to a pretty avatar]"
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar)
         message_copy.display_name = "5890 the all powerful droney woney."
 
         await webhook_if_message_altered(message_original, message_copy)
@@ -131,7 +131,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.delete.assert_called_once()
         send_webhook.assert_called_once_with(message_content=message_copy.content,
                                              message_username=message_copy.display_name,
-                                             message_avatar=message_copy.avatar_url,
+                                             message_avatar=message_copy.avatar.url,
                                              message_attachments=[],
                                              channel=message_original.channel,
                                              webhook=None,
@@ -162,10 +162,10 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Channel."
         message_original.content = "Content."
         message_original.author.display_name = "Display name"
-        message_original.author.avatar_url = "Avatar URL"
+        message_original.author.display_avatar.url = "Avatar URL"
         message_original.attachments = [attachment_mock_one, attachment_mock_two]
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url, message_original.attachments)
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar, message_original.attachments)
         message_copy.content = "Altered content."
 
         await webhook_if_message_altered(message_original, message_copy)

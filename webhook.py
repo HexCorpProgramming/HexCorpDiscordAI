@@ -41,7 +41,7 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     '''
     content_differs = original.content != copy.content
     display_name_differs = original.author.display_name != copy.display_name
-    avatar_differs = original.author.avatar_url != copy.avatar_url
+    avatar_differs = original.author.display_avatar.url != copy.avatar.url
     attachments_differ = original.attachments != copy.attachments
     if any([content_differs, display_name_differs, avatar_differs, attachments_differ]):
         LOGGER.info("Proxying altered message.")
@@ -67,12 +67,12 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
                 reply_text = reply_text[:277] + "..."
 
             embed = discord.Embed(color=0xff66ff, description=reply_text)
-            embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar_url)
+            embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar)
 
         await original.delete()
         await proxy_message_by_webhook(message_content=copy.content,
                                        message_username=copy.display_name,
-                                       message_avatar=copy.avatar_url,
+                                       message_avatar=copy.avatar.url,
                                        message_attachments=attachments_as_files,
                                        channel=original.channel,
                                        webhook=None,
