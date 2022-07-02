@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch, Mock
 from ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
 from roles import HIVE_MXTRESS
@@ -24,7 +24,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         target = AsyncMock()
         target.mention = "Target Associate"
-        target.joined_at = datetime.now() - timedelta(hours=48)
+        target.joined_at = datetime.now(timezone.utc) - timedelta(hours=48)
 
         hours = 4
 
@@ -124,7 +124,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         target = AsyncMock()
         target.mention = "Target Associate"
-        target.joined_at = datetime.now() - timedelta(hours=16)
+        target.joined_at = datetime.now(timezone.utc) - timedelta(hours=16)
 
         hours = 4
 
