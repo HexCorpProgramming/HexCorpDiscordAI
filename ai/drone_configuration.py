@@ -205,7 +205,7 @@ async def emergency_release(context, drone_id: str):
     update_droneOS_parameter(drone_member, "identity_enforcement", False)
     update_droneOS_parameter(drone_member, "glitched", False)
     update_droneOS_parameter(drone_member, "is_battery_powered", False)
-    await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT), get(context.guild.roles, name=BATTERY_DRAINED))
+    await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT), get(context.guild.roles, name=BATTERY_POWERED), get(context.guild.roles, name=BATTERY_DRAINED))
     await update_display_name(drone_member)
 
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
