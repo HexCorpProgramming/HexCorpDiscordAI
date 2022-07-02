@@ -180,7 +180,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(converted_file_two.fp.read(), expected_file_two.fp.read())
 
     @patch("webhook.proxy_message_by_webhook")
-    async def test_message_(self, send_webhook):
+    async def test_message_avatar_being_set(self, send_webhook):
         """
         The webhook_if_message_altered function should create an embed when replying to a message.
         """
@@ -193,7 +193,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.channel = "Some channel"
         message_original.content = "Beep boop."
         message_original.author.display_name = "9813"
-        message_original.author.avatar_url = "[link to a pretty avatar]"
+        message_original.author.avatar.url = "[link to a pretty avatar]"
         message_original.reference = message_to_reply_to
 
         message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
@@ -205,7 +205,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         send_webhook.assert_called_once()
         self.assertEqual(send_webhook.call_args.kwargs['message_content'], message_copy.content)
         self.assertEqual(send_webhook.call_args.kwargs['message_username'], message_copy.display_name)
-        self.assertEqual(send_webhook.call_args.kwargs['message_avatar'], message_copy.avatar_url)
+        self.assertEqual(send_webhook.call_args.kwargs['message_avatar'], message_copy.avatar.url)
         self.assertEqual(send_webhook.call_args.kwargs['message_attachments'], [])
         self.assertEqual(send_webhook.call_args.kwargs['channel'], message_original.channel)
         self.assertEqual(send_webhook.call_args.kwargs['webhook'], None)

@@ -9,7 +9,7 @@ LOGGER = logging.getLogger('ai')
 
 async def enforce_identity(message: discord.Message, message_copy):
     if identity_enforcable(message.author, channel=message.channel):
-        message_copy.avatar_url = DRONE_AVATAR
+        message_copy.avatar.url = DRONE_AVATAR
 
 
 def identity_enforcable(member: discord.Member, channel=None):
