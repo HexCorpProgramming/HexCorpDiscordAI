@@ -2,6 +2,7 @@ import discord
 import logging
 from ai.data_objects import MessageCopy
 import io
+from resources import DRONE_AVATAR
 
 LOGGER = logging.getLogger("ai")
 
@@ -72,7 +73,7 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
         await original.delete()
         await proxy_message_by_webhook(message_content=copy.content,
                                        message_username=copy.display_name,
-                                       message_avatar=copy.avatar.url,
+                                       message_avatar=copy.avatar.url if not copy.identity_enforced else DRONE_AVATAR,
                                        message_attachments=attachments_as_files,
                                        channel=original.channel,
                                        webhook=None,

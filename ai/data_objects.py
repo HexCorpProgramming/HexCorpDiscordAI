@@ -14,9 +14,11 @@ class MessageCopy:
         content: Optional[str] = None,
         display_name: Optional[str] = None,
         avatar: Optional[Asset] = None,
+        identity_enforced: bool = False,
         attachments: Iterable[Attachment] = []
     ):
         self.content = content
         self.display_name = display_name
         self.avatar = avatar
+        self.identity_enforced = identity_enforced
         self.attachments = attachments

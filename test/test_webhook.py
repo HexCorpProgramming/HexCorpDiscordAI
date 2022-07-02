@@ -165,7 +165,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.author.display_avatar.url = "Avatar URL"
         message_original.attachments = [attachment_mock_one, attachment_mock_two]
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.display_avatar, message_original.attachments)
+        message_copy = MessageCopy(content=message_original.content, display_name=message_original.author.display_name, avatar=message_original.author.display_avatar, attachments=message_original.attachments)
         message_copy.content = "Altered content."
 
         await webhook_if_message_altered(message_original, message_copy)
@@ -196,8 +196,8 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.author.avatar.url = "[link to a pretty avatar]"
         message_original.reference = message_to_reply_to
 
-        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar_url)
-        message_copy.avatar_url = "[link to an even prettier avatar]"
+        message_copy = MessageCopy(message_original.content, message_original.author.display_name, message_original.author.avatar)
+        message_copy.avatar.url = "[link to an even prettier avatar]"
 
         await webhook_if_message_altered(message_original, message_copy)
 
