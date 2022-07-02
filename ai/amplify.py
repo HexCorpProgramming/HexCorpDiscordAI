@@ -27,6 +27,6 @@ class AmplificationCog(Cog):
         for drone in member_drones:
             await webhook.proxy_message_by_webhook(message_content=f"{get_id(drone.display_name)} :: {message}",
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.avatar.url if not identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
         return True
