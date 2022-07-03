@@ -21,7 +21,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         amplification_cog = amplify.AmplificationCog()
 
         drone = AsyncMock()
-        drone.avatar_url = "Pretty avatar"
+        drone.avatar.url = "Pretty avatar"
         drone.display_name = "5890"
         id_converter.return_value = set(drone)
 
