@@ -29,7 +29,7 @@ import ai.drone_os_status as drone_os_status
 import ai.glitch_message as glitch_message
 import ai.battery as battery
 import ai.status_message as status_message
-import ai.thought_denial as thought_denial
+import ai.forbidden_word as forbidden_word
 import ai.react as react
 import ai.amplify as amplify
 import ai.temporary_dronification as temporary_dronification
@@ -81,12 +81,14 @@ orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 timers_cog = timers.TimersCog(bot)
 battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
+forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
 
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(orders_reporting_cog)
 bot.add_cog(timers_cog)
 bot.add_cog(battery_cog)
+bot.add_cog(forbidden_word_cog)
 
 # Register message listeners.
 message_listeners = [
@@ -98,7 +100,7 @@ message_listeners = [
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
-    thought_denial.deny_thoughts,
+    forbidden_word.deny_thoughts,
     battery_cog.append_battery_indicator,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
