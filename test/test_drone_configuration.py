@@ -14,9 +14,10 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         pass
 
+    @patch("ai.drone_configuration.update_display_name")
     @patch("ai.drone_configuration.rename_drone_in_db")
     @patch("ai.drone_configuration.fetch_drone_with_drone_id")
-    async def test_rename_drone(self, fetch_drone_with_drone_id, rename_drone_in_db):
+    async def test_rename_drone(self, fetch_drone_with_drone_id, rename_drone_in_db, update_display_name):
         # setup
         old_id = "1234"
         new_id = "4312"
@@ -38,6 +39,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.assert_has_calls([call(new_id), call(old_id)])
         context.guild.get_member.assert_called_once_with(drone.id)
         rename_drone_in_db.assert_called_once_with(old_id, new_id)
+        update_display_name.assert_called_once_with(member)
         context.send.assert_called_once_with(f"Successfully renamed drone {old_id} to {new_id}.")
 
     @patch("ai.drone_configuration.rename_drone_in_db")
