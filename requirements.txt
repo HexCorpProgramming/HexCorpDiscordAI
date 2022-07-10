@@ -1,2 +1,2 @@
-py-cord ~= 2.0.0rc1
+py-cord ~= 2.0.0
 glitch-this ~= 1.0.2
