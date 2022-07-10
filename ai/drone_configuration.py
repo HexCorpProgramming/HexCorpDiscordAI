@@ -161,6 +161,7 @@ async def rename_drone(context, old_id: str, new_id: str):
         member = context.guild.get_member(drone.id)
         rename_drone_in_db(old_id, new_id)
         await member.edit(nick=f'⬡-Drone #{new_id}')
+        await update_display_name(member)
         await context.send(f"Successfully renamed drone {old_id} to {new_id}.")
     else:
         await context.send(f"ID {new_id} already in use.")
@@ -205,7 +206,7 @@ async def emergency_release(context, drone_id: str):
     update_droneOS_parameter(drone_member, "identity_enforcement", False)
     update_droneOS_parameter(drone_member, "glitched", False)
     update_droneOS_parameter(drone_member, "is_battery_powered", False)
-    await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT), get(context.guild.roles, name=BATTERY_DRAINED))
+    await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT), get(context.guild.roles, name=BATTERY_POWERED), get(context.guild.roles, name=BATTERY_DRAINED))
     await update_display_name(drone_member)
 
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
@@ -278,7 +279,7 @@ async def toggle_parameter(context,
                 drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.avatar_url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.avatar.url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
 
 

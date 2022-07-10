@@ -68,6 +68,7 @@ def set_up_logger():
 intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
+intents.message_content = True
 
 bot = Bot(command_prefix=COMMAND_PREFIX, case_insensitive=True, intents=intents, guild_subscriptions=True)
 bot.remove_command("help")
@@ -176,7 +177,7 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
-    message_copy = MessageCopy(message.content, message.author.display_name, message.author.avatar_url, message.attachments)
+    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments)
 
     LOGGER.info("Beginning message listener stack execution.")
     # use the listeners for bot messages or user messages

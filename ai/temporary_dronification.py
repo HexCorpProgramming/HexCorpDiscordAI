@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 
 import discord
@@ -68,7 +68,7 @@ class TemporaryDronificationCog(Cog):
             return
 
         # target has to have been on the server for more than 24 hours
-        if target.joined_at > (datetime.now() - timedelta(hours=24)):
+        if target.joined_at > (datetime.now(timezone.utc) - timedelta(hours=24)):
             await context.reply("Target has not been on the server for more than 24 hours. Can not temporarily dronify.")
             return
 

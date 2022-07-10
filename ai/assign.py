@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
 import discord
@@ -31,7 +31,7 @@ async def check_for_assignment_message(message: discord.Message, message_copy=No
         return False
 
     # member has not been on the server for the required period
-    if message.author.joined_at > datetime.now() - timedelta(hours=24):
+    if message.author.joined_at > datetime.now(timezone.utc) - timedelta(hours=24):
         await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
         return False
 

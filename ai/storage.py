@@ -107,7 +107,7 @@ async def store_drone(message: discord.Message, message_copy=None):
         if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
         await message.channel.send(REJECT_MESSAGE)
-        return True
+        return False
 
     LOGGER.debug('Message is valid for storage.')
     [(drone_id, target_id, time, purpose)] = re.findall(
@@ -116,17 +116,17 @@ async def store_drone(message: discord.Message, message_copy=None):
     # check if drone is already in storage
     if fetch_storage_by_target_id(target_id) is not None:
         await message.channel.send(f'{target_id} is already in storage.')
-        return True
+        return False
 
     # validate time
     if not 0 < int(time) <= 24:
         await message.channel.send(f'{time} is not between 0 and 24.')
-        return True
+        return False
 
     # check if target is the Hive Mxtress
     if target_id == '0006':
         await message.channel.send('You cannot store the Hive Mxtress, silly drone.')
-        return True
+        return False
 
     # find target drone
     drone_to_store = fetch_drone_with_drone_id(target_id)
@@ -134,7 +134,7 @@ async def store_drone(message: discord.Message, message_copy=None):
     # if no drone was stored answer with error
     if drone_to_store is None:
         await message.channel.send(f'Drone with ID {target_id} could not be found.')
-        return True
+        return False
 
     # store it
     stored_role = get(message.guild.roles, name=roles.STORED)

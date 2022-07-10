@@ -16,4 +16,4 @@ ai.db
 ai.db-journal
 
 # Coverage data
-.coverage
+.coverage*

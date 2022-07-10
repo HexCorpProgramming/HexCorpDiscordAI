@@ -2,6 +2,7 @@ import discord
 import logging
 from ai.data_objects import MessageCopy
 import io
+from resources import DRONE_AVATAR
 
 LOGGER = logging.getLogger("ai")
 
@@ -41,9 +42,9 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     '''
     content_differs = original.content != copy.content
     display_name_differs = original.author.display_name != copy.display_name
-    avatar_differs = original.author.avatar_url != copy.avatar_url
+    avatar_differs = original.author.display_avatar.url != copy.avatar.url
     attachments_differ = original.attachments != copy.attachments
-    if any([content_differs, display_name_differs, avatar_differs, attachments_differ]):
+    if any([content_differs, display_name_differs, avatar_differs, attachments_differ, copy.identity_enforced]):
         LOGGER.info("Proxying altered message.")
 
         LOGGER.info("Converting all attachments")
@@ -56,17 +57,23 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
                 attachments_as_files.append(discord.File(io.BytesIO(await attachment.read()), filename=attachment.filename))
         LOGGER.info("Attachments converted.")
 
+        # create an embed when responding to another message
         embed = None
         if original.reference:
             referenced_message: discord.Message = original.reference.resolved
             reply_text = f"[Reply to]({referenced_message.jump_url}): {referenced_message.content}"
+
+            # trim down overly long messages
+            if len(reply_text) > 277:
+                reply_text = reply_text[:277] + "..."
+
             embed = discord.Embed(color=0xff66ff, description=reply_text)
-            embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar_url)
+            embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar)
 
         await original.delete()
         await proxy_message_by_webhook(message_content=copy.content,
                                        message_username=copy.display_name,
-                                       message_avatar=copy.avatar_url,
+                                       message_avatar=copy.avatar.url if not copy.identity_enforced else DRONE_AVATAR,
                                        message_attachments=attachments_as_files,
                                        channel=original.channel,
                                        webhook=None,
