@@ -44,7 +44,7 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     display_name_differs = original.author.display_name != copy.display_name
     avatar_differs = original.author.display_avatar.url != copy.avatar.url
     attachments_differ = original.attachments != copy.attachments
-    if any([content_differs, display_name_differs, avatar_differs, attachments_differ]):
+    if any([content_differs, display_name_differs, avatar_differs, attachments_differ, copy.identity_enforced]):
         LOGGER.info("Proxying altered message.")
 
         LOGGER.info("Converting all attachments")
