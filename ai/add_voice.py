@@ -5,7 +5,7 @@ from discord.ext.commands import Cog, command, dm_only
 
 from bot_utils import COMMAND_PREFIX
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 NOT_A_MEMBER = 'Access denied: you are not a member of this server.'
@@ -29,13 +29,13 @@ class AddVoiceCog(Cog):
 
 
 async def add_voice(context, guild: discord.Guild):
-    member = guild.get_member(context.channel.recipient.id)
+    member = guild.get_member(context.message.author.id)
 
     if member is None:
         await context.channel.send(NOT_A_MEMBER)
         return
 
-    if member.joined_at > datetime.now() - timedelta(weeks=2):
+    if member.joined_at > datetime.now(timezone.utc) - timedelta(weeks=2):
         await context.channel.send(ACCESS_DENIED)
         return
     if has_role(member, VOICE):
