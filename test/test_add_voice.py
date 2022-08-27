@@ -1,7 +1,7 @@
 import unittest
 import ai.add_voice as add_voice
 from unittest.mock import Mock, AsyncMock
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from roles import VOICE
 
 
@@ -14,11 +14,11 @@ class AddVoiceTest(unittest.IsolatedAsyncioTestCase):
     async def test_not_long_enough(self):
         # setup
         context = AsyncMock()
-        context.channel.recipient.id = 1234
+        context.message.author.id = 1234
 
         member = AsyncMock()
         member.id = 1234
-        member.joined_at = datetime.now() - timedelta(weeks=1)
+        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=1)
         member.roles = []
 
         guild = Mock()
@@ -36,11 +36,11 @@ class AddVoiceTest(unittest.IsolatedAsyncioTestCase):
     async def test_already_granted(self):
         # setup
         context = AsyncMock()
-        context.channel.recipient.id = 1234
+        context.message.author.id = 1234
 
         member = AsyncMock()
         member.id = 1234
-        member.joined_at = datetime.now() - timedelta(weeks=13)
+        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
         member.roles = [voice_role]
 
         guild = Mock()
@@ -58,11 +58,11 @@ class AddVoiceTest(unittest.IsolatedAsyncioTestCase):
     async def test_granted(self):
         # setup
         context = AsyncMock()
-        context.channel.recipient.id = 1234
+        context.message.author.id = 1234
 
         member = AsyncMock()
         member.id = 1234
-        member.joined_at = datetime.now() - timedelta(weeks=13)
+        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
         member.roles = []
 
         guild = Mock()
@@ -80,11 +80,11 @@ class AddVoiceTest(unittest.IsolatedAsyncioTestCase):
     async def test_not_a_member(self):
         # setup
         context = AsyncMock()
-        context.channel.recipient.id = 1234
+        context.message.author.id = 1234
 
         member = AsyncMock()
         member.id = 1234
-        member.joined_at = datetime.now() - timedelta(weeks=13)
+        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
         member.roles = []
 
         guild = Mock()
