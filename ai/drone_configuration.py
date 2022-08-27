@@ -44,7 +44,7 @@ class DroneConfigurationCog(Cog):
             await emergency_release(context, drone_id)
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}unassign", brief="DroneOS")
+    @command(brief="DroneOS", usage=f"{COMMAND_PREFIX}unassign")
     async def unassign(self, context):
         '''
         Allows a drone to go back to the status of an Associate.
@@ -52,7 +52,7 @@ class DroneConfigurationCog(Cog):
         await unassign_drone(context.bot.guilds[0].get_member(context.author.id))
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}rename 1234 3412', brief="Hive Mxtress")
+    @command(brief="Hive Mxtress", usage=f'{COMMAND_PREFIX}rename 1234 3412')
     async def rename(self, context, old_id, new_id):
         '''
         Allows the Hive Mxtress to change the ID of a drone.
