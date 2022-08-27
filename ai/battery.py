@@ -1,4 +1,4 @@
-from bot_utils import get_id
+from bot_utils import COMMAND_PREFIX, get_id
 from discord.ext import tasks, commands
 from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, get_battery_minutes_remaining, set_battery_minutes_remaining
 from id_converter import convert_ids_to_members
@@ -22,7 +22,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @commands.command()
+    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief="Hive Mxtress")
     async def energize(self, context, *drone_ids):
         '''
         Hive Mxtress only command.
