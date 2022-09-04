@@ -35,7 +35,7 @@ MINUTES_PARAMETER = "minutes"
 class DroneConfigurationCog(Cog):
 
     @guild_only()
-    @command(brief="DroneOS", usage=f'{COMMAND_PREFIX}emergency_release 9813')
+    @command(brief=["DroneOS"], usage=f'{COMMAND_PREFIX}emergency_release 9813')
     async def emergency_release(self, context, drone_id: str):
         '''
         Lets moderators disable all DroneOS restrictions currently active on a drone.
@@ -44,7 +44,7 @@ class DroneConfigurationCog(Cog):
             await emergency_release(context, drone_id)
 
     @dm_only()
-    @command(brief="DroneOS", usage=f"{COMMAND_PREFIX}unassign")
+    @command(brief=["DroneOS"], usage=f"{COMMAND_PREFIX}unassign")
     async def unassign(self, context):
         '''
         Allows a drone to go back to the status of an Associate.
@@ -52,7 +52,7 @@ class DroneConfigurationCog(Cog):
         await unassign_drone(context.bot.guilds[0].get_member(context.author.id))
 
     @guild_only()
-    @command(brief="Hive Mxtress", usage=f'{COMMAND_PREFIX}rename 1234 3412')
+    @command(brief=["Hive Mxtress"], usage=f'{COMMAND_PREFIX}rename 1234 3412')
     async def rename(self, context, old_id, new_id):
         '''
         Allows the Hive Mxtress to change the ID of a drone.
@@ -61,7 +61,7 @@ class DroneConfigurationCog(Cog):
             await rename_drone(context, old_id, new_id)
 
     @guild_only()
-    @command(aliases=['tid'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_id_prepending 5890 9813')
+    @command(aliases=['tid'], brief=["DroneOS"], usage=f'{COMMAND_PREFIX}toggle_id_prepending 5890 9813')
     async def toggle_id_prepending(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Allows the Hive Mxtress or trusted users to enforce mandatory ID prepending upon specified drones.
@@ -77,7 +77,7 @@ class DroneConfigurationCog(Cog):
                                minutes)
 
     @guild_only()
-    @command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_speech_optimization 5890 9813')
+    @command(aliases=['optimize', 'toggle_speech_op', 'tso'], brief=["DroneOS"], usage=f'{COMMAND_PREFIX}toggle_speech_optimization 5890 9813')
     async def toggle_speech_optimization(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Lets the Hive Mxtress or trusted users toggle drone speech optimization.
@@ -93,7 +93,7 @@ class DroneConfigurationCog(Cog):
                                minutes)
 
     @guild_only()
-    @command(aliases=['tei'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_enforce_identity 5890 9813')
+    @command(aliases=['tei'], brief=["DroneOS"], usage=f'{COMMAND_PREFIX}toggle_enforce_identity 5890 9813')
     async def toggle_enforce_identity(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
@@ -109,7 +109,7 @@ class DroneConfigurationCog(Cog):
                                minutes)
 
     @guild_only()
-    @command(aliases=['glitch', 'tdg'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_drone_glitch 9813 3287')
+    @command(aliases=['glitch', 'tdg'], brief=["DroneOS"], usage=f'{COMMAND_PREFIX}toggle_drone_glitch 9813 3287')
     async def toggle_drone_glitch(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Lets the Hive Mxtress or trusted users toggle drone glitch levels.
@@ -125,7 +125,7 @@ class DroneConfigurationCog(Cog):
                                minutes)
 
     @guild_only()
-    @command(aliases=['battery', 'tbp'], brief="DroneOS", usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
+    @command(aliases=['battery', 'tbp'], brief=["DroneOS"], usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
     async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered.

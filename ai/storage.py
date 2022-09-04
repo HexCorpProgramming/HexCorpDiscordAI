@@ -41,7 +41,7 @@ class StorageCog(Cog):
         self.stored_role = None
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
+    @command(usage=f'{COMMAND_PREFIX}release 9813', brief=["Hive Mxtress"])
     async def release(self, context, drone):
         '''
         Allows the Hive Mxtress to release a drone from storage.

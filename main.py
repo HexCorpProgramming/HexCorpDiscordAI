@@ -157,12 +157,16 @@ async def help(context):
         command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
-        if command.brief == "Hive Mxtress":
-            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
-        elif command.brief == "DroneOS":
-            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
-        else:
-            commands_card.add_field(name=command_name, value=command_description, inline=False)
+        if command.brief is not None:
+            if "DM-Only" in command.brief:
+                command_description += "\n This command can only be used in DMs with the AI."
+
+            if "Hive Mxtress" in command.brief:
+                Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
+            elif "DroneOS" in command.brief:
+                droneOS_card.add_field(name=command_name, value=command_description, inline=False)
+            else:
+                commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     await context.author.send(embed=commands_card)
     await context.author.send(embed=droneOS_card)

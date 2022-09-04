@@ -12,7 +12,7 @@ from ai.identity_enforcement import identity_enforcable
 class AmplificationCog(Cog):
 
     @guild_only()
-    @command(brief="Hive Mxtress", usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
+    @command(brief=["Hive Mxtress"], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
     async def amplify(self, context, message: str, target_channel: discord.TextChannel, *drones):
         '''
         Allows the Hive Mxtress to speak through other drones.

@@ -14,7 +14,7 @@ LOGGER = logging.getLogger('ai')
 class TrustedUserCog(Cog):
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief="DroneOS")
+    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief=["DroneOS"])
     async def add_trusted_user(self, context, user_name: str):
         '''
         Add user with the given nickname as a trusted user.
@@ -24,7 +24,7 @@ class TrustedUserCog(Cog):
         await add_trusted_user(context, user_name)
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief="DroneOS")
+    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=["DroneOS"])
     async def remove_trusted_user(self, context, user_name: str):
         '''
         Remove a given user from the list of trusted users.

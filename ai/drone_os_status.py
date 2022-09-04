@@ -13,7 +13,7 @@ LOGGER = logging.getLogger('ai')
 class DroneOsStatusCog(Cog):
 
     @dm_only()
-    @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief="DroneOS")
+    @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief=["DroneOS", "DM-Only"])
     async def drone_status(self, context, drone_id: str):
         '''
         Displays all the DroneOS information you have access to about a drone.

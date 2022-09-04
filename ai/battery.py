@@ -22,7 +22,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief="Hive Mxtress")
+    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief=["Hive Mxtress"])
     async def energize(self, context, *drone_ids):
         '''
         Hive Mxtress only command.
