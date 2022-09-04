@@ -37,7 +37,7 @@ class BatteryCog(commands.Cog):
 
             LOGGER.info(f"Energizing {drone.display_name}")
 
-            set_battery_minutes_remaining(member = drone, minutes = MAX_BATTERY_CAPACITY_MINS)
+            set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
                                                    message_username=drone.display_name,
