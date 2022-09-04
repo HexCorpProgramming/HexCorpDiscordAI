@@ -4,6 +4,7 @@ import sys
 import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
+from discord.ext.commands.errors import PrivateMessageOnly
 from traceback import TracebackException
 from datetime import datetime, timedelta
 import asyncio
@@ -265,6 +266,8 @@ async def on_command_error(context, error):
         # missing arguments should not be that noisy and can be reported to the user
         LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
         await context.send(f"`{error.param.name}` is a required argument that is missing.")
+    elif isinstance(error, PrivateMessageOnly):
+        await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
     else:
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
