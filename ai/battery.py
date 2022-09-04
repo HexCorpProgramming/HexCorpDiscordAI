@@ -41,7 +41,7 @@ class BatteryCog(commands.Cog):
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
                                                    message_username=drone.display_name,
-                                                   message_avatar=DRONE_AVATAR if identity_enforcable(drone, context=context) else drone.avatar_url,
+                                                   message_avatar=DRONE_AVATAR if identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
                                                    webhook=channel_webhook)
 
     async def start_battery_drain(self, message, message_copy=None):
