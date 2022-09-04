@@ -6,7 +6,8 @@ from roles import has_role, DRONE
 
 
 PATTERN_REACTS = {
-    r'^(\d{4}) :: Code `109` :: .*': 'gooddrone'
+    r'^(\d{4}) :: Code `109` :: .*': 'gooddrone',
+    r'^(\d{4}) :: <.*> :: Code `109` :: .*': 'gooddrone'
 }
 
 
