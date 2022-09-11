@@ -4,7 +4,7 @@ import webhook
 from bot_utils import COMMAND_PREFIX, get_id
 from channels import OFFICE
 from discord.ext.commands import Cog, command, guild_only
-from resources import DRONE_AVATAR
+from resources import BRIEF_HIVE_MXTRESS, DRONE_AVATAR
 from roles import HIVE_MXTRESS, has_role
 from ai.identity_enforcement import identity_enforcable
 
@@ -12,7 +12,7 @@ from ai.identity_enforcement import identity_enforcable
 class AmplificationCog(Cog):
 
     @guild_only()
-    @command(brief=["Hive Mxtress"], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
+    @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
     async def amplify(self, context, message: str, target_channel: discord.TextChannel, *drones):
         '''
         Allows the Hive Mxtress to speak through other drones.

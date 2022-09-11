@@ -42,7 +42,7 @@ from bot_utils import COMMAND_PREFIX
 from db import database
 from db import drone_dao
 # Constants
-from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
+from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
 # Data objects
 from ai.data_objects import MessageCopy
 
@@ -159,12 +159,12 @@ async def help(context):
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
         if command.brief is not None:
-            if "DM-Only" in command.brief:
+            if BRIEF_DM_ONLY in command.brief:
                 command_description += "\n This command can only be used in DMs with the AI."
 
-            if "Hive Mxtress" in command.brief:
+            if BRIEF_HIVE_MXTRESS in command.brief:
                 Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
-            elif "DroneOS" in command.brief:
+            elif BRIEF_DRONE_OS in command.brief:
                 droneOS_card.add_field(name=command_name, value=command_description, inline=False)
             else:
                 commands_card.add_field(name=command_name, value=command_description, inline=False)
