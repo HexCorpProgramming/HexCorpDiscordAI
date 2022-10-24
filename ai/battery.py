@@ -1,3 +1,4 @@
+from copy import deepcopy
 from bot_utils import COMMAND_PREFIX, get_id
 from discord.ext import tasks, commands
 from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, get_battery_minutes_remaining, set_battery_minutes_remaining
@@ -61,20 +62,28 @@ class BatteryCog(commands.Cog):
         LOGGER.info("Draining battery from active drones.")
 
         inactive_drones = []
+        # make a copy in case there is simultaneous modification
+        draining_batteries = deepcopy(self.draining_batteries)
 
-        for drone, remaining_minutes in self.draining_batteries.items():
+        for drone, remaining_minutes in draining_batteries.items():
+            if drone is None:
+                LOGGER.warn("drone is None; skipping")
+                continue
+
             if remaining_minutes <= 0:
                 LOGGER.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
                 # Cannot alter list while iterating, so add drone to list of drones to pop after the loop.
                 inactive_drones.append(drone)
             else:
                 LOGGER.info(f"Draining 1 minute worth of charge from {drone}")
-                self.draining_batteries[drone] = remaining_minutes - 1
+                draining_batteries[drone] = remaining_minutes - 1
                 deincrement_battery_minutes_remaining(drone_id=drone)
 
         for inactive_drone in inactive_drones:
             LOGGER.info(f"Removing {inactive_drone} from drain list.")
-            self.draining_batteries.pop(inactive_drone)
+            draining_batteries.pop(inactive_drone)
+
+        self.draining_batteries = draining_batteries
 
     @tasks.loop(minutes=1)
     async def track_drained_batteries(self):
