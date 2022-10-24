@@ -72,3 +72,43 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
         fetch_drone_with_drone_id.assert_called_once_with('9813')
         get_trusted_users.assert_called_once_with(drone.id)
+
+    @patch("ai.drone_os_status.get_trusted_users")
+    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    def test_status_on_self(self, fetch_drone_with_drone_id, get_trusted_users):
+        # setup
+        drone = Mock()
+        drone.id = 7263486234
+        drone.optimized = True
+        drone.glitched = False
+        drone.id_prepending = False
+        drone.battery_minutes = 300
+
+        fetch_drone_with_drone_id.return_value = drone
+        trusted_user_id = 7263486233
+        get_trusted_users.return_value = [trusted_user_id]
+
+        trusted_user = Mock()
+        trusted_user.display_name = "A trustworthy user"
+
+        context = Mock()
+        context.bot.get_user.return_value = trusted_user
+
+        # run
+        status = get_status('9813', drone.id, context)
+
+        # assert
+        self.assertIsNotNone(status)
+        self.assertEqual("Welcome, ⬡-Drone #9813", status.description)
+        self.assertEqual("Optimized", status.fields[0].name)
+        self.assertEqual("Enabled", status.fields[0].value)
+        self.assertEqual("Glitched", status.fields[1].name)
+        self.assertEqual("Disabled", status.fields[1].value)
+        self.assertEqual("ID prepending required", status.fields[2].name)
+        self.assertEqual("Disabled", status.fields[2].value)
+        self.assertEqual("Trusted users", status.fields[6].name)
+        self.assertEqual(str(["A trustworthy user"]), status.fields[6].value)
+
+        fetch_drone_with_drone_id.assert_called_once_with('9813')
+        get_trusted_users.assert_called_once_with(drone.id)
+        context.bot.get_user.assert_called_once_with(trusted_user_id)
