@@ -1,4 +1,5 @@
 import discord
+from resources import BRIEF_DM_ONLY
 from roles import VOICE, has_role
 from discord.utils import get
 from discord.ext.commands import Cog, command, dm_only
@@ -20,7 +21,7 @@ class AddVoiceCog(Cog):
         self.bot = bot
 
     @dm_only()
-    @command(usage=f'{COMMAND_PREFIX}request_voice_role')
+    @command(usage=f'{COMMAND_PREFIX}request_voice_role', brief=[BRIEF_DM_ONLY])
     async def request_voice_role(self, context):
         '''
         Gives you the Voice role and thus access to voice channels if you have been on the server for more than 2 weeks.

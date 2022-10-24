@@ -4,7 +4,7 @@ from discord.ext import tasks, commands
 from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, get_battery_minutes_remaining, set_battery_minutes_remaining
 from id_converter import convert_ids_to_members
 import logging
-from resources import MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR, HOURS_OF_RECHARGE_PER_HOUR
+from resources import BRIEF_HIVE_MXTRESS, MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR, HOURS_OF_RECHARGE_PER_HOUR
 from roles import has_role, BATTERY_POWERED, BATTERY_DRAINED, HIVE_MXTRESS
 from discord.utils import get
 import webhook
@@ -23,7 +23,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief="Hive Mxtress")
+    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief=[BRIEF_HIVE_MXTRESS])
     async def energize(self, context, *drone_ids):
         '''
         Hive Mxtress only command.

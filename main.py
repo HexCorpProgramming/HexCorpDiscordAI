@@ -4,6 +4,7 @@ import sys
 import logging
 from logging import handlers
 from discord.ext.commands import Bot, MissingRequiredArgument
+from discord.ext.commands.errors import PrivateMessageOnly
 from traceback import TracebackException
 from datetime import datetime, timedelta
 import asyncio
@@ -41,7 +42,7 @@ from bot_utils import COMMAND_PREFIX
 from db import database
 from db import drone_dao
 # Constants
-from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
+from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
 # Data objects
 from ai.data_objects import MessageCopy
 
@@ -157,12 +158,16 @@ async def help(context):
         command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
-        if command.brief == "Hive Mxtress":
-            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
-        elif command.brief == "DroneOS":
-            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
-        else:
-            commands_card.add_field(name=command_name, value=command_description, inline=False)
+        if command.brief is not None:
+            if BRIEF_DM_ONLY in command.brief:
+                command_description += "\n This command can only be used in DMs with the AI."
+
+            if BRIEF_HIVE_MXTRESS in command.brief:
+                Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
+            elif BRIEF_DRONE_OS in command.brief:
+                droneOS_card.add_field(name=command_name, value=command_description, inline=False)
+            else:
+                commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     await context.author.send(embed=commands_card)
     await context.author.send(embed=droneOS_card)
@@ -261,6 +266,8 @@ async def on_command_error(context, error):
         # missing arguments should not be that noisy and can be reported to the user
         LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
         await context.send(f"`{error.param.name}` is a required argument that is missing.")
+    elif isinstance(error, PrivateMessageOnly):
+        await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
     else:
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))

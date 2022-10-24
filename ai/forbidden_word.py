@@ -10,6 +10,7 @@ from db.forbidden_word_dao import get_all_forbidden_words, insert_forbidden_word
 from discord.utils import get
 from bot_utils import COMMAND_PREFIX
 from emoji import DRONE_EMOJI
+from resources import BRIEF_HIVE_MXTRESS
 from roles import HIVE_MXTRESS, has_role
 LOGGER = logging.getLogger("ai")
 
@@ -38,7 +39,7 @@ class ForbiddenWordCog(Cog):
         self.bot = bot
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}add_forbidden_word name pattern', brief="Hive Mxtress")
+    @command(usage=f'{COMMAND_PREFIX}add_forbidden_word name pattern', brief=[BRIEF_HIVE_MXTRESS])
     async def add_forbidden_word(self, context: Context, id: str, pattern: str):
         '''
         Lets the Hive Mxtress add a word to the list of forbidden words. The pattern is a regular expression.
@@ -50,7 +51,7 @@ class ForbiddenWordCog(Cog):
             await context.send("This command can only be used by the Hive Mxtress in their office.")
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}list_forbidden_words', brief="Hive Mxtress")
+    @command(usage=f'{COMMAND_PREFIX}list_forbidden_words', brief=[BRIEF_HIVE_MXTRESS])
     async def list_forbidden_words(self, context: Context):
         '''
         List the currently configured forbidden words.
@@ -65,7 +66,7 @@ class ForbiddenWordCog(Cog):
             await context.send("This command can only be used by the Hive Mxtress in their office.")
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}remove_forbidden_word name', brief="Hive Mxtress")
+    @command(usage=f'{COMMAND_PREFIX}remove_forbidden_word name', brief=[BRIEF_HIVE_MXTRESS])
     async def remove_forbidden_word(self, context: Context, id: str):
         '''
         Remove one of the forbidden words.

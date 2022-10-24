@@ -7,6 +7,7 @@ from uuid import uuid4
 import discord
 from discord.ext.commands import Cog, command, guild_only
 from discord.ext import tasks
+from resources import BRIEF_HIVE_MXTRESS
 import roles
 from channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from db.data_objects import Storage as StorageDO
@@ -41,7 +42,7 @@ class StorageCog(Cog):
         self.stored_role = None
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}release 9813', brief="Hive Mxtress")
+    @command(usage=f'{COMMAND_PREFIX}release 9813', brief=[BRIEF_HIVE_MXTRESS])
     async def release(self, context, drone):
         '''
         Allows the Hive Mxtress to release a drone from storage.
