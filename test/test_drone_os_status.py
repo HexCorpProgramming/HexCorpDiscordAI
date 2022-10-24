@@ -10,8 +10,10 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         # setup
         fetch_drone_with_drone_id.return_value = None
 
+        context = Mock()
+
         # run
-        status = get_status('9814', 782638723)
+        status = get_status('9814', 782638723, context)
 
         # assert
         self.assertIsNone(status)
@@ -27,8 +29,10 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.return_value = drone
         get_trusted_users.return_value = []
 
+        context = Mock()
+
         # run
-        status = get_status('9813', 782638723)
+        status = get_status('9813', 782638723, context)
 
         # assert
         self.assertIsNotNone(status)
@@ -51,8 +55,10 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         requesting_user_id = 782638723
         get_trusted_users.return_value = [requesting_user_id]
 
+        context = Mock()
+
         # run
-        status = get_status('9813', requesting_user_id)
+        status = get_status('9813', requesting_user_id, context)
 
         # assert
         self.assertIsNotNone(status)
