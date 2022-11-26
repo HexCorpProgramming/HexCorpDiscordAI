@@ -66,6 +66,10 @@ class BatteryCog(commands.Cog):
 
         for drone in set(context.message.mentions) | convert_ids_to_members(context.guild, drone_ids):
 
+            if not is_battery_powered(drone=drone):
+                await context.send(f"{drone.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
+                continue
+
             LOGGER.info(f"Draining {drone.display_name}")
 
             drain_battery(member=drone)
