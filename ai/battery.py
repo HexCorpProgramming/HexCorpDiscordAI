@@ -1,17 +1,25 @@
-from copy import deepcopy
-from bot_utils import COMMAND_PREFIX, get_id
-from discord.ext import tasks, commands
-from db.drone_dao import is_drone, is_battery_powered, deincrement_battery_minutes_remaining, get_battery_percent_remaining, get_all_drone_batteries, get_battery_minutes_remaining, set_battery_minutes_remaining
-from id_converter import convert_ids_to_members
 import logging
-from resources import BRIEF_HIVE_MXTRESS, MAX_BATTERY_CAPACITY_MINS, DRONE_AVATAR, HOURS_OF_RECHARGE_PER_HOUR
-from roles import has_role, BATTERY_POWERED, BATTERY_DRAINED, HIVE_MXTRESS
-from discord.utils import get
-import webhook
-from ai.identity_enforcement import identity_enforcable
-import emoji
 import re
+from copy import deepcopy
 from typing import Dict, List
+
+import emoji
+import webhook
+from bot_utils import COMMAND_PREFIX, get_id
+from db.drone_dao import (deincrement_battery_minutes_remaining,
+                          get_all_drone_batteries,
+                          get_battery_minutes_remaining,
+                          get_battery_percent_remaining, is_battery_powered,
+                          is_drone, set_battery_minutes_remaining)
+from discord import Member
+from discord.ext import commands, tasks
+from discord.utils import get
+from id_converter import convert_ids_to_members
+from resources import (BRIEF_HIVE_MXTRESS, DRONE_AVATAR,
+                       HOURS_OF_RECHARGE_PER_HOUR, MAX_BATTERY_CAPACITY_MINS)
+from roles import BATTERY_DRAINED, BATTERY_POWERED, HIVE_MXTRESS, has_role
+
+from ai.identity_enforcement import identity_enforcable
 
 LOGGER = logging.getLogger('ai')
 
@@ -41,6 +49,29 @@ class BatteryCog(commands.Cog):
             set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
+                                                   message_username=drone.display_name,
+                                                   message_avatar=DRONE_AVATAR if identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
+                                                   webhook=channel_webhook)
+
+    @commands.command(usage=f"{COMMAND_PREFIX}drain 3287", brief=[BRIEF_HIVE_MXTRESS])
+    async def drain(self, context, *drone_ids):
+        '''
+        Hive Mxtress only command.
+        Drains a drone's battery by 10%.
+        '''
+        if not has_role(context.message.author, HIVE_MXTRESS):
+            return
+
+        LOGGER.info("Drain command envoked.")
+
+        for drone in set(context.message.mentions) | convert_ids_to_members(context.guild, drone_ids):
+
+            LOGGER.info(f"Draining {drone.display_name}")
+
+            drain_battery(member=drone)
+            percentage_remaining = get_battery_percent_remaining(drone=drone)
+            channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
+            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
                                                    message_username=drone.display_name,
                                                    message_avatar=DRONE_AVATAR if identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
                                                    webhook=channel_webhook)
@@ -177,3 +208,8 @@ def recharge_battery(storage_record):
     except Exception as e:
         LOGGER.error(f"Something went wrong with recharging drone: {e}")
         return False
+
+
+def drain_battery(member: Member):
+    minutes_remaining = get_battery_minutes_remaining(member=member)
+    set_battery_minutes_remaining(member=member, minutes=minutes_remaining - MAX_BATTERY_CAPACITY_MINS / 10)
