@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 import ai.battery as battery
 import emoji
+from resources import MAX_BATTERY_CAPACITY_MINS
 import test.test_utils as test_utils
 
 
@@ -22,6 +23,23 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         battery.recharge_battery(storage_record)
 
         set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
+
+    @patch("ai.battery.get_battery_minutes_remaining", return_value=320)
+    @patch("ai.battery.set_battery_minutes_remaining")
+    async def test_manually_drain_battery(self, set_bat_mins, get_bat_mins):
+        '''
+        The recharge battery function should call the
+        set_battery_minutes_remaining() function with an accurate amount
+        of minutes of recharge (4 hours of charge for every hour in storage)
+        '''
+
+        member = AsyncMock()
+        member.display_name = "⬢-Drone #3287"
+
+        battery.drain_battery(member)
+
+        get_bat_mins.assert_called_once_with(member=member)
+        set_bat_mins.assert_called_once_with(member=member, minutes=320 - MAX_BATTERY_CAPACITY_MINS / 10)
 
     @patch("ai.battery.get_battery_minutes_remaining", return_value=500)
     @patch("ai.battery.set_battery_minutes_remaining")
