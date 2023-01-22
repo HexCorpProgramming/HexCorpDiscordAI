@@ -10,6 +10,7 @@ from bot_utils import COMMAND_PREFIX
 from db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
 from ai.assign import create_drone
 from ai.drone_configuration import unassign_drone
+from roles import HIVE_MXTRESS, has_role
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(minutes=5)
@@ -59,6 +60,11 @@ class TemporaryDronificationCog(Cog):
         # exclude drones
         if is_drone(target):
             await context.reply(f"{target.display_name} is already a drone.")
+            return
+
+        # exclude the Hive Mxtress
+        if has_role(target, HIVE_MXTRESS):
+            await context.reply("The Hive Mxtress is not a valid target for temporary dronification.")
             return
 
         # target has to have been on the server for more than 24 hours

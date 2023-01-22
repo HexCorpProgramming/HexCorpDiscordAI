@@ -74,23 +74,20 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         context.reply.return_value = question_message
 
         target = AsyncMock()
-        target.mention = "Hive Mxtress"
-        target.joined_at = datetime.now(timezone.utc) - timedelta(hours=48)
+        target.mention = "Target Associate"
 
         hive_mxtress_role = Mock()
         hive_mxtress_role.name = HIVE_MXTRESS
         target.roles = [hive_mxtress_role]
-
         hours = 4
-
         is_drone.return_value = False
-
         # run
         await self.cog.temporarily_dronify(self.cog, context, target, hours)
 
         # assert
         is_drone.assert_called_once_with(target)
-        self.assertEqual(1, len(self.cog.dronfication_requests), "There must be no dronification request.")
+        context.reply.assert_called_once_with("The Hive Mxtress is not a valid target for temporary dronification.")
+        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
     @patch("ai.temporary_dronification.is_drone")
     async def test_request_dronification_hours_negative(self, is_drone):
