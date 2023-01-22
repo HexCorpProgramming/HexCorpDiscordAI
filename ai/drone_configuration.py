@@ -8,7 +8,7 @@ from uuid import uuid4
 import random
 from datetime import datetime, timedelta
 
-from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED, BATTERY_DRAINED
+from roles import has_role, has_any_role, DRONE, GLITCHED, STORED, ASSOCIATE, ID_PREPENDING, IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, HIVE_MXTRESS, MODERATION_ROLES, BATTERY_POWERED, BATTERY_DRAINED, ADMIN
 from id_converter import convert_id_to_member
 from display_names import update_display_name
 import webhook
@@ -274,7 +274,8 @@ async def toggle_parameter(context,
                     message = toggle_on_timed_message(minutes)
                     LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
 
-            if await update_display_name(drone):
+            is_admin = has_role(drone, ADMIN)
+            if await update_display_name(drone) and not is_admin:
                 # Display name has been updated, get the new drone object with updated display name.
                 drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
