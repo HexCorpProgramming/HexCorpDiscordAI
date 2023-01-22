@@ -79,11 +79,8 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         hive_mxtress_role = Mock()
         hive_mxtress_role.name = HIVE_MXTRESS
         target.roles = [hive_mxtress_role]
-
         hours = 4
-
         is_drone.return_value = False
-
         # run
         await self.cog.temporarily_dronify(self.cog, context, target, hours)
 

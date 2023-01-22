@@ -10,7 +10,7 @@ from bot_utils import COMMAND_PREFIX
 from db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
 from ai.assign import create_drone
 from ai.drone_configuration import unassign_drone
-from roles import has_role, HIVE_MXTRESS
+from roles import HIVE_MXTRESS, has_role
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(minutes=5)
