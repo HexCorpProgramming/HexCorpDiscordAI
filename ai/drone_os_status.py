@@ -1,10 +1,10 @@
 import logging
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, command
 
 from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
-from resources import BRIEF_DM_ONLY, BRIEF_DRONE_OS, DRONE_AVATAR
+from resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from bot_utils import COMMAND_PREFIX
 
 LOGGER = logging.getLogger('ai')
@@ -12,17 +12,16 @@ LOGGER = logging.getLogger('ai')
 
 class DroneOsStatusCog(Cog):
 
-    @dm_only()
-    @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
+    @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief=[BRIEF_DRONE_OS])
     async def drone_status(self, context, drone_id: str):
         '''
         Displays all the DroneOS information you have access to about a drone.
         '''
         response = get_status(drone_id, context.author.id, context)
         if response is None:
-            await context.send(f"No drone with ID {drone_id} found.")
+            await context.author.send(f"No drone with ID {drone_id} found.")
         if response is not None:
-            await context.send(embed=response)
+            await context.author.send(embed=response)
 
 
 def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
