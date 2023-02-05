@@ -168,6 +168,8 @@ async def help(context):
                 droneOS_card.add_field(name=command_name, value=command_description, inline=False)
             else:
                 commands_card.add_field(name=command_name, value=command_description, inline=False)
+        else:
+            commands_card.add_field(name=command_name, value=command_description, inline=False)
 
     await context.author.send(embed=commands_card)
     await context.author.send(embed=droneOS_card)
