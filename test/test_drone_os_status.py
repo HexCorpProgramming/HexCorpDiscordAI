@@ -168,7 +168,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
         # assert
         self.assertIsNotNone(status)
-        self.assertEqual("You are a moderator and have access to this drones' data.", status.description)
+        self.assertEqual("You are a moderator and have access to this drone's data.", status.description)
         self.assertEqual("Optimized", status.fields[0].name)
         self.assertEqual("Enabled", status.fields[0].value)
         self.assertEqual("Glitched", status.fields[1].name)

@@ -49,7 +49,7 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
     if is_trusted_user:
         embed.description = "You are registered as a trusted user of this drone and have access to its data."
     if is_moderation:
-        embed.description = "You are a moderator and have access to this drones' data."
+        embed.description = "You are a moderator and have access to this drone's data."
     if is_drone_self:
         embed.description = f"Welcome, ⬡-Drone #{drone_id}"
 
