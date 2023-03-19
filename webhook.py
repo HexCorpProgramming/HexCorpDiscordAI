@@ -1,3 +1,4 @@
+from typing import Any, Coroutine
 import discord
 import logging
 from ai.data_objects import MessageCopy
@@ -7,7 +8,7 @@ from resources import DRONE_AVATAR
 LOGGER = logging.getLogger("ai")
 
 
-async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, message_attachments=None, webhook=None, channel=None, embed=None):
+async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, message_attachments=None, webhook=None, channel=None, embed=None) -> Coroutine[Any, Any, discord.WebhookMessage]:
     '''
     Proxies a message via webhook. If a webhook is not provided, one will be retrieved via the channel object passed as a parameter.
     If neither a webhook or channel object are passed, this function will do nothing.
@@ -21,7 +22,7 @@ async def proxy_message_by_webhook(message_content, message_username=None, messa
         LOGGER.warn(f"Failed to retrieve a webhook. Could not proxy message: '{message_content}'")
         return False
 
-    await webhook.send(message_content, avatar_url=message_avatar, username=message_username, files=message_attachments, embed=embed)
+    return await webhook.send(message_content, avatar_url=message_avatar, username=message_username, files=message_attachments, embed=embed, wait=True)
 
 
 async def get_webhook_for_channel(channel: discord.TextChannel) -> discord.Webhook:
@@ -71,10 +72,14 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
             embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar)
 
         await original.delete()
-        await proxy_message_by_webhook(message_content=copy.content,
-                                       message_username=copy.display_name,
-                                       message_avatar=copy.avatar.url if not copy.identity_enforced else DRONE_AVATAR,
-                                       message_attachments=attachments_as_files,
-                                       channel=original.channel,
-                                       webhook=None,
-                                       embed=embed)
+        created_message = await proxy_message_by_webhook(message_content=copy.content,
+                                                         message_username=copy.display_name,
+                                                         message_avatar=copy.avatar.url if not copy.identity_enforced else DRONE_AVATAR,
+                                                         message_attachments=attachments_as_files,
+                                                         channel=original.channel,
+                                                         webhook=None,
+                                                         embed=embed)
+
+        # add reacts from the original message
+        for reaction in original.reactions:
+            await created_message.add_reaction(reaction)

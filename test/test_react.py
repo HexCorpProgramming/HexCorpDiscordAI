@@ -38,7 +38,23 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         guild.emojis = [GOOD_DRONE_EMOTE, RUBBERHEART_EMOTE]
 
         message = AsyncMock()
-        message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
+        message.content = "9813 :: 109"
+        message.guild = guild
+
+        # run
+        result = await react.parse_for_reactions(message, None)
+
+        # assert
+        self.assertFalse(result, "parse_for_reactions should always return False.")
+        message.add_reaction.assert_called_once_with(GOOD_DRONE_EMOTE)
+
+    async def test_reaction_additional_status(self):
+        # init
+        guild = Mock()
+        guild.emojis = [GOOD_DRONE_EMOTE, RUBBERHEART_EMOTE]
+
+        message = AsyncMock()
+        message.content = "9813 :: 109 :: beep boop"
         message.guild = guild
 
         # run

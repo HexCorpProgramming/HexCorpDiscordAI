@@ -1,5 +1,5 @@
 from typing import Iterable, Optional
-from discord import Attachment, Asset
+from discord import Attachment, Asset, Reaction
 
 
 class MessageCopy:
@@ -15,10 +15,12 @@ class MessageCopy:
         display_name: Optional[str] = None,
         avatar: Optional[Asset] = None,
         identity_enforced: bool = False,
-        attachments: Iterable[Attachment] = []
+        attachments: Iterable[Attachment] = [],
+        reactions: Iterable[Reaction] = []
     ):
         self.content = content
         self.display_name = display_name
         self.avatar = avatar
         self.identity_enforced = identity_enforced
         self.attachments = attachments
+        self.reactions = reactions

@@ -103,6 +103,7 @@ message_listeners = [
     identity_enforcement.enforce_identity,
     forbidden_word.deny_thoughts,
     battery_cog.append_battery_indicator,
+    react.parse_for_reactions,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
     storage.store_drone,
@@ -110,9 +111,7 @@ message_listeners = [
 ]
 
 # register message listeners that take messages sent by bots
-bot_message_listeners = [
-    react.parse_for_reactions
-]
+bot_message_listeners = []
 
 # Cogs that do not use tasks.
 bot.add_cog(emote.EmoteCog())
@@ -184,7 +183,7 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
         return
 
-    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments)
+    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
 
     LOGGER.info("Beginning message listener stack execution.")
     # use the listeners for bot messages or user messages
