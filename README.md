@@ -1,43 +1,99 @@
 # HexCorp Mxtress AI
 
 ## Requirements
+
 - Python 3.8
 - pip
 - python-setuptools
 - discord.py ~= 1.6.0
 
-To install all Python dependencies you can use pip. Just enter `pip install -r requirements.txt` in the project directory.
+To install all Python dependencies you can use pip. Just enter
+`pip install -r requirements.txt` in the project directory.
 
-Note: We use Python 3.8+ so if your system does have multiple versions installed you may have to specify which installation to use e.g. `python3.8` and `pip3.8`.
+Note: We use Python 3.8+ so if your system does have multiple versions
+installed, you may have to specify which installation to use e.g.
+`python3.8` and `pip3.8`.
 
-## Deployment
-To start the bot you can enter
+## Building and deploying with Docker
+
+### Building
+
+To build a Docker image, simply invoke:
+
+``` bash
+docker image build --tag mxtress_ai:latest .
 ```
+
+### Running
+
+Running the Discord bot in a Docker container is simple, though care must be
+given to expose the Discord API key and bot database to the runtime.  Assuming
+the `ai.db` file is present in the current working directory, run the following:
+
+``` bash
+docker run \
+    --name HiveMxtressAI \
+    --detach \
+    --restart always \
+    --env DISCORD_ACCESS_TOKEN=(bot token) \
+    --volume ai.db:/var/opt/HexCorpDiscordAI/ai.db \
+    mxtress_ai:latest
+```
+
+## Building and running with system Python
+
+To start the bot you can enter the following command in the project root:
+
+```bash
 python3.8 main.py <access_token>
 ```
-in the project directory.
 
-### Current server configuration
+### Updating
 
-#### Update
 To update the current production instance of the AI you have to:
-1. kill the running process
-2. navigate into the project repo
+
+1. Kill the running process
+2. Navigate into the project repo
 3. `git fetch`
 4. `git checkout <NEW_VERSION>`
-5. navigate back up
+5. `cd ..`
 6. `sh start_ai.sh`
 
-## Hints for development
+## Tips for development
+
 ### Database
-We use a SQLite DB to persist certain data. It is recommended to get a SQL client so you can poke around in it.
 
-When you want to change the DB schema, you can create a new sql-file in `res/db/migrate`. The number in the beginning has to be higher than every other number of the migration scripts. These scripts are executed in sequence when the AI starts.
+The Discord bot uses an SQLite3 database to persist runtime data.  A graphical
+database client is recommended to easily view its contents.
 
-If you manage to screw up your DB you can remove it by simply deleting the file `ai.db`. On the next AI start the DB will be recreated.
+When performing database schema changes, create a new SQL file in the
+`res/db/migrate/` directory.  The schema filename should adhere to the naming
+convention therein, with an incremented four-digit sequence number.  Any schema
+files which have not been applied yet will be applied in ordered sequence when
+starting the bot.
 
-## CI
-### Linting
-We use flake8 as a linting tool. Everytime you push code, our CI-pipeline will run flake8 to find problems and will notify you if stuff should be changed. If you want to run flake8 yourself, you can use `pip install flake8` to install it and then simply call `flake8` at the project root.
+In the event of database corruption, simply remove the `ai.db` file; the
+database will be recreated with the `res/db/migrate/` schema files the next time
+the bot is started.
 
-It is also recommended to configure flake8 as your IDE linting tool to get your code highlighted.
+### Linting and syntax highlighting
+
+The Python tool `flake8` is used to lint the codebase.  To perform linting
+locally, one may install the tool using `pip3 install flake8`; invoking it is
+as simple as running `flake8` in the project root.
+
+If using an IDE for development, it is highly recommended to set up flake8 to
+benefit from syntax highlighting.
+
+## Continuous integration
+
+All commits pushed to the repository upstream pass through GitHub's continuous
+integration pipeline, as per the file `.github/workflows/continuous-integration.yml`.
+The project will go through the following stages in the pipeline:
+
+1. The codebase will be linted with `flake8`.
+2. Unit tests will be invoked with the `run_tests_with_coverage.sh` script.
+3. The unit test coverage metrics from the above step will be measured; 60%
+   coverage of the codebase must be met .
+
+All steps must pass in order for a commit to be accepted.
