@@ -51,13 +51,15 @@ LOGGER = logging.getLogger('ai')
 
 def set_up_logger():
     # Logging setup
-    formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s', datefmt='%Y-%m-%d :: %H:%M:%S')
+    logging_format = '%(asctime)s.%(msecs)03d :: %(levelname)s :: %(message)s'
+    date_format = '%Y-%m-%d :: %H:%M:%S'
+    formatter = logging.Formatter(fmt=logging_format, datefmt=date_format)
 
     log_file_handler = handlers.TimedRotatingFileHandler(
         filename='ai.log', encoding='utf-8', backupCount=6, when='D', interval=7)
     log_file_handler.setFormatter(formatter)
 
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.WARNING, format=logging_format, datefmt=date_format)
     root_logger = logging.getLogger()
     root_logger.addHandler(log_file_handler)
 
