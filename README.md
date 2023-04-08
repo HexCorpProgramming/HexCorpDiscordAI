@@ -2,17 +2,17 @@
 
 ## Requirements
 
-- Python 3.8
+- Python 3.11
 - pip
 - python-setuptools
-- discord.py ~= 1.6.0
+- pycord 2.4.1
 
 To install all Python dependencies you can use pip. Just enter
 `pip install -r requirements.txt` in the project directory.
 
-Note: We use Python 3.8+ so if your system does have multiple versions
+Note: We use Python 3.11+ so if your system does have multiple versions
 installed, you may have to specify which installation to use e.g.
-`python3.8` and `pip3.8`.
+`python3.11` and `pip3.11`.
 
 ## Building and deploying with Docker
 
@@ -45,7 +45,7 @@ docker run \
 To start the bot you can enter the following command in the project root:
 
 ```bash
-python3.8 main.py <access_token>
+python3.11 main.py <access_token>
 ```
 
 ### Updating
