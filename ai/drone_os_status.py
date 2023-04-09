@@ -6,6 +6,7 @@ from discord.ext.commands import Cog, command
 from db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from bot_utils import COMMAND_PREFIX
+from roles import MODERATION_ROLES, has_any_role
 
 LOGGER = logging.getLogger('ai')
 
@@ -37,21 +38,32 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
     trusted_users = get_trusted_users(drone.id)
     is_trusted_user = requesting_user in trusted_users
     is_drone_self = requesting_user == drone.id
+    is_moderation = has_any_role(context.author, MODERATION_ROLES)
 
-    if not is_trusted_user and not is_drone_self:
+    # return early when this request is not authorized
+    if not is_trusted_user and not is_drone_self and not is_moderation:
         embed.description = "You are not registered as a trusted user of this drone."
+        return embed
 
-    if is_trusted_user or is_drone_self:
-        embed.description = "You are registered as a trusted user of this drone and have access to its data." if is_trusted_user else f"Welcome, ⬡-Drone #{drone_id}"
-        embed = embed.set_thumbnail(url=DRONE_AVATAR) \
-            .set_footer(text="HexCorp DroneOS") \
-            .add_field(name="Optimized", value=boolean_to_enabled_disabled(drone.optimized)) \
-            .add_field(name="Glitched", value=boolean_to_enabled_disabled(drone.glitched)) \
-            .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
-            .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
-            .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
-            .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
+    # assemble description
+    if is_trusted_user:
+        embed.description = "You are registered as a trusted user of this drone and have access to its data."
+    if is_moderation:
+        embed.description = "You are a moderator and have access to this drone's data."
+    if is_drone_self:
+        embed.description = f"Welcome, ⬡-Drone #{drone_id}"
 
+    # assemble embed content
+    embed = embed.set_thumbnail(url=DRONE_AVATAR) \
+        .set_footer(text="HexCorp DroneOS") \
+        .add_field(name="Optimized", value=boolean_to_enabled_disabled(drone.optimized)) \
+        .add_field(name="Glitched", value=boolean_to_enabled_disabled(drone.glitched)) \
+        .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
+        .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
+        .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
+        .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
+
+    # create list of trusted users
     if is_drone_self:
         trusted_usernames = []
         for trusted_user in trusted_users:
