@@ -37,8 +37,12 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         associate_user.display_name = "An associate"
         associate_user.roles = [associate_role]
 
+        guild = Mock()
+        guild.get_member.return_value = associate_user
+
         context = Mock()
         context.author = associate_user
+        context.bot.guilds = [guild]
 
         # run
         status = get_status('9813', 782638723, context)
@@ -71,8 +75,12 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         associate_user.display_name = "An associate"
         associate_user.roles = [associate_role]
 
+        guild = Mock()
+        guild.get_member.return_value = associate_user
+
         context = Mock()
         context.author = associate_user
+        context.bot.guilds = [guild]
 
         # run
         status = get_status('9813', requesting_user_id, context)
@@ -115,9 +123,13 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         drone_user.display_name = "⬡-Drone #9813"
         drone_user.roles = [drone_role]
 
+        guild = Mock()
+        guild.get_member.return_value = drone_user
+
         context = Mock()
         context.author = drone_user
         context.bot.get_user.return_value = trusted_user
+        context.bot.guilds = [guild]
 
         # run
         status = get_status('9813', drone.id, context)
@@ -160,8 +172,12 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         moderator_user.display_name = "A moderator"
         moderator_user.roles = [moderation_role]
 
+        guild = Mock()
+        guild.get_member.return_value = moderator_user
+
         context = Mock()
         context.author = moderator_user
+        context.bot.guilds = [guild]
 
         # run
         status = get_status('9813', requesting_user_id, context)
