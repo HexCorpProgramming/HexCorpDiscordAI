@@ -48,7 +48,7 @@ To start the bot you can enter the following command in the project root:
 python3.11 main.py <access_token>
 ```
 
-### Updating
+## Updating
 
 To update the current production instance of the AI you have to:
 
