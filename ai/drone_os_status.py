@@ -35,10 +35,12 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
         .set_thumbnail(url=DRONE_AVATAR) \
         .set_footer(text="HexCorp DroneOS")
 
+    member = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
+
     trusted_users = get_trusted_users(drone.id)
     is_trusted_user = requesting_user in trusted_users
     is_drone_self = requesting_user == drone.id
-    is_moderation = has_any_role(context.author, MODERATION_ROLES)
+    is_moderation = has_any_role(member, MODERATION_ROLES)
 
     # return early when this request is not authorized
     if not is_trusted_user and not is_drone_self and not is_moderation:
