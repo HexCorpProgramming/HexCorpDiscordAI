@@ -288,6 +288,20 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
     await react.delete_marked_message(reaction, user)
 
 
+@bot.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    if member.bot:
+        return
+
+    LOGGER.info(after)
+
+    if after.channel and after.channel.name == 'development-voice' and len(bot.voice_clients) == 0:
+        voice_client = await after.channel.connect()
+        voice_client.play(discord.FFmpegOpusAudio("audio/loop.mp3"))
+    elif before.channel.name == 'development-voice' and len(before.channel.members) == 1 and before.channel.members[0].bot:
+        await bot.voice_clients[0].disconnect()
+
+
 def main():
     set_up_logger()
     database.prepare()
