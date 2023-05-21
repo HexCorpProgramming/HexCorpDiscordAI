@@ -274,7 +274,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
 
         # assert
         set_trusted_users.assert_not_called()
-        self.context.reply.assert_called_once_with(f"No user with name \"0000\" found.")
+        self.context.reply.assert_called_once_with("No user with name \"0000\" found.")
 
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
