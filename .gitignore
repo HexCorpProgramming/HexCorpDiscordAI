@@ -20,3 +20,4 @@ ai.db-journal
 
 # Other misc config files
 .python-version
+.DS_Store
