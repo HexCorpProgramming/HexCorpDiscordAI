@@ -28,7 +28,7 @@ class AmplificationCog(Cog):
 
         for drone in member_drones:
 
-            formatted_message = generate_battery_message(f"{get_id(drone.display_name)} :: {message}")
+            formatted_message = generate_battery_message(drone, f"{get_id(drone.display_name)} :: {message}")
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=drone.display_name,

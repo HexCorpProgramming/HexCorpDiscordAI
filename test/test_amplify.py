@@ -45,7 +45,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
             webhook=webhook
         )
 
-        generate_battery_message.assert_called_once_with("3287 :: Beep boop!")
+        generate_battery_message.assert_called_once_with(drone, "3287 :: Beep boop!")
 
     @patch("ai.amplify.has_role")
     async def test_does_not_work_if_not_Mxtress(self, has_role):
