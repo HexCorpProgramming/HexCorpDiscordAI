@@ -78,56 +78,69 @@ bot.remove_command("help")
 
 
 # Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
+battery_cog = battery.BatteryCog(bot)
+forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
+orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
-orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
-timers_cog = timers.TimersCog(bot)
-battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
-forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
+timers_cog = timers.TimersCog(bot)
+trusted_user_cog = trusted_user.TrustedUserCog(bot)
 
+bot.add_cog(battery_cog)
+bot.add_cog(forbidden_word_cog)
+bot.add_cog(orders_reporting_cog)
 bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
-bot.add_cog(orders_reporting_cog)
+bot.add_cog(temporary_dronification_cog)
 bot.add_cog(timers_cog)
 bot.add_cog(battery_cog)
 bot.add_cog(forbidden_word_cog)
 
 # Register message listeners.
 message_listeners = [
-    join.check_for_consent,
     assign.check_for_assignment_message,
-    stoplights.check_for_stoplights,
-    battery_cog.start_battery_drain,
-    id_prepending.check_if_prepending_necessary,
-    speech_optimization_enforcement.enforce_speech_optimization,
-    speech_optimization.optimize_speech,
-    identity_enforcement.enforce_identity,
-    forbidden_word.deny_thoughts,
     battery_cog.append_battery_indicator,
-    react.parse_for_reactions,
+    battery_cog.start_battery_drain,
+    forbidden_word.deny_thoughts,
     glitch_message.glitch_if_applicable,
+    id_prepending.check_if_prepending_necessary,
+    identity_enforcement.enforce_identity,
+    join.check_for_consent,
+    react.parse_for_reactions,
     respond.respond_to_question,
+    speech_optimization.optimize_speech,
+    speech_optimization_enforcement.enforce_speech_optimization,
+    stoplights.check_for_stoplights,
     storage.store_drone,
     temporary_dronification_cog.temporary_dronification_response
 ]
 
-# register message listeners that take messages sent by bots
+# Register message listeners that take messages sent by bots
 bot_message_listeners = []
 
 # Cogs that do not use tasks.
 bot.add_cog(emote.EmoteCog())
 bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
-bot.add_cog(trusted_user.TrustedUserCog())
 bot.add_cog(drone_os_status.DroneOsStatusCog())
 bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(amplify.AmplificationCog())
-bot.add_cog(temporary_dronification_cog)
+
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed, battery_cog.track_active_battery_drain, battery_cog.track_drained_batteries, battery_cog.warn_low_battery_drones, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones, timers_cog.process_timers]
-hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders]
+minute_tasks = [
+    battery_cog.track_active_battery_drain,
+    battery_cog.track_drained_batteries,
+    battery_cog.warn_low_battery_drones,
+    storage_cog.release_timed,
+    temporary_dronification_cog.clean_dronification_requests,
+    temporary_dronification_cog.release_temporary_drones,
+    timers_cog.process_timers]
+hour_tasks = [
+    orders_reporting_cog.deactivate_drones_with_completed_orders,
+    storage_cog.report_storage,
+    trusted_user_cog.clean_trusted_user_requests]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
