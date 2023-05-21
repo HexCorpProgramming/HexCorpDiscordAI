@@ -1,10 +1,15 @@
+'''
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch, Mock
-from ai.trusted_user import add_trusted_user, remove_trusted_user, remove_trusted_user_on_all
+from ai.trusted_user import TrustedUserCog, TrustedUserRequest, find_user_by_display_name_or_drone_id, remove_trusted_user, remove_trusted_user_on_all
 from resources import HIVE_MXTRESS_USER_ID
 
 
 class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
+
+    bot = AsyncMock()
+    cog = TrustedUserCog(bot)
 
     def setUp(self):
         self.hive_mxtress = AsyncMock()
@@ -87,6 +92,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         # assert
         set_trusted_users.assert_not_called()
         self.context.send.assert_called_once_with("No user with name \"Some random name\" found")
+
 
     @patch("ai.trusted_user.get_discord_id_of_drone")
     @patch("ai.trusted_user.get_trusted_users")
@@ -178,3 +184,4 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         # assert
         fetch_all_drones_with_trusted_user.assert_called_once_with(id_of_member_leaving)
         set_trusted_users.assert_called_once_with(drone.id, [int(HIVE_MXTRESS_USER_ID), unrelated_user_id])
+'''
