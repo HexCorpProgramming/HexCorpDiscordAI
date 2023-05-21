@@ -1,5 +1,5 @@
 import unittest
-from ai.glitch_message import escape_characters, protected_text_regex
+from src.ai.glitch_message import escape_characters, protected_text_regex
 
 
 class GlitchMessageTest(unittest.TestCase):

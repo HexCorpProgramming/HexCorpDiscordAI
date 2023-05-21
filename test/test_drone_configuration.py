@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock, call
 
-import roles
-import ai.drone_configuration as drone_configuration
+import src.roles as roles
+import src.ai.drone_configuration as drone_configuration
 
 
 hive_mxtress_role = Mock()
@@ -14,9 +14,9 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         pass
 
-    @patch("ai.drone_configuration.update_display_name")
-    @patch("ai.drone_configuration.rename_drone_in_db")
-    @patch("ai.drone_configuration.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_configuration.update_display_name")
+    @patch("src.ai.drone_configuration.rename_drone_in_db")
+    @patch("src.ai.drone_configuration.fetch_drone_with_drone_id")
     async def test_rename_drone(self, fetch_drone_with_drone_id, rename_drone_in_db, update_display_name):
         # setup
         old_id = "1234"
@@ -42,8 +42,8 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         update_display_name.assert_called_once_with(member)
         context.send.assert_called_once_with(f"Successfully renamed drone {old_id} to {new_id}.")
 
-    @patch("ai.drone_configuration.rename_drone_in_db")
-    @patch("ai.drone_configuration.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_configuration.rename_drone_in_db")
+    @patch("src.ai.drone_configuration.fetch_drone_with_drone_id")
     async def test_rename_drone_already_used(self, fetch_drone_with_drone_id, rename_drone_in_db):
         # setup
         old_id = "1234"
@@ -69,8 +69,8 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         rename_drone_in_db.assert_not_called()
         context.send.assert_called_once_with(f"ID {new_id} already in use.")
 
-    @patch("ai.drone_configuration.remove_drone_from_db")
-    @patch("ai.drone_configuration.fetch_drone_with_id")
+    @patch("src.ai.drone_configuration.remove_drone_from_db")
+    @patch("src.ai.drone_configuration.fetch_drone_with_id")
     async def test_unassign_drone(self, fetch_drone_with_id, remove_drone_from_db):
         # setup
         drone = AsyncMock()
@@ -89,8 +89,8 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         remove_drone_from_db.assert_called_once_with(drone.drone_id)
         member.send.assert_called_once_with(f"Drone with ID {drone.drone_id} unassigned.")
 
-    @patch("ai.drone_configuration.remove_drone_from_db")
-    @patch("ai.drone_configuration.fetch_drone_with_id")
+    @patch("src.ai.drone_configuration.remove_drone_from_db")
+    @patch("src.ai.drone_configuration.fetch_drone_with_id")
     async def test_unassign_drone_does_not_exist(self, fetch_drone_with_id, remove_drone_from_db):
         # setup
         drone = AsyncMock()
@@ -115,10 +115,10 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         remove_drone_from_db.assert_not_called()
         member.send.assert_called_once_with('You are not a drone. Can not unassign.')
 
-    @patch("ai.drone_configuration.delete_timers_by_drone_id")
-    @patch("ai.drone_configuration.delete_drone_order_by_drone_id")
-    @patch("ai.drone_configuration.delete_storage_by_target_id")
-    @patch("ai.drone_configuration.delete_drone_by_drone_id")
+    @patch("src.ai.drone_configuration.delete_timers_by_drone_id")
+    @patch("src.ai.drone_configuration.delete_drone_order_by_drone_id")
+    @patch("src.ai.drone_configuration.delete_storage_by_target_id")
+    @patch("src.ai.drone_configuration.delete_drone_by_drone_id")
     def test_remove_drone_from_db(self, delete_drone_by_drone_id, delete_storage_by_target_id, delete_drone_order_by_drone_id, delete_timers_by_drone_id):
         # setup
         to_remove = "1234"
@@ -132,9 +132,9 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         delete_drone_order_by_drone_id.assert_called_once_with(to_remove)
         delete_timers_by_drone_id.assert_called_once_with(to_remove)
 
-    @patch("ai.drone_configuration.update_display_name")
-    @patch("ai.drone_configuration.convert_id_to_member")
-    @patch("ai.drone_configuration.update_droneOS_parameter")
+    @patch("src.ai.drone_configuration.update_display_name")
+    @patch("src.ai.drone_configuration.convert_id_to_member")
+    @patch("src.ai.drone_configuration.update_droneOS_parameter")
     async def test_emergency_release(self, update_droneOS_parameter, convert_id_to_member, update_display_name):
         # setup
         to_remove = "1234"

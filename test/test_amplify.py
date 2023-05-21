@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, patch
-from channels import OFFICE, TRANSMISSIONS_CHANNEL
-import ai.amplify as amplify
+from src.channels import OFFICE, TRANSMISSIONS_CHANNEL
+import src.ai.amplify as amplify
 
 
 class TestAmplify(unittest.IsolatedAsyncioTestCase):
@@ -9,11 +9,11 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     The amplify command...
     '''
 
-    @patch("ai.amplify.identity_enforcable", return_value=False)
-    @patch("ai.amplify.has_role", return_value=True)
-    @patch("ai.amplify.webhook.get_webhook_for_channel")
-    @patch("ai.amplify.id_converter.convert_ids_to_members")
-    @patch("ai.amplify.webhook.proxy_message_by_webhook")
+    @patch("src.ai.amplify.identity_enforcable", return_value=False)
+    @patch("src.ai.amplify.has_role", return_value=True)
+    @patch("src.ai.amplify.webhook.get_webhook_for_channel")
+    @patch("src.ai.amplify.id_converter.convert_ids_to_members")
+    @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
     async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable):
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
@@ -42,7 +42,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
             webhook=webhook
         )
 
-    @patch("ai.amplify.has_role")
+    @patch("src.ai.amplify.has_role")
     async def test_does_not_work_if_not_Mxtress(self, has_role):
         '''
         only works when called by the Hive Mxtress in the Hex Office channel.

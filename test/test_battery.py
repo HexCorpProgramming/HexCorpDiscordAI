@@ -1,15 +1,15 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
-import ai.battery as battery
-import emoji
-from resources import MAX_BATTERY_CAPACITY_MINS
+import src.ai.battery as battery
+import src.emoji as emoji
+from src.resources import MAX_BATTERY_CAPACITY_MINS
 import test.test_utils as test_utils
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
-    @patch("ai.battery.get_battery_minutes_remaining", return_value=20)
-    @patch("ai.battery.set_battery_minutes_remaining")
+    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=20)
+    @patch("src.ai.battery.set_battery_minutes_remaining")
     async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should call the
@@ -24,8 +24,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
 
-    @patch("ai.battery.get_battery_minutes_remaining", return_value=320)
-    @patch("ai.battery.set_battery_minutes_remaining")
+    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=320)
+    @patch("src.ai.battery.set_battery_minutes_remaining")
     async def test_manually_drain_battery(self, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should call the
@@ -41,8 +41,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         get_bat_mins.assert_called_once_with(member=member)
         set_bat_mins.assert_called_once_with(member=member, minutes=320 - MAX_BATTERY_CAPACITY_MINS / 10)
 
-    @patch("ai.battery.get_battery_minutes_remaining", return_value=500)
-    @patch("ai.battery.set_battery_minutes_remaining")
+    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
+    @patch("src.ai.battery.set_battery_minutes_remaining")
     async def test_recharge_battery_no_overcharge(self, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should not call
@@ -56,7 +56,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)
 
-    @patch("ai.battery.deincrement_battery_minutes_remaining")
+    @patch("src.ai.battery.deincrement_battery_minutes_remaining")
     async def test_track_active_battery_drain(self, deincrement):
         '''
         For every inactive drone, 1 minute of battery should be drained from them
@@ -91,9 +91,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNone(battery_cog.draining_batteries.get('9813', None))
 
-    @patch("ai.battery.has_role", return_value=True)
-    @patch("ai.battery.get")
-    @patch("ai.battery.get_all_drone_batteries")
+    @patch("src.ai.battery.has_role", return_value=True)
+    @patch("src.ai.battery.get")
+    @patch("src.ai.battery.get_all_drone_batteries")
     async def test_add_drained_role(self, drone_batteries, discord_get, has_role):
         '''
         Battery module should add the drained role if drone has 0 minutes
@@ -120,9 +120,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         member.add_roles.assert_called_once_with(drained_role)
 
-    @patch("ai.battery.has_role", return_value=True)
-    @patch("ai.battery.get")
-    @patch("ai.battery.get_all_drone_batteries")
+    @patch("src.ai.battery.has_role", return_value=True)
+    @patch("src.ai.battery.get")
+    @patch("src.ai.battery.get_all_drone_batteries")
     async def test_remove_drained_role(self, drone_batteries, discord_get, has_role):
         '''
         Battery module should remove the drained role from drones that have it
@@ -149,7 +149,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         member.remove_roles.assert_called_once_with(drained_role)
 
-    @patch("ai.battery.get_all_drone_batteries")
+    @patch("src.ai.battery.get_all_drone_batteries")
     async def test_warn_low_battery_drones(self, drone_batteries):
         '''
         The AI Mxtress should warn drones with less than 30 percent battery
@@ -174,7 +174,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
         self.assertTrue('5890' in battery_cog.low_battery_drones)
 
-    @patch("ai.battery.get_all_drone_batteries")
+    @patch("src.ai.battery.get_all_drone_batteries")
     async def test_drone_not_warned_more_than_one(self, drone_batteries):
         '''
         The AI Mxtress should only DM low battery drones once. If a drone
@@ -200,7 +200,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         member.send.assert_not_called()
 
-    @patch("ai.battery.get_all_drone_batteries")
+    @patch("src.ai.battery.get_all_drone_batteries")
     async def test_remove_recharged_drones(self, drone_batteries):
         '''
         The AI Mxtress should remove drones from the list of warned drones
@@ -238,9 +238,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         else:
             return "SHOULDNTHAPPEN"
 
-    @patch("ai.battery.get")
-    @patch("ai.battery.get_battery_percent_remaining")
-    @patch("ai.battery.is_battery_powered", return_value=True)
+    @patch("src.ai.battery.get")
+    @patch("src.ai.battery.get_battery_percent_remaining")
+    @patch("src.ai.battery.is_battery_powered", return_value=True)
     async def test_append_battery_indicator(self, battery_powered, battery_percentage, discord_get):
         '''
         When passed a message by a battery powered drone, should append
@@ -276,9 +276,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         await battery_cog.append_battery_indicator(message, message_copy)
         self.assertEqual(message_copy.content, f"EMPTYBATTERYEMOJI :: {original_message}")
 
-    @patch("ai.battery.get")
-    @patch("ai.battery.get_battery_percent_remaining", return_value=100)
-    @patch("ai.battery.is_battery_powered", return_value=True)
+    @patch("src.ai.battery.get")
+    @patch("src.ai.battery.get_battery_percent_remaining", return_value=100)
+    @patch("src.ai.battery.is_battery_powered", return_value=True)
     async def test_append_battery_indicator_with_prepending(self, battery_powered, battery_percentage, discord_get):
         '''
         When passed a message by a battery powered drone, should append a
@@ -315,8 +315,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         await battery_cog.append_battery_indicator(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.\nBeep boop.")
 
-    @patch("ai.battery.is_drone", return_value=True)
-    @patch("ai.battery.is_battery_powered", return_value=True)
+    @patch("src.ai.battery.is_drone", return_value=True)
+    @patch("src.ai.battery.is_battery_powered", return_value=True)
     async def test_start_battery_drain(self, bat_pow, is_drn):
         '''
         Battery powered drones should have their active tracking minutes
@@ -335,8 +335,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)
 
-    @patch("ai.battery.is_drone", return_value=True)
-    @patch("ai.battery.is_battery_powered", return_value=True)
+    @patch("src.ai.battery.is_drone", return_value=True)
+    @patch("src.ai.battery.is_battery_powered", return_value=True)
     async def test_restart_battery_drain(self, bat_pow, is_drn):
         '''
         Drones that are currently being tracked for battery drain should have

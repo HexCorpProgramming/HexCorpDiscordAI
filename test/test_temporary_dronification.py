@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch, Mock
-from ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
-from roles import HIVE_MXTRESS
+from src.ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
+from src.roles import HIVE_MXTRESS
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -14,7 +14,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.bot.reset_mock()
         self.cog.dronfication_requests = []
 
-    @patch("ai.temporary_dronification.is_drone")
+    @patch("src.ai.temporary_dronification.is_drone")
     async def test_request_dronification(self, is_drone):
         # init
         question_message = AsyncMock()
@@ -42,7 +42,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(hours, self.cog.dronfication_requests[0].hours)
         self.assertEqual(question_message, self.cog.dronfication_requests[0].question_message)
 
-    @patch("ai.temporary_dronification.is_drone")
+    @patch("src.ai.temporary_dronification.is_drone")
     async def test_request_dronification_already_drone(self, is_drone):
         # init
         question_message = AsyncMock()
@@ -65,7 +65,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         context.reply.assert_called_once_with(f"{target.display_name} is already a drone.")
         self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification requests.")
 
-    @patch("ai.temporary_dronification.is_drone")
+    @patch("src.ai.temporary_dronification.is_drone")
     async def test_request_dronification_hive_mxtress(self, is_drone):
         # init
         question_message = AsyncMock()
@@ -89,7 +89,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         context.reply.assert_called_once_with("The Hive Mxtress is not a valid target for temporary dronification.")
         self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
-    @patch("ai.temporary_dronification.is_drone")
+    @patch("src.ai.temporary_dronification.is_drone")
     async def test_request_dronification_hours_negative(self, is_drone):
         # init
         question_message = AsyncMock()
@@ -111,7 +111,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         context.reply.assert_called_once_with("Hours must be greater than 0.")
         self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
-    @patch("ai.temporary_dronification.is_drone")
+    @patch("src.ai.temporary_dronification.is_drone")
     async def test_request_not_24_hours(self, is_drone):
         # init
         question_message = AsyncMock()
@@ -135,7 +135,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         context.reply.assert_called_once_with("Target has not been on the server for more than 24 hours. Can not temporarily dronify.")
         self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
 
-    @patch("ai.temporary_dronification.create_drone")
+    @patch("src.ai.temporary_dronification.create_drone")
     async def test_temporary_dronification_response(self, create_drone):
         # init
         question_message = AsyncMock()

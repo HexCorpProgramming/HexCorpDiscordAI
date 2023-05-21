@@ -10,41 +10,41 @@ from datetime import datetime, timedelta
 import asyncio
 
 # Modules
-import ai.stoplights as stoplights
-import ai.identity_enforcement as identity_enforcement
-import ai.speech_optimization as speech_optimization
-import ai.speech_optimization_enforcement as speech_optimization_enforcement
-import ai.id_prepending as id_prepending
-import ai.join as join
-import ai.respond as respond
-import ai.storage as storage
-import ai.timers as timers
-import ai.emote as emote
-import ai.assign as assign
-import ai.orders_reporting as orders_reporting
-import ai.status as status
-import ai.drone_configuration as drone_configuration
-import ai.add_voice as add_voice
-import ai.trusted_user as trusted_user
-import ai.drone_os_status as drone_os_status
-import ai.glitch_message as glitch_message
-import ai.battery as battery
-import ai.status_message as status_message
-import ai.forbidden_word as forbidden_word
-import ai.react as react
-import ai.amplify as amplify
-import ai.temporary_dronification as temporary_dronification
-import webhook
+import src.ai.stoplights as stoplights
+import src.ai.identity_enforcement as identity_enforcement
+import src.ai.speech_optimization as speech_optimization
+import src.ai.speech_optimization_enforcement as speech_optimization_enforcement
+import src.ai.id_prepending as id_prepending
+import src.ai.join as join
+import src.ai.respond as respond
+import src.ai.storage as storage
+import src.ai.timers as timers
+import src.ai.emote as emote
+import src.ai.assign as assign
+import src.ai.orders_reporting as orders_reporting
+import src.ai.status as status
+import src.ai.drone_configuration as drone_configuration
+import src.ai.add_voice as add_voice
+import src.ai.trusted_user as trusted_user
+import src.ai.drone_os_status as drone_os_status
+import src.ai.glitch_message as glitch_message
+import src.ai.battery as battery
+import src.ai.status_message as status_message
+import src.ai.forbidden_word as forbidden_word
+import src.ai.react as react
+import src.ai.amplify as amplify
+import src.ai.temporary_dronification as temporary_dronification
+import src.webhook as webhook
 # Utils
-from bot_utils import COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX
 
 # Database
-from db import database
-from db import drone_dao
+from src.db import database
+from src.db import drone_dao
 # Constants
-from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
+from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
 # Data objects
-from ai.data_objects import MessageCopy
+from src.ai.data_objects import MessageCopy
 
 LOGGER = logging.getLogger('ai')
 

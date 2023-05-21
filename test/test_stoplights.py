@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, patch
-from ai.stoplights import check_for_stoplights
+from src.ai.stoplights import check_for_stoplights
 
 
 class StoplightsTest(unittest.IsolatedAsyncioTestCase):
@@ -11,7 +11,7 @@ class StoplightsTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         StoplightsTest.mocked_mod_role.reset_mock()
 
-    @patch("ai.stoplights.get", return_value=mocked_mod_role)
+    @patch("src.ai.stoplights.get", return_value=mocked_mod_role)
     async def test_alert_mods_and_return_true_if_clock_in_message(self, mocked_get):
 
         clock_message = AsyncMock()

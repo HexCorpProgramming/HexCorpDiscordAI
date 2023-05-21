@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock, patch, Mock
 
 from datetime import datetime, timedelta, timezone
 
-import roles
-import ai.assign as assign
-from channels import ASSIGNMENT_CHANNEL
+import src.roles as roles
+import src.ai.assign as assign
+from src.channels import ASSIGNMENT_CHANNEL
 
 
 associate_role = Mock()
@@ -45,8 +45,8 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await assign.check_for_assignment_message(test_message))
         test_message.delete.assert_not_called()
 
-    @patch("ai.assign.insert_drone")
-    @patch("ai.assign.get_used_drone_ids")
+    @patch("src.ai.assign.insert_drone")
+    @patch("src.ai.assign.get_used_drone_ids")
     async def test_request_approve(self, get_used_drone_ids, insert_drone):
         test_message = AsyncMock()
         test_message.content = assign.ASSIGNMENT_MESSAGE
@@ -63,8 +63,8 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         test_message.author.add_roles.assert_called_once_with(drone_role)
         test_message.author.edit.assert_called_once_with(nick="⬡-Drone #1234")
 
-    @patch("ai.assign.insert_drone")
-    @patch("ai.assign.get_used_drone_ids")
+    @patch("src.ai.assign.insert_drone")
+    @patch("src.ai.assign.get_used_drone_ids")
     async def test_assign_hive_mxtress(self, get_used_drone_ids, insert_drone):
         test_message = AsyncMock()
         test_message.content = assign.ASSIGNMENT_MESSAGE
@@ -84,7 +84,7 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         test_message.author.remove_roles.assert_called_once_with(associate_role)
         test_message.author.add_roles.assert_called_once_with(drone_role)
 
-    @patch("ai.assign.get_used_drone_ids", return_value=["1234"])
+    @patch("src.ai.assign.get_used_drone_ids", return_value=["1234"])
     async def test_id_already_used(self, get_used_drone_ids):
         test_message = AsyncMock()
         test_message.content = assign.ASSIGNMENT_MESSAGE

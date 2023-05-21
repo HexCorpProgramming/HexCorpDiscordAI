@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
-from ai.speech_optimization import StatusType, get_status_type, build_status_message, optimize_speech
-from ai.data_objects import MessageCopy
+from src.ai.speech_optimization import StatusType, get_status_type, build_status_message, optimize_speech
+from src.ai.data_objects import MessageCopy
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -9,8 +9,8 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     The optimize_speech function...
     '''
 
-    @patch("ai.speech_optimization.get_status_type", return_value=(StatusType.PLAIN, Mock(), Mock()))
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.get_status_type", return_value=(StatusType.PLAIN, Mock(), Mock()))
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_calls_get_status_type(self, is_drone, get_status_type):
         '''
         should call 'get_status_type' if author is drone, message IDs match, and the message is a status code.
@@ -23,8 +23,8 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await optimize_speech(message, message_copy))
         get_status_type.assert_called_once()
 
-    @patch("ai.speech_optimization.build_status_message")
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.build_status_message")
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_calls_build_status_message(self, is_drone, build_status_message):
         message = Mock()
         message.author.display_name = "5890"
@@ -34,7 +34,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await optimize_speech(message, message_copy))
         build_status_message.assert_called_once()
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_delete_mismatching_id_messages(self, is_drone):
         '''
         should delete message if author ID does not match status ID.
@@ -47,7 +47,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await optimize_speech(message, message_copy))
         message.delete.assert_called_once()
 
-    @patch("ai.speech_optimization.is_drone", return_value=False)
+    @patch("src.ai.speech_optimization.is_drone", return_value=False)
     async def test_dont_operate_on_non_drone_messages(self, is_drone):
         '''
         should return False early if message author is not a drone.
@@ -56,7 +56,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         message_copy = Mock()
         self.assertFalse(await optimize_speech(message, message_copy))
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_status_codes_transform_message_copy(self, is_drone):
         '''
         should update message_copy when passed message content with a valid status code.
@@ -74,7 +74,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await optimize_speech(message, message_copy))
         self.assertEqual("5890 :: Code `200` :: Response :: Affirmative. :: Additional information.", message_copy.content)
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_plain_code(self, is_drn):
         '''
         should take a plain status code and set message copy content to plain status message.
@@ -89,7 +89,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("5890 :: Code `200` :: Response :: Affirmative.", message_copy.content)
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_informative_code(self, is_drn):
         '''
         should take an informative status code and set message copy content to an informative status message.
@@ -104,7 +104,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("5890 :: Code `200` :: Response :: Affirmative. :: Additional information", message_copy.content)
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_informative_id_code(self, is_drn):
         '''
         should take an informative address by ID and set message copy content to an equivalent translated message.
@@ -119,7 +119,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("5890 :: Code `110` :: Addressing: Drone #9813 :: Hello there", message_copy.content)
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_plain_id_code(self, is_drn):
         '''
         should take a plain address by ID and set message copy content to an address by ID message.
@@ -134,7 +134,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual("5890 :: Code `110` :: Addressing: Drone #9813", message_copy.content)
 
-    @patch("ai.speech_optimization.is_drone", return_value=True)
+    @patch("src.ai.speech_optimization.is_drone", return_value=True)
     async def test_no_status_found(self, is_drn):
         '''
         should not edit the message copy if no status code is found.

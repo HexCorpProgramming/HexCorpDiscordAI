@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, AsyncMock
 import discord
-from ai.emote import generate_big_text
+from src.ai.emote import generate_big_text
 
 
 class TestEmote(unittest.TestCase):
@@ -18,29 +18,29 @@ class TestEmote(unittest.TestCase):
 
     normal_response = f"> {str(normal_mock_emoji)*4}"
 
-    @patch("ai.emote.get", return_value=normal_mock_emoji)
+    @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generate_big_text_generates_big_text_normally(self, mocked_get):
 
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "beep"), TestEmote.normal_response)
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "boop"), TestEmote.normal_response)
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "    "), TestEmote.normal_response)
 
-    @patch("ai.emote.get", return_value=normal_mock_emoji)
+    @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_return_none_if_generated_text_too_long(self, mocked_get):
         self.assertIsNone(generate_big_text(TestEmote.mock_channel, "9813 is such a good development drone that i could write about how wonderful they are and the bigtext generator would return none because there are too many good things to say about it"))
         self.assertIsNone(generate_big_text(TestEmote.mock_channel, "and since we need to do two tests i'd like to mention that 3287 is also a sweet little thing and 5890 always loves to have it around even when it bullies it by calling it a good drone and making it blush"))
 
-    @patch("ai.emote.get", return_value=normal_mock_emoji)
+    @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_return_none_if_input_contains_no_convertible_material(self, mocked_get):
         self.assertIsNone(generate_big_text(TestEmote.mock_channel, "ʰᵉʷʷᵒˀˀ"))
         self.assertIsNone(generate_big_text(TestEmote.mock_channel, "ᵐʷˢᶦᵗᵉʳ_ᵒᵇᵃᵐᵃˀ"))
         self.assertIsNone(generate_big_text(TestEmote.mock_channel, "_____"))
 
-    @patch("ai.emote.get", return_value=normal_mock_emoji)
+    @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generator_removes_custom_emojis_from_input(self, mocked_get):
         self.assertEqual(generate_big_text(TestEmote.mock_channel, f"{str(TestEmote.extra_custom_emoji)}beep{str(TestEmote.extra_custom_emoji)}"), TestEmote.normal_response)
 
-    @patch("ai.emote.get", return_value=normal_mock_emoji)
+    @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generator_converts_input_to_lower_case(self, mocked_get):
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "BEEP"), generate_big_text(TestEmote.mock_channel, "beep"))
 

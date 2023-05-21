@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import patch, Mock
-from ai.drone_os_status import get_status
-import roles
+from src.ai.drone_os_status import get_status
+import src.roles as roles
 
 
 class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
-    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
     def test_status_no_drone(self, fetch_drone_with_drone_id):
         # setup
         fetch_drone_with_drone_id.return_value = None
@@ -20,8 +20,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(status)
         fetch_drone_with_drone_id.assert_called_once_with('9814')
 
-    @patch("ai.drone_os_status.get_trusted_users")
-    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_os_status.get_trusted_users")
+    @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
     def test_status_not_trusted(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
@@ -53,8 +53,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.assert_called_once_with('9813')
         get_trusted_users.assert_called_once_with(drone.id)
 
-    @patch("ai.drone_os_status.get_trusted_users")
-    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_os_status.get_trusted_users")
+    @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
     def test_status(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
@@ -98,8 +98,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.assert_called_once_with('9813')
         get_trusted_users.assert_called_once_with(drone.id)
 
-    @patch("ai.drone_os_status.get_trusted_users")
-    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_os_status.get_trusted_users")
+    @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
     def test_status_on_self(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
@@ -150,8 +150,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         get_trusted_users.assert_called_once_with(drone.id)
         context.bot.get_user.assert_called_once_with(trusted_user_id)
 
-    @patch("ai.drone_os_status.get_trusted_users")
-    @patch("ai.drone_os_status.fetch_drone_with_drone_id")
+    @patch("src.ai.drone_os_status.get_trusted_users")
+    @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
     def test_status_as_moderator(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
