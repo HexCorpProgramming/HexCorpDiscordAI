@@ -5,6 +5,8 @@ RUN pip3 install -r /root/requirements.txt
 
 WORKDIR /var/opt/HexCorpDiscordAI
 
-COPY . .
+COPY main.py .
+COPY src/ ./src/
+COPY res/ ./res/
 
 CMD python3.11 main.py ${DISCORD_ACCESS_TOKEN}
