@@ -94,8 +94,7 @@ bot.add_cog(status_message_cog)
 bot.add_cog(storage_cog)
 bot.add_cog(temporary_dronification_cog)
 bot.add_cog(timers_cog)
-bot.add_cog(battery_cog)
-bot.add_cog(forbidden_word_cog)
+bot.add_cog(trusted_user_cog)
 
 # Register message listeners.
 message_listeners = [
@@ -118,6 +117,9 @@ message_listeners = [
 
 # Register message listeners that take messages sent by bots
 bot_message_listeners = []
+
+# Register message listeners that need to be run on DMs
+direct_message_listeners = [trusted_user_cog.trusted_user_response]
 
 # Cogs that do not use tasks.
 bot.add_cog(emote.EmoteCog())
@@ -193,12 +195,16 @@ async def help(context):
 
 @bot.event
 async def on_message(message: discord.Message):
+    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
+
     # handle DMs
     if isinstance(message.channel, discord.DMChannel):
+        LOGGER.info("Beginning DM listener stack execution.")
+        for listener in direct_message_listeners:
+            if await listener(message, message_copy):
+                return
         await bot.process_commands(message)
         return
-
-    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
 
     LOGGER.info("Beginning message listener stack execution.")
     # use the listeners for bot messages or user messages
