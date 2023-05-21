@@ -63,7 +63,7 @@ class TrustedUserCog(Cog):
 
         # request permission from trusted user and notify drone
         drone_name = context.bot.guilds[0].get_member(context.author.id).display_name
-        question_message = await trusted_user.send(f"\"{drone_name}\" is requesting to add you as a trusted user. This request will expire in 24 hours. Do you accept? (y/n)")
+        question_message = await trusted_user.send(f"\"{drone_name}\" is requesting to add you as a trusted user. This request will expire in 24 hours. To accept or reject this request, reply to this message. (y/n)")
         request = TrustedUserRequest(trusted_user, context.author, question_message)
         LOGGER.info(f"Adding a new trusted user addition request: {request}")
         self.trusted_user_requests.append(request)
