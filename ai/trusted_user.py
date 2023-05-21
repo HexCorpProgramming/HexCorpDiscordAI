@@ -58,7 +58,7 @@ class TrustedUserCog(Cog):
         trusted_users = get_trusted_users(context.author.id)
 
         if trusted_user.id in trusted_users:
-            await context.reply(f"User with name \"{trusted_user_name}\" is already trusted.")
+            await context.reply(f"User with name \"{trusted_user.display_name}\" is already trusted.")
             return
 
         # request permission from trusted user and notify drone
@@ -67,7 +67,7 @@ class TrustedUserCog(Cog):
         request = TrustedUserRequest(trusted_user, context.author, question_message)
         LOGGER.info(f"Adding a new trusted user addition request: {request}")
         self.trusted_user_requests.append(request)
-        await context.reply(f"Request sent to \"{trusted_user_name}\". They have 24 hours to accept.")
+        await context.reply(f"Request sent to \"{trusted_user.display_name}\". They have 24 hours to accept.")
 
     @dm_only()
     @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
@@ -136,12 +136,12 @@ async def remove_trusted_user(context, trusted_user_name: str):
         return
 
     if trusted_user.id not in trusted_users:
-        await context.reply(f"User with name \"{trusted_user_name}\" was not trusted.")
+        await context.reply(f"User with name \"{trusted_user.display_name}\" was not trusted.")
         return
 
     trusted_users.remove(trusted_user.id)
     set_trusted_users(context.author.id, trusted_users)
-    await context.reply(f"Successfully removed trusted user \"{trusted_user_name}\".")
+    await context.reply(f"Successfully removed trusted user \"{trusted_user.display_name}\".")
 
 
 def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> discord.Member:
