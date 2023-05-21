@@ -9,20 +9,21 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     The amplify command...
     '''
 
+    @patch("ai.amplify.generate_battery_message")
     @patch("ai.amplify.identity_enforcable", return_value=False)
     @patch("ai.amplify.has_role", return_value=True)
     @patch("ai.amplify.webhook.get_webhook_for_channel")
     @patch("ai.amplify.id_converter.convert_ids_to_members")
     @patch("ai.amplify.webhook.proxy_message_by_webhook")
-    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable):
+    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable, generate_battery_message):
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
         '''
         amplification_cog = amplify.AmplificationCog()
 
         drone = AsyncMock()
-        drone.avatar.url = "Pretty avatar"
-        drone.display_name = "5890"
+        drone.display_avatar.url = "Pretty avatar"
+        drone.display_name = "3287"
         id_converter.return_value = set(drone)
 
         webhook = AsyncMock()
@@ -34,13 +35,17 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         message = "Beep boop!"
         target_channel = AsyncMock()
 
+        generate_battery_message.return_value = "3287 :: Beep boop!"
+
         await amplification_cog.amplify(amplification_cog, context, message, target_channel)
         webhook_proxy.assert_called_once_with(
-            message_content="5890 :: Beep boop!",
-            message_username="5890",
+            message_content="3287 :: Beep boop!",
+            message_username="3287",
             message_avatar="Pretty avatar",
             webhook=webhook
         )
+
+        generate_battery_message.assert_called_once_with(drone, "3287 :: Beep boop!")
 
     @patch("ai.amplify.has_role")
     async def test_does_not_work_if_not_Mxtress(self, has_role):

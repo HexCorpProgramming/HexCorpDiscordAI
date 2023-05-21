@@ -104,7 +104,7 @@ message_listeners = [
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
     forbidden_word.deny_thoughts,
-    battery_cog.append_battery_indicator,
+    battery.add_battery_indicator_to_copy,
     react.parse_for_reactions,
     glitch_message.glitch_if_applicable,
     respond.respond_to_question,
