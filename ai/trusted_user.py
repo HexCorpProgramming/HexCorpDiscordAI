@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 import discord
 from discord.ext.commands import Cog, command, dm_only
@@ -144,7 +144,7 @@ async def remove_trusted_user(context, trusted_user_name: str):
     await context.reply(f"Successfully removed trusted user \"{trusted_user.display_name}\".")
 
 
-def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> discord.Member:
+def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> Optional[discord.Member]:
     user = get(guild.members, display_name=id)
 
     if user is None:
