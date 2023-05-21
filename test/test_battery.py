@@ -255,22 +255,22 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_percentage.return_value = 100
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, f"FULLBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, f"MIDBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, f"LOWBATTERYEMOJI :: {original_message}")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, f"EMPTYBATTERYEMOJI :: {original_message}")
 
     @patch("ai.battery.get")
@@ -291,22 +291,22 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         battery_percentage.return_value = 100
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 50
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 20
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.\nBeep boop.")
 
         battery_percentage.return_value = 5
         message_copy.content = original_message
-        battery.add_battery_indicator_to_copy(message, message_copy)
+        await battery.add_battery_indicator_to_copy(message, message_copy)
         self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.\nBeep boop.")
 
     @patch("ai.battery.is_drone", return_value=True)

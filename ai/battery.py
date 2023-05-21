@@ -170,7 +170,7 @@ class BatteryCog(commands.Cog):
                         continue
 
 
-def add_battery_indicator_to_copy(message: Message, message_copy: MessageCopy):
+async def add_battery_indicator_to_copy(message: Message, message_copy: MessageCopy):
     '''
     Prepends battery indicator emoji to a MessageCopy if the drone
     which sent the original message is battery powered.
