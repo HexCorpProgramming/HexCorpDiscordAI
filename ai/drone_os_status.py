@@ -68,8 +68,12 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
     # create list of trusted users
     if is_drone_self:
         trusted_usernames = []
-        for trusted_user in trusted_users:
-            trusted_usernames.append(context.bot.get_user(trusted_user).display_name)
+        for trusted_user_id in trusted_users:
+            trusted_user = context.bot.get_user(trusted_user_id)
+
+            # we might have a few dangling trusted users in the DB
+            if trusted_user is not None:
+                trusted_usernames.append(trusted_user.display_name)
 
         embed.add_field(name="Trusted users", value=trusted_usernames)
 
