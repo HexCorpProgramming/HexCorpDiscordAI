@@ -70,6 +70,8 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         get_trusted_users.return_value = [int(self.hive_mxtress.id)]
 
         question_message = AsyncMock()
+        question_message.id = 123456
+        question_message_id = question_message.id
         self.trusted_user_member.send.return_value = question_message
         self.context.author = self.drone_member
 
@@ -82,7 +84,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(self.cog.trusted_user_requests))
         self.assertEqual(self.trusted_user_member, self.cog.trusted_user_requests[0].target)
         self.assertEqual(self.drone_member, self.cog.trusted_user_requests[0].issuer)
-        self.assertEqual(question_message, self.cog.trusted_user_requests[0].question_message)
+        self.assertEqual(question_message_id, self.cog.trusted_user_requests[0].question_message_id)
 
     @patch("ai.trusted_user.get_trusted_users")
     @patch("ai.trusted_user.find_user_by_display_name_or_drone_id")
@@ -135,18 +137,19 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.trusted_user.get_trusted_users")
     async def test_trusted_user_response_accepted(self, get_trusted_users, set_trusted_users):
         # setup
-        question_message = AsyncMock()
+        question_message_id = AsyncMock()
 
         target = self.trusted_user_member
         issuer = self.drone_member
 
-        request = TrustedUserRequest(target, issuer, question_message)
+        request = TrustedUserRequest(target, issuer, question_message_id)
 
         self.cog.trusted_user_requests.append(request)
 
         message = AsyncMock()
         message.content = "y"
-        message.reference.resolved = question_message
+        message.reference.message.id = question_message_id
+        message.reference.resolved.id = question_message_id
         message.author = target
         message.guild = AsyncMock()
 
@@ -164,18 +167,19 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.trusted_user.get_trusted_users")
     async def test_trusted_user_response_rejected(self, get_trusted_users, set_trusted_users):
         # setup
-        question_message = AsyncMock()
+        question_message_id = AsyncMock()
 
         target = self.trusted_user_member
         issuer = self.drone_member
 
-        request = TrustedUserRequest(target, issuer, question_message)
+        request = TrustedUserRequest(target, issuer, question_message_id)
 
         self.cog.trusted_user_requests.append(request)
 
         message = AsyncMock()
         message.content = "n"
-        message.reference.resolved = question_message
+        message.reference.message_id = question_message_id
+        message.reference.resolved.id = question_message_id
         message.author = target
         message.guild = AsyncMock()
 
@@ -193,18 +197,19 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("ai.trusted_user.get_trusted_users")
     async def test_trusted_user_response_invalid(self, get_trusted_users, set_trusted_users):
         # setup
-        question_message = AsyncMock()
+        question_message_id = AsyncMock()
 
         target = self.trusted_user_member
         issuer = self.drone_member
 
-        request = TrustedUserRequest(target, issuer, question_message)
+        request = TrustedUserRequest(target, issuer, question_message_id)
 
         self.cog.trusted_user_requests.append(request)
 
         message = AsyncMock()
         message.content = "bingle"
-        message.reference.resolved = question_message
+        message.reference.message_id = question_message_id
+        message.reference.resolved.id = question_message_id
         message.author = target
         message.guild = AsyncMock()
 
