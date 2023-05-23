@@ -17,10 +17,10 @@ REQUEST_TIMEOUT = timedelta(hours=24)
 
 class TrustedUserRequest:
 
-    def __init__(self, target: discord.Member, issuer: discord.Member, question_message: discord.Message):
+    def __init__(self, target: discord.Member, issuer: discord.Member, question_message_id: int):
         self.target = target
         self.issuer = issuer
-        self.question_message = question_message
+        self.question_message_id = question_message_id
         self.issued = datetime.now()
 
 
@@ -64,7 +64,8 @@ class TrustedUserCog(Cog):
         # request permission from trusted user and notify drone
         drone_name = context.bot.guilds[0].get_member(context.author.id).display_name
         question_message = await trusted_user.send(f"\"{drone_name}\" is requesting to add you as a trusted user. This request will expire in 24 hours. To accept or reject this request, reply to this message. (y/n)")
-        request = TrustedUserRequest(trusted_user, context.author, question_message)
+        question_message_id = int(question_message.id)
+        request = TrustedUserRequest(trusted_user, context.author, question_message_id)
         LOGGER.info(f"Adding a new trusted user addition request: {request}")
         self.trusted_user_requests.append(request)
         await context.reply(f"Request sent to \"{trusted_user.display_name}\". They have 24 hours to accept.")
@@ -87,7 +88,7 @@ class TrustedUserCog(Cog):
                 matching_request = request
                 break
 
-        if matching_request and message.reference and message.reference.resolved == matching_request.question_message:
+        if matching_request and message.reference.message_id and message.reference.resolved.id == matching_request.question_message_id:
             LOGGER.info(f"Message detected as response to a trusted user addition request {matching_request}")
 
             # fetch display names of parties involved
