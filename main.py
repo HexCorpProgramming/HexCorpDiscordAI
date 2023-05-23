@@ -1,48 +1,57 @@
 # Core
-import discord
-import sys
-import logging
-from logging import handlers
-from discord.ext.commands import Bot, MissingRequiredArgument
-from discord.ext.commands.errors import PrivateMessageOnly
-from traceback import TracebackException
-from datetime import datetime, timedelta
 import asyncio
 
+from datetime import datetime, timedelta
+
+import discord
+from discord.ext.commands import Bot, MissingRequiredArgument
+from discord.ext.commands.errors import PrivateMessageOnly
+
+import logging
+from logging import handlers
+
+import sys
+
+from traceback import TracebackException
+
+
 # Modules
-import ai.stoplights as stoplights
+import ai.add_voice as add_voice
+import ai.amplify as amplify
+import ai.assign as assign
+import ai.battery as battery
+import ai.drone_configuration as drone_configuration
+import ai.drone_os_status as drone_os_status
+import ai.emote as emote
+import ai.forbidden_word as forbidden_word
+import ai.glitch_message as glitch_message
+import ai.id_prepending as id_prepending
 import ai.identity_enforcement as identity_enforcement
+import ai.join as join
+import ai.orders_reporting as orders_reporting
+import ai.react as react
+import ai.respond as respond
 import ai.speech_optimization as speech_optimization
 import ai.speech_optimization_enforcement as speech_optimization_enforcement
-import ai.id_prepending as id_prepending
-import ai.join as join
-import ai.respond as respond
-import ai.storage as storage
-import ai.timers as timers
-import ai.emote as emote
-import ai.assign as assign
-import ai.orders_reporting as orders_reporting
 import ai.status as status
-import ai.drone_configuration as drone_configuration
-import ai.add_voice as add_voice
-import ai.trusted_user as trusted_user
-import ai.drone_os_status as drone_os_status
-import ai.glitch_message as glitch_message
-import ai.battery as battery
 import ai.status_message as status_message
-import ai.forbidden_word as forbidden_word
-import ai.react as react
-import ai.amplify as amplify
+import ai.stoplights as stoplights
+import ai.storage as storage
 import ai.temporary_dronification as temporary_dronification
+import ai.timers as timers
+import ai.trusted_user as trusted_user
 import webhook
+
 # Utils
 from bot_utils import COMMAND_PREFIX
 
 # Database
 from db import database
 from db import drone_dao
+
 # Constants
 from resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
+
 # Data objects
 from ai.data_objects import MessageCopy
 
@@ -78,20 +87,23 @@ bot.remove_command("help")
 
 
 # Need to create cogs as a seperate variable so they can be assigned and have their tasks started after bot has booted.
+battery_cog = battery.BatteryCog(bot)
+forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
+orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 status_message_cog = status_message.StatusMessageCog(bot)
 storage_cog = storage.StorageCog(bot)
-orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
-timers_cog = timers.TimersCog(bot)
-battery_cog = battery.BatteryCog(bot)
 temporary_dronification_cog = temporary_dronification.TemporaryDronificationCog(bot)
-forbidden_word_cog = forbidden_word.ForbiddenWordCog(bot)
+timers_cog = timers.TimersCog(bot)
+trusted_user_cog = trusted_user.TrustedUserCog(bot)
 
-bot.add_cog(status_message_cog)
-bot.add_cog(storage_cog)
-bot.add_cog(orders_reporting_cog)
-bot.add_cog(timers_cog)
 bot.add_cog(battery_cog)
 bot.add_cog(forbidden_word_cog)
+bot.add_cog(orders_reporting_cog)
+bot.add_cog(status_message_cog)
+bot.add_cog(storage_cog)
+bot.add_cog(temporary_dronification_cog)
+bot.add_cog(timers_cog)
+bot.add_cog(trusted_user_cog)
 
 # Register message listeners.
 message_listeners = [
@@ -112,22 +124,34 @@ message_listeners = [
     temporary_dronification_cog.temporary_dronification_response
 ]
 
-# register message listeners that take messages sent by bots
+# Register message listeners that take messages sent by bots
 bot_message_listeners = []
 
+# Register message listeners that need to be run on DMs
+direct_message_listeners = [trusted_user_cog.trusted_user_response]
+
 # Cogs that do not use tasks.
-bot.add_cog(emote.EmoteCog())
-bot.add_cog(drone_configuration.DroneConfigurationCog())
 bot.add_cog(add_voice.AddVoiceCog(bot))
-bot.add_cog(trusted_user.TrustedUserCog())
-bot.add_cog(drone_os_status.DroneOsStatusCog())
-bot.add_cog(status.StatusCog(message_listeners))
 bot.add_cog(amplify.AmplificationCog())
-bot.add_cog(temporary_dronification_cog)
+bot.add_cog(drone_configuration.DroneConfigurationCog())
+bot.add_cog(drone_os_status.DroneOsStatusCog())
+bot.add_cog(emote.EmoteCog())
+bot.add_cog(status.StatusCog(message_listeners))
+
 
 # Categorize which tasks run at which intervals
-minute_tasks = [storage_cog.release_timed, battery_cog.track_active_battery_drain, battery_cog.track_drained_batteries, battery_cog.warn_low_battery_drones, temporary_dronification_cog.clean_dronification_requests, temporary_dronification_cog.release_temporary_drones, timers_cog.process_timers]
-hour_tasks = [storage_cog.report_storage, orders_reporting_cog.deactivate_drones_with_completed_orders]
+minute_tasks = [
+    battery_cog.track_active_battery_drain,
+    battery_cog.track_drained_batteries,
+    battery_cog.warn_low_battery_drones,
+    storage_cog.release_timed,
+    temporary_dronification_cog.clean_dronification_requests,
+    temporary_dronification_cog.release_temporary_drones,
+    timers_cog.process_timers]
+hour_tasks = [
+    orders_reporting_cog.deactivate_drones_with_completed_orders,
+    storage_cog.report_storage,
+    trusted_user_cog.clean_trusted_user_requests]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
@@ -180,12 +204,16 @@ async def help(context):
 
 @bot.event
 async def on_message(message: discord.Message):
+    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
+
     # handle DMs
     if isinstance(message.channel, discord.DMChannel):
+        LOGGER.info("Beginning DM listener stack execution.")
+        for listener in direct_message_listeners:
+            if await listener(message, message_copy):
+                return
         await bot.process_commands(message)
         return
-
-    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
 
     LOGGER.info("Beginning message listener stack execution.")
     # use the listeners for bot messages or user messages
