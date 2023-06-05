@@ -2,8 +2,10 @@ import logging
 import re
 from copy import deepcopy
 from typing import Dict, List
+from ai.data_objects import MessageCopy
+from db.data_objects import Storage
 
-from discord import Member
+from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
 from discord.utils import get
 
@@ -168,44 +170,62 @@ class BatteryCog(commands.Cog):
                     except ValueError:
                         continue
 
-    async def append_battery_indicator(self, message, message_copy):
-        '''
-        Prepends battery indicator emoji to drone's message if they are
-        battery powered. The indicator is placed after the ID prepend
-        if the message includes it
-        '''
 
-        if not is_battery_powered(message.author):
-            return False
+async def add_battery_indicator_to_copy(message: Message, message_copy: MessageCopy):
+    '''
+    Prepends battery indicator emoji to a MessageCopy if the drone
+    which sent the original message is battery powered.
+    The indicator is placed after the ID prepend if the message includes it.
+    '''
+    message_copy.content = generate_battery_message(message.author, message_copy.content)
 
-        id_prepending_regex = re.compile(r'(\d{4} ::)(.+)', re.DOTALL)
-
-        battery_percentage = get_battery_percent_remaining(message.author)
-
-        LOGGER.debug(f"Battery percentage: {battery_percentage}")
-
-        if battery_percentage <= 100 and battery_percentage >= 75:
-            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_FULL)
-        elif battery_percentage <= 75 and battery_percentage >= 25:
-            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_MID)
-        elif battery_percentage <= 24 and battery_percentage >= 10:
-            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_LOW)
-        elif battery_percentage <= 9:
-            battery_emoji = get(message.guild.emojis, name=emoji.BATTERY_EMPTY)
-        else:
-            battery_emoji = "[BATTERY ERROR]"
-
-        id_prepending_message = id_prepending_regex.match(message_copy.content)
-
-        if id_prepending_message:
-            message_copy.content = f"{id_prepending_message.group(1)} {str(battery_emoji)} ::{id_prepending_message.group(2)}"
-        else:
-            message_copy.content = f"{str(battery_emoji)} :: {message_copy.content}"
-
-        return False
+    return False
 
 
-def recharge_battery(storage_record):
+def generate_battery_message(member: Member, original_content: str) -> str:
+    '''
+    Assembles a message content with a battery emoji for a given Guild Member.
+    Returns the original content if the drone is not battery powered.
+    '''
+
+    if not is_battery_powered(member):
+        return original_content
+
+    battery_percentage = get_battery_percent_remaining(member)
+    battery_emoji = determine_battery_emoji(battery_percentage, member.guild)
+
+    id_prepending_regex = re.compile(r'(\d{4} ::)(.+)', re.DOTALL)
+
+    id_prepending_message = id_prepending_regex.match(original_content)
+
+    if id_prepending_message:
+        return f"{id_prepending_message.group(1)} {str(battery_emoji)} ::{id_prepending_message.group(2)}"
+    else:
+        return f"{str(battery_emoji)} :: {original_content}"
+
+
+def determine_battery_emoji(battery_percentage: int, guild: Guild) -> Emoji | str:
+    '''
+    Determines which battery emoji should be used according to the charge of the drone.
+    '''
+
+    if battery_percentage <= 100 and battery_percentage >= 75:
+        return get(guild.emojis, name=emoji.BATTERY_FULL)
+    elif battery_percentage <= 75 and battery_percentage >= 25:
+        return get(guild.emojis, name=emoji.BATTERY_MID)
+    elif battery_percentage <= 24 and battery_percentage >= 10:
+        return get(guild.emojis, name=emoji.BATTERY_LOW)
+    elif battery_percentage <= 9:
+        return get(guild.emojis, name=emoji.BATTERY_EMPTY)
+    else:
+        return "[BATTERY ERROR]"
+
+
+def recharge_battery(storage_record: Storage):
+    '''
+    Fills the battery of a drone in storage up to max.
+    '''
+
     try:
         current_minutes_remaining = get_battery_minutes_remaining(drone_id=storage_record.target_id)
         set_battery_minutes_remaining(drone_id=storage_record.target_id, minutes=min(MAX_BATTERY_CAPACITY_MINS, current_minutes_remaining + (60 * HOURS_OF_RECHARGE_PER_HOUR)))
@@ -216,5 +236,9 @@ def recharge_battery(storage_record):
 
 
 def drain_battery(member: Member):
+    '''
+    Reduces the battery charge of a drone by 10%.
+    '''
+
     minutes_remaining = get_battery_minutes_remaining(member=member)
     set_battery_minutes_remaining(member=member, minutes=minutes_remaining - MAX_BATTERY_CAPACITY_MINS / 10)

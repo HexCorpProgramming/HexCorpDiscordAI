@@ -2,6 +2,7 @@ import discord
 from discord.ext.commands import Cog, command, guild_only
 
 import src.id_converter as id_converter
+from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
 from src.bot_utils import COMMAND_PREFIX, get_id
@@ -26,8 +27,11 @@ class AmplificationCog(Cog):
         channel_webhook = await webhook.get_webhook_for_channel(target_channel)
 
         for drone in member_drones:
-            await webhook.proxy_message_by_webhook(message_content=f"{get_id(drone.display_name)} :: {message}",
+
+            formatted_message = generate_battery_message(drone, f"{get_id(drone.display_name)} :: {message}")
+
+            await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.avatar.url if not identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.display_avatar.url if not identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
         return True
