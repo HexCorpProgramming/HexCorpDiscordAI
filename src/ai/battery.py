@@ -2,8 +2,8 @@ import logging
 import re
 from copy import deepcopy
 from typing import Dict, List
-from ai.data_objects import MessageCopy
-from db.data_objects import Storage
+from src.ai.data_objects import MessageCopy
+from src.db.data_objects import Storage
 
 from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
