@@ -36,7 +36,7 @@ docker run \
     --detach \
     --restart always \
     --env DISCORD_ACCESS_TOKEN=(bot token) \
-    --volume ai.db:/var/opt/HexCorpDiscordAI/ai.db \
+    --volume /absolute/path/to/the/repo/ai.db:/var/opt/HexCorpDiscordAI/ai.db \
     mxtress_ai:latest
 ```
 
