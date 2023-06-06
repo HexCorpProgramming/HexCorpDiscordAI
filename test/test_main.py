@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, patch, ANY
 
-import main as main
+import main
 
 
 class MainTest(unittest.IsolatedAsyncioTestCase):
