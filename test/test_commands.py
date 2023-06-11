@@ -1,7 +1,7 @@
 import unittest
 from discord.ext.commands import BadArgument
 
-import ai.commands as commands
+import src.ai.commands as commands
 
 
 class NamedParameterConverterTest(unittest.IsolatedAsyncioTestCase):

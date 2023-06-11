@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, patch
 
-from ai.drone_configuration import can_toggle_permissions_for
+from src.ai.drone_configuration import can_toggle_permissions_for
 
-from resources import HIVE_MXTRESS_USER_ID
+from src.resources import HIVE_MXTRESS_USER_ID
 
 
 class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
@@ -28,7 +28,7 @@ class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
         self.random_user_member.id = "123456789"
         self.random_user_member.display_name = "random"
 
-        self.get_trusted_users_patch = patch('ai.drone_configuration.get_trusted_users')
+        self.get_trusted_users_patch = patch('src.ai.drone_configuration.get_trusted_users')
         self.get_trusted_users = self.get_trusted_users_patch.start()
         self.get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id]
 
@@ -47,14 +47,14 @@ class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
         '''
         self.assertTrue(can_toggle_permissions_for(self.trusted_user_member, self.drone_member))
 
-    @patch("ai.drone_configuration.can_self_configure", return_value=True)
+    @patch("src.ai.drone_configuration.can_self_configure", return_value=True)
     def test_self_can_toggle_if_not_otherwise_controlled(self, can_self_configure):
         '''
         should return true if the toggling user is the toggled user and no one else has toggled anything.
         '''
         self.assertTrue(can_toggle_permissions_for(self.drone_member, self.drone_member))
 
-    @patch("ai.drone_configuration.can_self_configure", return_value=False)
+    @patch("src.ai.drone_configuration.can_self_configure", return_value=False)
     def test_self_cannot_toggle_if_otherwise_controlled(self, can_self_configure):
         '''
         should return false if the toggling user is the toggled user and someone else has toggled something.

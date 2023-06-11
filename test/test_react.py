@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock, Mock
-from roles import DRONE, ASSOCIATE
+from src.roles import DRONE, ASSOCIATE
 
-import ai.react as react
+import src.ai.react as react
 
 
 GOOD_DRONE_EMOTE = Mock()

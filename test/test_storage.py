@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, patch, Mock
 from uuid import uuid4
 from datetime import datetime, timedelta
 
-import roles
-import channels
-import ai.storage as storage
-from db.data_objects import Storage, Drone
+import src.roles as roles
+import src.channels as channels
+import src.ai.storage as storage
+from src.db.data_objects import Storage, Drone
 import test.test_utils as test_utils
 
 storage_channel = AsyncMock()
@@ -62,7 +62,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await storage.store_drone(message))
         message.channel.send.assert_called_once_with(storage.REJECT_MESSAGE)
 
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
     async def test_storage_message_already_in_storage(self, fetch_storage_by_target_id):
         # setup
         message = AsyncMock()
@@ -76,7 +76,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("3287 is already in storage.")
 
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_storage_message_duration_too_long(self, fetch_storage_by_target_id):
         # setup
         message = AsyncMock()
@@ -89,7 +89,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         fetch_storage_by_target_id.assert_called_once_with('3287')
         message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
 
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_storage_message_is_Hive_Mxtress(self, fetch_storage_by_target_id):
         # setup
         message = AsyncMock()
@@ -102,10 +102,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         fetch_storage_by_target_id.assert_called_once_with('0006')
         message.channel.send.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
-    @patch("ai.storage.datetime")
-    @patch("ai.storage.insert_storage")
-    @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    @patch("src.ai.storage.datetime")
+    @patch("src.ai.storage.insert_storage")
+    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_self(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
         # setup
         message = AsyncMock()
@@ -137,10 +137,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8 hours and for the following reason: recharge")
 
-    @patch("ai.storage.datetime")
-    @patch("ai.storage.insert_storage")
-    @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    @patch("src.ai.storage.datetime")
+    @patch("src.ai.storage.insert_storage")
+    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_hive_mxtress(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
         # setup
         message = AsyncMock()
@@ -172,10 +172,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
 
-    @patch("ai.storage.datetime")
-    @patch("ai.storage.insert_storage")
-    @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=None)
+    @patch("src.ai.storage.datetime")
+    @patch("src.ai.storage.insert_storage")
+    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
         # setup
         message = AsyncMock()
@@ -207,7 +207,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
 
-    @patch("ai.storage.fetch_all_storage", return_value=[])
+    @patch("src.ai.storage.fetch_all_storage", return_value=[])
     async def test_storage_report_empty(self, fetch_all_storage):
         storage_cog = storage.StorageCog(bot)
 
@@ -215,8 +215,8 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
         storage_cog.storage_channel.send.assert_called_once_with('No drones in storage.')
 
-    @patch("ai.storage.recharge_battery")
-    @patch("ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '9813', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
+    @patch("src.ai.storage.recharge_battery")
+    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '9813', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
     async def test_storage_report(self, fetch_all_storage, recharge):
         storage_cog = storage.StorageCog(bot)
 
@@ -224,8 +224,8 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
         storage_cog.storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by `Drone #9813`. Remaining time in storage: 4.0 hours')
 
-    @patch("ai.storage.recharge_battery")
-    @patch("ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '0006', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
+    @patch("src.ai.storage.recharge_battery")
+    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '0006', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
     async def test_storage_report_hive_mxtress(self, fetch_all_storage, recharge_battery):
         storage_cog = storage.StorageCog(bot)
 
@@ -233,9 +233,9 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
         storage_cog.storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by the Hive Mxtress. Remaining time in storage: 4.0 hours')
 
-    @patch("ai.storage.delete_storage")
-    @patch("ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
-    @patch("ai.storage.fetch_all_elapsed_storage", return_value=[Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() - timedelta(minutes=4)))])
+    @patch("src.ai.storage.delete_storage")
+    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("src.ai.storage.fetch_all_elapsed_storage", return_value=[Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() - timedelta(minutes=4)))])
     async def test_release_timed(self, fetch_all_elapsed_storage, fetch_drone_with_drone_id, delete_storage):
         # setup
         stored_member = AsyncMock()
@@ -263,9 +263,9 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             # run & assert
             self.assertFalse(await storage.release(context, None))
 
-    @patch("ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
-    @patch("ai.storage.convert_id_to_member")
-    @patch("ai.storage.delete_storage")
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
+    @patch("src.ai.storage.convert_id_to_member")
+    @patch("src.ai.storage.delete_storage")
     async def test_release(self, delete_storage, convert_id_to_member, fetch_storage_by_target_id):
         for role in roles.MODERATION_ROLES:
             # setup

@@ -1,8 +1,8 @@
 import unittest
-import ai.add_voice as add_voice
+import src.ai.add_voice as add_voice
 from unittest.mock import Mock, AsyncMock
 from datetime import datetime, timedelta, timezone
-from roles import VOICE
+from src.roles import VOICE
 
 
 voice_role = Mock()

@@ -3,21 +3,21 @@ from unittest.mock import AsyncMock, patch, Mock
 from uuid import uuid4
 from datetime import datetime, timedelta
 
-import roles
-from ai.timers import TimersCog
-from db.data_objects import Timer
+import src.roles as roles
+from src.ai.timers import TimersCog
+from src.db.data_objects import Timer
 import test.test_utils as test_utils
 
 
 class TimersTest(unittest.IsolatedAsyncioTestCase):
 
-    @patch("ai.timers.set_can_self_configure")
-    @patch("ai.timers.update_display_name")
-    @patch("ai.timers.convert_id_to_member")
-    @patch("ai.timers.update_droneOS_parameter")
-    @patch("ai.timers.fetch_drone_with_drone_id")
-    @patch("ai.timers.delete_timer")
-    @patch("ai.timers.get_timers_elapsed_before")
+    @patch("src.ai.timers.set_can_self_configure")
+    @patch("src.ai.timers.update_display_name")
+    @patch("src.ai.timers.convert_id_to_member")
+    @patch("src.ai.timers.update_droneOS_parameter")
+    @patch("src.ai.timers.fetch_drone_with_drone_id")
+    @patch("src.ai.timers.delete_timer")
+    @patch("src.ai.timers.get_timers_elapsed_before")
     async def test_process_timers(self,
                                   get_timers_elapsed_before,
                                   delete_timer,

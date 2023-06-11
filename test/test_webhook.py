@@ -1,14 +1,14 @@
-from webhook import webhook_if_message_altered
+from src.webhook import webhook_if_message_altered
 import unittest
 from unittest.mock import ANY, Mock, AsyncMock, patch
-from ai.data_objects import MessageCopy
+from src.ai.data_objects import MessageCopy
 import discord
 import io
 
 
 class TestWebhook(unittest.IsolatedAsyncioTestCase):
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_not_proxied_if_message_not_altered(self, send_webhook):
         """
         The webhook_if_message_altered function should do nothing if the message and its copy are identical.
@@ -27,7 +27,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         message_original.delete.assert_not_called()
         send_webhook.assert_not_called()
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_proxied_if_message_content_altered(self, send_webhook):
         """
         The webhook_if_message_altered function should delete the original message and proxy the updated version if the original message and the message copy are not identical.
@@ -54,7 +54,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
                                              webhook=None,
                                              embed=None)
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_proxied_if_message_avatar_url_altered(self, send_webhook):
         """
         The webhook_if_message_altered function should delete the original message and proxy the updated version if the original message's avatar url and the message copy's avatar_url are not identical.
@@ -81,7 +81,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
                                              webhook=None,
                                              embed=None)
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_proxied_if_message_display_name_altered(self, send_webhook):
         """
         The webhook_if_message_altered function should delete the original message and proxy the updated version if the original message's display name and the message copy's display_name are not identical.
@@ -108,7 +108,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
                                              webhook=None,
                                              embed=None)
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_proxied_with_reference(self, send_webhook):
         """
         The webhook_if_message_altered function should delete the original message and proxy
@@ -137,7 +137,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
                                              webhook=None,
                                              embed=ANY)
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_attachments_are_converted_into_file_objects(self, send_webhook):
         '''
         The webhook_if_message altered function should read each Attachment object in the MessageCopy's attachments attribute
@@ -179,7 +179,7 @@ class TestWebhook(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(converted_file_one.fp.read(), expected_file_one.fp.read())
         self.assertEqual(converted_file_two.fp.read(), expected_file_two.fp.read())
 
-    @patch("webhook.proxy_message_by_webhook")
+    @patch("src.webhook.proxy_message_by_webhook")
     async def test_message_avatar_being_set(self, send_webhook):
         """
         The webhook_if_message_altered function should create an embed when replying to a message.

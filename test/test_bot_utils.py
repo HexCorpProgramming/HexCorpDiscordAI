@@ -1,4 +1,4 @@
-from bot_utils import get_id
+from src.bot_utils import get_id
 import unittest
 
 
