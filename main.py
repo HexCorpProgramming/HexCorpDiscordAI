@@ -47,6 +47,7 @@ from src.bot_utils import COMMAND_PREFIX
 # Database
 from src.db import database
 from src.db import drone_dao
+from src.db import maintenance
 
 # Constants
 from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
@@ -249,8 +250,11 @@ async def on_member_remove(member: discord.Member):
 async def on_ready():
     LOGGER.info("Hive Mxtress AI online.")
 
-    LOGGER.info("Inserting any new drones into database.")
-    drone_dao.add_new_drone_members(bot.guilds[0].members)
+    LOGGER.info("Performing startup maintenance.")
+    LOGGER.info("Syncing drones between Discord and DB.")
+    maintenance.sync_drones(bot.guilds[0].members)
+    LOGGER.info("Trimming trusted users not in the guild anymore.")
+    maintenance.trusted_user_cleanup(bot.guilds[0].members)
 
     LOGGER.info("Starting timing agnostic tasks.")
     for task in timing_agnostic_tasks:
