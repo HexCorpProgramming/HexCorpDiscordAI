@@ -308,19 +308,19 @@ def set_can_self_configure(drone: discord.Member):
 
 
 async def toggle_free_storage(target: discord.Member):
-    drone_member = fetch_drone_with_id(target.id)
+    drone = fetch_drone_with_id(target.id)
     guild = target.guild
 
     # check for existence
-    if drone_member is None:
+    if drone is None:
         await target.send("You are not a drone. Cannot toggle this parameter.")
         return
 
-    if is_free_storage(drone_member):
-        update_droneOS_parameter(drone_member, "free_storage", False)
-        await drone_member.remove_roles(get(guild.roles, name=FREE_STORAGE))
+    if is_free_storage(target):
+        update_droneOS_parameter(target, "free_storage", False)
+        await target.remove_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
     else:
-        update_droneOS_parameter(drone_member, "free_storage", True)
-        await drone_member.add_roles(get(guild.roles, name=FREE_STORAGE))
+        update_droneOS_parameter(target, "free_storage", True)
+        await target.add_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage enabled. You can now be stored by anyone.")
