@@ -155,9 +155,13 @@ async def store_drone(message: discord.Message, message_copy=None):
     plural = "hour" if int(time) == 1 else "hours"
     if drone_id == target_id:
         drone_id = "yourself"
+        drone_id_thirdperson = "itself"
     elif drone_id == '0006':
-        drone_id = "the Hive Mxtress"
+        drone_id = drone_id_thirdperson = "the Hive Mxtress"
+    else:
+        drone_id_thirdperson = drone_id
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
+    await message.channel.send(f"Drone {target_id} has been stored away in the Hive Storage Chambers by {drone_id_thirdperson} for {time} {plural} and for the following reason: {purpose}")
     return False
 
 
