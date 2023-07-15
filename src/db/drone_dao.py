@@ -250,7 +250,7 @@ def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
     return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}), Drone)
 
 
-def is_free_storage(drone: discord.Member) -> bool:
+def is_free_storage(drone: Drone) -> bool:
     '''
     Determines if the given member is a drone and can be freely stored by anyone.
     '''
