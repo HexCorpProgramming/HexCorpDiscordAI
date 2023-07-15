@@ -136,6 +136,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8 hours and for the following reason: recharge")
+        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by itself for 8 hours and for the following reason: recharge")
 
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
@@ -171,6 +172,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
+        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
 
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
@@ -206,6 +208,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
+        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
 
     @patch("src.ai.storage.fetch_all_storage", return_value=[])
     async def test_storage_report_empty(self, fetch_all_storage):
