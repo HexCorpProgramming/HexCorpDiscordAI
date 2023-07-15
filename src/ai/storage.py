@@ -13,13 +13,14 @@ import src.roles as roles
 from src.ai.battery import recharge_battery
 from src.bot_utils import COMMAND_PREFIX
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
+from src.db.data_objects import Drone as DroneDO
 from src.db.data_objects import Storage as StorageDO
-from src.db.drone_dao import fetch_drone_with_drone_id
+from src.db.drone_dao import fetch_drone_with_drone_id, is_free_storage, get_trusted_users
 from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
 from src.id_converter import convert_id_to_member
-from src.resources import BRIEF_HIVE_MXTRESS
+from src.resources import BRIEF_HIVE_MXTRESS, HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
 
@@ -32,7 +33,7 @@ RELEASE_INTERVAL_SECONDS = 60
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
 
-NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING]
+NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING + roles.FREE_STORAGE]
 
 
 class StorageCog(Cog):
@@ -99,7 +100,43 @@ class StorageCog(Cog):
 
 async def store_drone(message: discord.Message, message_copy=None):
     '''
-    Process posted messages.
+    Stores drones. Always has to return False, to match original function design. May warrant a refactor in the future.
+    '''
+    # check for message structure validity
+    if await check_storage_message_validity(message):
+        # extract info from message
+        [(drone_id, target_id, time, purpose)] = re.findall(MESSAGE_FORMAT, message.content)
+
+        # check if message target is valid
+        if await check_storage_message_target(target_id, time, message):
+            # get actual data object of the drone to be stored
+            drone_to_store = fetch_drone_with_drone_id(target_id)
+
+            # check if drone can be freely stored
+            if is_free_storage(drone_to_store):
+                await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
+                return False
+            else:
+                # check if initiator is allowed to store drone
+                trusted_users = get_trusted_users(drone_to_store.id)
+                initiator = fetch_drone_with_drone_id(drone_id)
+
+                # proceed if allowed, send error message if not
+                if (initiator.id == HIVE_MXTRESS_USER_ID or drone_to_store.id) or (initiator.id in trusted_users):
+                    await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
+                    return False
+                else:
+                    await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
+                    return False
+        else:
+            return False
+    else:
+        return False
+
+
+async def check_storage_message_validity(message: discord.Message, message_copy=None):
+    '''
+    Check if storage message is valid, and send error message if applicable.
     '''
     if message.channel.name != STORAGE_FACILITY:
         return False
@@ -109,12 +146,17 @@ async def store_drone(message: discord.Message, message_copy=None):
         if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
         await message.channel.send(REJECT_MESSAGE)
+        LOGGER.debug('Storage message format is invalid.')
         return False
 
     LOGGER.debug('Message is valid for storage.')
-    [(drone_id, target_id, time, purpose)] = re.findall(
-        MESSAGE_FORMAT, message.content)
+    return True
 
+
+async def check_storage_message_target(target_id, time, message: discord.Message, message_copy=None):
+    '''
+    Check if storage message has a valid target, and return any relevant errors
+    '''
     # check if drone is already in storage
     if fetch_storage_by_target_id(target_id) is not None:
         await message.channel.send(f'{target_id} is already in storage.')
@@ -138,6 +180,11 @@ async def store_drone(message: discord.Message, message_copy=None):
         await message.channel.send(f'Drone with ID {target_id} could not be found.')
         return False
 
+
+async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, time, purpose, message: discord.Message, message_copy=None):
+    '''
+    Initate storage process on drone. Assumes target is already valid and can be freely stored.
+    '''
     # store it
     stored_role = get(message.guild.roles, name=roles.STORED)
     member = message.guild.get_member(drone_to_store.id)
@@ -145,13 +192,11 @@ async def store_drone(message: discord.Message, message_copy=None):
     await member.remove_roles(*former_roles)
     await member.add_roles(stored_role)
     stored_until = str(datetime.now() + timedelta(hours=int(time)))
-    stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(
-        get_names_for_roles(former_roles)), stored_until)
+    stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
     insert_storage(stored_drone)
 
     # Inform the drone that they have been stored.
-    storage_chambers = get(
-        message.guild.channels, name=STORAGE_CHAMBERS)
+    storage_chambers = get(message.guild.channels, name=STORAGE_CHAMBERS)
     plural = "hour" if int(time) == 1 else "hours"
     if drone_id == target_id:
         drone_id = "yourself"
@@ -162,6 +207,7 @@ async def store_drone(message: discord.Message, message_copy=None):
         drone_id_thirdperson = drone_id
     await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
     await message.channel.send(f"Drone {target_id} has been stored away in the Hive Storage Chambers by {drone_id_thirdperson} for {time} {plural} and for the following reason: {purpose}")
+
     return False
 
 

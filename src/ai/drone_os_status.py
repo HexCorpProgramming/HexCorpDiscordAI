@@ -63,7 +63,8 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
         .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
         .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
         .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
-        .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")
+        .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")\
+        .add_field(name="Free storage", value=boolean_to_enabled_disabled(drone.free_storage))
 
     # create list of trusted users
     if is_drone_self:

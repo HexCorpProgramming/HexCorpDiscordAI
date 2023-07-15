@@ -248,3 +248,11 @@ def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
     Finds all drones, that have the user with the given ID as a trusted user.
     '''
     return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}), Drone)
+
+
+def is_free_storage(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and can be freely stored by anyone.
+    '''
+    free_storage_drone = fetchone('SELECT free_storage FROM drone WHERE id = :discord', {'discord': drone.id})
+    return free_storage_drone is not None and bool(free_storage_drone['free_storage'])

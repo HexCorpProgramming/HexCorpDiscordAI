@@ -17,7 +17,7 @@ from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
                               fetch_drone_with_drone_id, fetch_drone_with_id,
-                              get_trusted_users, is_battery_powered,
+                              get_trusted_users, is_battery_powered, is_free_storage,
                               is_glitched, is_identity_enforced, is_optimized,
                               is_prepending_id, rename_drone_in_db,
                               set_battery_minutes_remaining,
@@ -32,7 +32,7 @@ from src.resources import (BRIEF_DM_ONLY, BRIEF_DRONE_OS, BRIEF_HIVE_MXTRESS,
                            DRONE_AVATAR, HIVE_MXTRESS_USER_ID,
                            MAX_BATTERY_CAPACITY_MINS)
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
-                       DRONE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
+                       DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
 
@@ -59,6 +59,14 @@ class DroneConfigurationCog(Cog):
         Allows a drone to go back to the status of an Associate.
         '''
         await unassign_drone(context.bot.guilds[0].get_member(context.author.id))
+
+    @dm_only()
+    @command(aliases=['free_storage', 'tfs'], brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY], usage=f"{COMMAND_PREFIX}toggle_free_storage")
+    async def toggle_free_storage(self, context):
+        '''
+        Allows a drone to choose whether to be stored by anyone, or just its trusted users and the Hive Mxtress. Defaults to trusted users only.
+        '''
+        await toggle_free_storage(context.bot.guilds[0].get_member(context.author.id))
 
     @guild_only()
     @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}rename 1234 3412')
@@ -297,3 +305,22 @@ def set_can_self_configure(drone: discord.Member):
     still_configured = is_configured(drone)
     if not still_configured:
         update_droneOS_parameter(drone, "can_self_configure", True)
+
+
+async def toggle_free_storage(target: discord.Member):
+    drone_member = fetch_drone_with_id(target.id)
+    guild = target.guild
+
+    # check for existence
+    if drone_member is None:
+        await target.send("You are not a drone. Cannot toggle this parameter.")
+        return
+
+    if is_free_storage(drone_member):
+        update_droneOS_parameter(drone_member, "free_storage", False)
+        await drone_member.remove_roles(get(guild.roles, name=FREE_STORAGE))
+        await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
+    else:
+        update_droneOS_parameter(drone_member, "free_storage", True)
+        await drone_member.add_roles(get(guild.roles, name=FREE_STORAGE))
+        await target.send("Free storage enabled. You can now be stored by anyone.")
