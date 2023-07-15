@@ -99,45 +99,6 @@ class StorageCog(Cog):
 
 
 async def store_drone(message: discord.Message, message_copy=None):
-    '''
-    Stores drones. Always has to return False, to match original function design. May warrant a refactor in the future.
-    '''
-    # check for message structure validity
-    if await check_storage_message_validity(message):
-        # extract info from message
-        [(drone_id, target_id, time, purpose)] = re.findall(MESSAGE_FORMAT, message.content)
-
-        # check if message target is valid
-        if await check_storage_message_target(target_id, time, message):
-            # get actual data object of the drone to be stored
-            drone_to_store = fetch_drone_with_drone_id(target_id)
-
-            # check if drone can be freely stored
-            if is_free_storage(drone_to_store):
-                await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
-                return False
-            else:
-                # check if initiator is allowed to store drone
-                trusted_users = get_trusted_users(drone_to_store.id)
-                initiator = fetch_drone_with_drone_id(drone_id)
-
-                # proceed if allowed, send error message if not
-                if (initiator.id == HIVE_MXTRESS_USER_ID or drone_to_store.id) or (initiator.id in trusted_users):
-                    await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
-                    return False
-                else:
-                    await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
-                    return False
-        else:
-            return False
-    else:
-        return False
-
-
-async def check_storage_message_validity(message: discord.Message, message_copy=None):
-    '''
-    Check if storage message is valid, and send error message if applicable.
-    '''
     if message.channel.name != STORAGE_FACILITY:
         return False
 
@@ -146,17 +107,12 @@ async def check_storage_message_validity(message: discord.Message, message_copy=
         if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
         await message.channel.send(REJECT_MESSAGE)
-        LOGGER.debug('Storage message format is invalid.')
         return False
 
     LOGGER.debug('Message is valid for storage.')
-    return True
+    [(drone_id, target_id, time, purpose)] = re.findall(
+        MESSAGE_FORMAT, message.content)
 
-
-async def check_storage_message_target(target_id, time, message: discord.Message, message_copy=None):
-    '''
-    Check if storage message has a valid target, and return any relevant errors
-    '''
     # check if drone is already in storage
     if fetch_storage_by_target_id(target_id) is not None:
         await message.channel.send(f'{target_id} is already in storage.')
@@ -179,6 +135,22 @@ async def check_storage_message_target(target_id, time, message: discord.Message
     if drone_to_store is None:
         await message.channel.send(f'Drone with ID {target_id} could not be found.')
         return False
+
+    if is_free_storage(drone_to_store):
+        await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
+        return False
+    else:
+        # check if initiator is allowed to store drone
+        trusted_users = get_trusted_users(drone_to_store.id)
+        initiator = fetch_drone_with_drone_id(drone_id)
+
+        # proceed if allowed, send error message if not
+        if (initiator.id == (HIVE_MXTRESS_USER_ID or drone_to_store.id)) or (initiator.id in trusted_users):
+            await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
+        else:
+            await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
+            return False
+    return False
 
 
 async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, time, purpose, message: discord.Message, message_copy=None):
