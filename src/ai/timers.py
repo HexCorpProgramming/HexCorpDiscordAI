@@ -10,7 +10,7 @@ from src.db.timer_dao import delete_timer, get_timers_elapsed_before
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
 from src.roles import (GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
-                       SPEECH_OPTIMIZATION)
+                       SPEECH_OPTIMIZATION, BATTERY_POWERED)
 
 LOGGER = logging.getLogger('ai')
 
@@ -18,7 +18,8 @@ MODE_TO_ROLE = {
     'optimized': SPEECH_OPTIMIZATION,
     'glitched': GLITCHED,
     'id_prepending': ID_PREPENDING,
-    'identity_enforcement': IDENTITY_ENFORCEMENT
+    'identity_enforcement': IDENTITY_ENFORCEMENT,
+    'is_battery_powered': BATTERY_POWERED
 }
 
 
