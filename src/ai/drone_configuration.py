@@ -184,7 +184,7 @@ async def unassign_drone(target: discord.Member):
         await target.send("You are not a drone. Can not unassign.")
         return
 
-    await target.edit(nick=None)
+    await target.edit(nick=drone.associate_name)
     await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED), get(guild.roles, name=BATTERY_DRAINED))
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
