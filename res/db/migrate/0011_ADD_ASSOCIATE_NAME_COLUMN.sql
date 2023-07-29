@@ -1,0 +1,1 @@
+ALTER TABLE drone ADD associate_name TEXT;
