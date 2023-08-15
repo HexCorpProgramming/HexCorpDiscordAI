@@ -59,6 +59,7 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await assign.check_for_assignment_message(test_message))
         insert_drone.assert_called_once()
         self.assertEqual(insert_drone.call_args.args[0].drone_id, "1234")
+        self.assertEqual(insert_drone.call_args.args[0].associate_name, "Future Drone 1234")
         test_message.author.remove_roles.assert_called_once_with(associate_role)
         test_message.author.add_roles.assert_called_once_with(drone_role)
         test_message.author.edit.assert_called_once_with(nick="⬡-Drone #1234")
