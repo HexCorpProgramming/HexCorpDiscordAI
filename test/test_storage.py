@@ -121,12 +121,12 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         fetch_storage_by_target_id.assert_called_once_with('3288')
         message.channel.send.assert_called_once_with("Drone with ID 3288 could not be found.")
 
-    '''
+    @patch("src.ai.storage.is_free_storage", return_value=True)
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_self(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
+    async def test_store_drone_self(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -158,11 +158,12 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8 hours and for the following reason: recharge")
         message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by itself for 8 hours and for the following reason: recharge")
 
+    @patch("src.ai.storage.is_free_storage", return_value=True)
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_hive_mxtress(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
+    async def test_store_drone_hive_mxtress(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -194,11 +195,12 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
         message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
 
+    @patch("src.ai.storage.is_free_storage", return_value=True)
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime):
+    async def test_store_drone_free_storage(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -229,7 +231,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
         storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
         message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
-    '''
 
     @patch("src.ai.storage.fetch_all_storage", return_value=[])
     async def test_storage_report_empty(self, fetch_all_storage):
