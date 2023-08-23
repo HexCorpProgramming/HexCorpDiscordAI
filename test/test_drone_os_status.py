@@ -143,8 +143,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Disabled", status.fields[1].value)
         self.assertEqual("ID prepending required", status.fields[2].name)
         self.assertEqual("Disabled", status.fields[2].value)
-        self.assertEqual("Trusted users", status.fields[6].name)
-        self.assertEqual(str(["A trustworthy user"]), status.fields[6].value)
+        self.assertEqual("Trusted users", status.fields[7].name)
+        self.assertEqual(str(["A trustworthy user"]), status.fields[7].value)
 
         fetch_drone_with_drone_id.assert_called_once_with('9813')
         get_trusted_users.assert_called_once_with(drone.id)
@@ -195,8 +195,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Disabled", status.fields[1].value)
         self.assertEqual("ID prepending required", status.fields[2].name)
         self.assertEqual("Disabled", status.fields[2].value)
-        self.assertEqual("Trusted users", status.fields[6].name)
-        self.assertEqual(str([]), status.fields[6].value)
+        self.assertEqual("Trusted users", status.fields[7].name)
+        self.assertEqual(str([]), status.fields[7].value)
 
         fetch_drone_with_drone_id.assert_called_once_with('9813')
         get_trusted_users.assert_called_once_with(drone.id)

@@ -85,6 +85,9 @@ def get_used_drone_ids() -> List[str]:
 
 
 def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
+    '''
+    Updates DroneOS parameters for the requested drone and parameter.
+    '''
     change(f'UPDATE drone SET {column} = :value WHERE id = :discord', {'value': value, 'discord': drone.id})
     # Hive Mxtress forgive me for I hath concatenated in an SQL query.
     # BUT IT'S FINEEEE 'cus the only functions that call this have a preset column value that is never based on user input.
@@ -131,16 +134,26 @@ def is_identity_enforced(drone: discord.Member) -> bool:
 
 
 def can_self_configure(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and can self-configure its other configs.
+    '''
     can_self_configure_drone = fetchone('SELECT can_self_configure FROM drone WHERE id = :discord', {'discord': drone.id})
     return can_self_configure_drone is not None and bool(can_self_configure_drone['can_self_configure'])
 
 
 def is_battery_powered(drone: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and is on battery power.
+    '''
     battery_powered_drone = fetchone('SELECT is_battery_powered FROM drone WHERE id = :discord', {'discord': drone.id})
     return battery_powered_drone is not None and bool(battery_powered_drone['is_battery_powered'])
 
 
 def deincrement_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None):
+    '''
+    Deincrements value of battery_minutes by the specified amount.
+    Raises a ValueError if drone is not found.
+    '''
     if member is not None:
         drone_record = fetchone('SELECT battery_minutes FROM drone WHERE id = :discord', {'discord': member.id})
         change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': drone_record['battery_minutes'] - 1, 'discord': member.id})
@@ -152,6 +165,10 @@ def deincrement_battery_minutes_remaining(member: Optional[discord.Member] = Non
 
 
 def set_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None, minutes: int = 0):
+    '''
+    Automatically sets value of battery_minutes to the specified amount.
+    Raises a ValueError if drone is not found.
+    '''
     if member is not None:
         change('UPDATE drone SET battery_minutes = :minutes WHERE id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
     elif drone_id is not None:
@@ -180,6 +197,10 @@ def get_battery_minutes_remaining(member: Optional[discord.Member] = None, drone
 
 
 def get_battery_percent_remaining(drone: Optional[discord.Member] = None, battery_minutes: Optional[int] = None) -> int:
+    '''
+    Gets value of battery_minutes as a percentage.
+    Raises a ValueError if drone is not found.
+    '''
     if battery_minutes is not None:
         return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
     elif drone is not None:
@@ -227,3 +248,11 @@ def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
     Finds all drones, that have the user with the given ID as a trusted user.
     '''
     return map_to_objects(fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}), Drone)
+
+
+def is_free_storage(drone: Drone) -> bool:
+    '''
+    Determines if the given member is a drone and can be freely stored by anyone.
+    '''
+    free_storage_drone = fetchone('SELECT free_storage FROM drone WHERE id = :discord', {'discord': drone.id})
+    return free_storage_drone is not None and bool(free_storage_drone['free_storage'])

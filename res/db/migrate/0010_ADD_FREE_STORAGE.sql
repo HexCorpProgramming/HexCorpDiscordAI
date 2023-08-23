@@ -1,0 +1,1 @@
+ALTER TABLE drone ADD free_storage BOOL default 0;

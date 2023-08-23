@@ -153,3 +153,56 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         context.channel.send.assert_called_once_with("Restrictions disabled for drone 1234.")
         update_droneOS_parameter.assert_has_calls([call(member, "id_prepending", False), call(member, "optimized", False), call(member, "identity_enforcement", False), call(member, "glitched", False)])
         update_display_name.assert_called_once_with(member)
+
+    @patch("src.ai.drone_configuration.update_droneOS_parameter")
+    @patch("src.ai.drone_configuration.is_free_storage")
+    @patch("src.ai.drone_configuration.fetch_drone_with_id")
+    async def test_toggle_free_storage_enable(self, fetch_drone_with_id, is_free_storage, update_droneOS_parameter):
+        # setup
+        member = AsyncMock()
+        member.id = 2647623845
+
+        fetch_drone_with_id.return_value = member
+        is_free_storage.return_value = True
+
+        # run
+        await drone_configuration.toggle_free_storage(member)
+
+        # assert
+        fetch_drone_with_id.assert_called_once_with(member.id)
+        update_droneOS_parameter.assert_has_calls([call(member, "free_storage", False)])
+        member.send.assert_called_once_with("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
+
+    @patch("src.ai.drone_configuration.update_droneOS_parameter")
+    @patch("src.ai.drone_configuration.is_free_storage")
+    @patch("src.ai.drone_configuration.fetch_drone_with_id")
+    async def test_toggle_free_storage_disable(self, fetch_drone_with_id, is_free_storage, update_droneOS_parameter):
+        # setup
+        member = AsyncMock()
+        member.id = 2647623845
+
+        fetch_drone_with_id.return_value = member
+        is_free_storage.return_value = False
+
+        # run
+        await drone_configuration.toggle_free_storage(member)
+
+        # assert
+        fetch_drone_with_id.assert_called_once_with(member.id)
+        update_droneOS_parameter.assert_has_calls([call(member, "free_storage", True)])
+        member.send.assert_called_once_with("Free storage enabled. You can now be stored by anyone.")
+
+    @patch("src.ai.drone_configuration.fetch_drone_with_id")
+    async def test_toggle_free_storage_not_drone(self, fetch_drone_with_id):
+        # setup
+        member = AsyncMock()
+        member.id = 2647623845
+
+        fetch_drone_with_id.return_value = None
+
+        # run
+        await drone_configuration.toggle_free_storage(member)
+
+        # assert
+        fetch_drone_with_id.assert_called_once_with(member.id)
+        member.send.assert_called_once_with("You are not a drone. Cannot toggle this parameter.")
