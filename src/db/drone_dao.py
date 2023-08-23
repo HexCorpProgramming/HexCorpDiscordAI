@@ -29,7 +29,7 @@ def insert_drone(drone: Drone):
     '''
     Inserts the given drone into the table drone.
     '''
-    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity, :temporary_until)', vars(drone))
+    change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until, associate_name) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity, :temporary_until, :associate_name)', vars(drone))
 
 
 def fetch_drone_with_drone_id(drone_id: str) -> Drone:
@@ -43,7 +43,7 @@ def fetch_drone_with_id(discord_id: int) -> Drone:
     '''
     Finds a drone with the given discord_id.
     '''
-    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
+    return map_to_object(fetchone('SELECT id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until, associate_name FROM drone WHERE id = :discord_id', {'discord_id': discord_id}), Drone)
 
 
 def get_all_drones() -> List[Drone]:

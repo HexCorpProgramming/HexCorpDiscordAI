@@ -75,6 +75,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         # setup
         drone = AsyncMock()
         drone.drone_id = '1234'
+        drone.associate_name = "Future Drone 1234"
 
         member = AsyncMock()
         member.id = 2647623845
@@ -88,6 +89,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_id.assert_called_once_with(member.id)
         remove_drone_from_db.assert_called_once_with(drone.drone_id)
         member.send.assert_called_once_with(f"Drone with ID {drone.drone_id} unassigned.")
+        member.edit.assert_called_once_with(nick=drone.associate_name)
 
     @patch("src.ai.drone_configuration.remove_drone_from_db")
     @patch("src.ai.drone_configuration.fetch_drone_with_id")

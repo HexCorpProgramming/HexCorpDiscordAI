@@ -30,6 +30,7 @@ class Drone:
     battery_minutes: int = None
     is_battery_powered: bool = None
     can_self_configure: bool = None
+    associate_name: str = None
     free_storage: bool = None
 
 
