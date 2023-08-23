@@ -138,7 +138,6 @@ async def store_drone(message: discord.Message, message_copy=None):
 
     if is_free_storage(drone_to_store):
         await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
-        return False
     else:
         # check if initiator is allowed to store drone
         trusted_users = get_trusted_users(drone_to_store.id)
@@ -149,7 +148,6 @@ async def store_drone(message: discord.Message, message_copy=None):
             await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
         else:
             await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
-            return False
     return False
 
 
