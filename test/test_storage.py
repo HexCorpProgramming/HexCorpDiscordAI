@@ -236,7 +236,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.is_free_storage", return_value=False)
     @patch("src.ai.storage.datetime")
     @patch("src.ai.storage.insert_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
+    @patch("src.ai.storage.fetch_drone_with_drone_id", side_effect=[Drone('3287snowflake', '3287', False, False, '', datetime.now()), Drone('9813snowflake', '9813', False, False, '', datetime.now())])
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_storage_not_allowed(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage, get_trusted_users):
         # setup
