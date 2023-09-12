@@ -146,7 +146,7 @@ async def store_drone(message: discord.Message, message_copy=None):
         # proceed if allowed, send error message if not
         if initiator.id in [drone_to_store.id] + trusted_users:
             await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
-        elif roles.HIVE_MXTRESS in message.author.roles:
+        elif roles.has_role(message.author, roles.HIVE_MXTRESS):
             await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
         else:
             await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
