@@ -229,7 +229,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         message.guild.channels = [storage_chambers]
 
         fetch_drone_with_drone_id.side_effect = [Drone('9813snowflake', '9813', False, False, '', datetime.now()),
-                                                 Drone('3287snowflake', '3287', False, False, '', datetime.now()),]
+                                                 Drone('3287snowflake', '3287', False, False, '', datetime.now())]
 
         drone_member = AsyncMock()
         drone_member.roles = [drone_role, development_role]
