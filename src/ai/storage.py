@@ -20,7 +20,7 @@ from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
 from src.id_converter import convert_id_to_member
-from src.resources import BRIEF_HIVE_MXTRESS, HIVE_MXTRESS_USER_ID
+from src.resources import BRIEF_HIVE_MXTRESS
 
 LOGGER = logging.getLogger('ai')
 
@@ -144,7 +144,7 @@ async def store_drone(message: discord.Message, message_copy=None):
         initiator = fetch_drone_with_drone_id(drone_id)
 
         # proceed if allowed, send error message if not
-        if initiator.id in [HIVE_MXTRESS_USER_ID, drone_to_store.id] + trusted_users:
+        if (initiator.id in [drone_to_store.id] + trusted_users) or roles.has_role(message.author, roles.HIVE_MXTRESS):
             await initiate_drone_storage(drone_to_store, drone_id, target_id, time, purpose, message)
         else:
             await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
