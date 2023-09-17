@@ -128,6 +128,14 @@ async def store_drone(message: discord.Message, message_copy=None):
         await message.channel.send('You cannot store the Hive Mxtress, silly drone.')
         return False
 
+    # find initiator
+    initiator = fetch_drone_with_drone_id(drone_id)
+
+    # validate specified initiator is message sender
+    if (not (drone_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS))) and (message.author.id != initiator.id):  # temp fix while we decide what to do with the db missing a drone entry for the Hive Mxtress
+        await message.channel.send(f'You are not {drone_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
+        return False
+
     # find target drone
     drone_to_store = fetch_drone_with_drone_id(target_id)
 
@@ -141,7 +149,6 @@ async def store_drone(message: discord.Message, message_copy=None):
     else:
         # check if initiator is allowed to store drone
         trusted_users = get_trusted_users(drone_to_store.id)
-        initiator = fetch_drone_with_drone_id(drone_id)
 
         # proceed if allowed, send error message if not
         if (initiator.id in [drone_to_store.id] + trusted_users) or roles.has_role(message.author, roles.HIVE_MXTRESS):
