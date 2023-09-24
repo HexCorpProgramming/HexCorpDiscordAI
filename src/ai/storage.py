@@ -131,6 +131,11 @@ async def store_drone(message: discord.Message, message_copy=None):
     # find initiator
     initiator = fetch_drone_with_drone_id(drone_id)
 
+    # check if initiator evaluates to a valid drone. special case if it's the Hive Mxtress.
+    if (not (drone_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS))) and (initiator is None):
+        await message.channel.send(f'Initiator drone with ID {drone_id} could not be found.')
+        return False
+
     # validate specified initiator is message sender
     if (not (drone_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS))) and (message.author.id != initiator.id):  # temp fix while we decide what to do with the db missing a drone entry for the Hive Mxtress
         await message.channel.send(f'You are not {drone_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
@@ -139,9 +144,9 @@ async def store_drone(message: discord.Message, message_copy=None):
     # find target drone
     drone_to_store = fetch_drone_with_drone_id(target_id)
 
-    # if no drone was stored answer with error
+    # check if target evaluates to a valid drone
     if drone_to_store is None:
-        await message.channel.send(f'Drone with ID {target_id} could not be found.')
+        await message.channel.send(f'Target drone with ID {target_id} could not be found.')
         return False
 
     if is_free_storage(drone_to_store):
