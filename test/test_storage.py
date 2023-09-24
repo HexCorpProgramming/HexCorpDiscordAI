@@ -104,6 +104,22 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         fetch_storage_by_target_id.assert_called_once_with('0006')
         message.channel.send.assert_called_once_with("You cannot store the Hive Mxtress, silly drone.")
 
+    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=None)
+    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
+    async def test_store_initiator_not_found(self, fetch_storage_by_target_id, fetch_drone_with_drone_id):
+        # setup
+        message = AsyncMock()
+        message.channel.name = channels.STORAGE_FACILITY
+        message.content = "3288 :: 3287 :: 1 :: who's this drone?"
+        message.author.roles = [drone_role]
+        message.author.id = "3287snowflake"
+
+        # run & assert
+        self.assertFalse(await storage.store_drone(message))
+        fetch_storage_by_target_id.assert_called_once_with('3287')
+        fetch_drone_with_drone_id.assert_called_once_with('3288')
+        message.channel.send.assert_called_once_with("Initiator drone with ID 3288 could not be found.")
+
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_is_forged(self, fetch_storage_by_target_id, fetch_drone_with_drone_id):
@@ -136,7 +152,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         # run & assert
         self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('3288')
-        message.channel.send.assert_called_once_with("Drone with ID 3288 could not be found.")
+        message.channel.send.assert_called_once_with("Target drone with ID 3288 could not be found.")
 
     @patch("src.ai.storage.is_free_storage", return_value=True)
     @patch("src.ai.storage.datetime")
