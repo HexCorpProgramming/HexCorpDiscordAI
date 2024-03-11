@@ -123,16 +123,23 @@ async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45)
     return processed_attachments
 
 
+def async calc_glitch_amount(drone: discord.Member) -> int:
+    if await is_glitched(drone):
+        return MAX_GLITCH_AMOUNT * 2
+    elif await is_battery_powered(drone) and await get_battery_percent_remaining(drone) < 30:
+        return (MAX_GLITCH_AMOUNT - await get_battery_percent_remaining(message.author)) * 2
+    else:
+        return 0
+
+
 async def glitch_if_applicable(message: discord.Message, message_copy: MessageCopy):
     # No glitching in the moderation channels
     if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         return False
 
-    if await is_glitched(message.author):
-        glitch_amount = MAX_GLITCH_AMOUNT * 2
-    elif await is_battery_powered(message.author) and await get_battery_percent_remaining(message.author) < 30:
-        glitch_amount = (MAX_GLITCH_AMOUNT - await get_battery_percent_remaining(message.author)) * 2
-    else:
+    glitch_amount = await calc_glitch_amount(message.author)
+
+    if glitch_amount == 0:
         LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
         return False
 

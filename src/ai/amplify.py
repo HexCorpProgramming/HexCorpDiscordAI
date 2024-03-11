@@ -5,6 +5,7 @@ from discord.ext.commands import Cog, command, Greedy
 from typing import Optional, Union
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
+from src.ai.glitch_message import calc_glitch_amount, glitch_text
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
@@ -40,12 +41,14 @@ class AmplificationCog(Cog):
 
         for member in members:
 
-            drone = await fetch_drone_with_id(discord_id=member.id)
+            formatted_message = f"{get_id(drone.display_name)} :: {message}"
 
-            if drone is None:
-                continue
+            formatted_message = await generate_battery_message(drone, formatted_message)
 
-            formatted_message = await generate_battery_message(member, f"{drone.drone_id} :: {message}")
+            glitch_amount = calc_glitch_amount(drone)
+
+            if glitch_amount > 0:
+                formatted_message = glitch_text(formatted_message)
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=member.display_name,
