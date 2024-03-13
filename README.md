@@ -61,6 +61,16 @@ To update the current production instance of the AI you have to:
 
 ## Tips for development
 
+### Containerised Development
+
+To develop in a container, download the git repository and then run `code .`
+to launch Visual Studio Code.  Select "Reopen in Container" when prompted.
+
+This will build a Docker container with Python, Git, the required Python
+packages, and VSCode extensions.
+
+The project code is mounted from the host into: `/workspaces/HexCorpDiscordAI/`
+
 ### Database
 
 The Discord bot uses an SQLite3 database to persist runtime data.  A graphical

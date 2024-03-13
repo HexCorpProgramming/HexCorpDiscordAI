@@ -1,0 +1,16 @@
+# Container for development work on HexCorp Discord AI.
+#
+# The directory is mounted into the container under /workspaces/HexCorpDiscordAI
+
+FROM python:3.11.3-slim-bullseye
+
+# Install Git.
+RUN apt update && apt install -y git
+
+# Install Python modules.
+COPY requirements.txt /root
+COPY dev_requirements.txt /root
+RUN pip3 install -r /root/requirements.txt && pip3 install -r /root/dev_requirements.txt
+
+# Don't actually run anything.
+CMD sleep 10000d
