@@ -17,6 +17,7 @@ ai.db-journal
 
 # Coverage data
 .coverage*
+htmlcov
 
 # Other misc config files
 .python-version
