@@ -30,7 +30,7 @@ REPORT_INTERVAL_SECONDS = 60 * 60
 # currently 1 minute
 RELEASE_INTERVAL_SECONDS = 60
 
-REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [NUMBER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
+REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [NUMBER UP TO 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
 MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: ((?:\d{0,2}\.\d{1,2})|(?:\d{1,2}\.?\d{0,2})) :: (.+)'
 
 NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING + roles.FREE_STORAGE]
