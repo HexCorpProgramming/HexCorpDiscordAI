@@ -8,6 +8,7 @@ import src.channels as channels
 import src.ai.storage as storage
 from src.db.data_objects import Storage, Drone
 import test.test_utils as test_utils
+import re
 
 storage_channel = AsyncMock()
 
@@ -41,6 +42,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         bot.reset_mock()
 
     async def test_storage_message_wrong_channel(self):
+        '''
+        Ensure that messages are rejected if sent via a channel other than STORAGE_FACILITY.
+        '''
+
         # setup
         channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
         channels_to_test.remove(channels.STORAGE_FACILITY)
@@ -52,6 +57,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(await storage.store_drone(message))
 
     async def test_storage_message_invalid(self):
+        '''
+        Ensure that messages are rejected if they are in the wrong format.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -64,6 +73,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.storage.fetch_storage_by_target_id")
     async def test_storage_message_already_in_storage(self, fetch_storage_by_target_id):
+        '''
+        Ensure that a drone cannot be stored if it is already in storage.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -80,19 +93,27 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_storage_message_duration_too_long(self, fetch_storage_by_target_id):
+        '''
+        Ensure that an appropriate error message is given if the storage time is too long.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 25 :: recharge"
+        message.content = "9813 :: 3287 :: 24.5 :: recharge"
         message.author.roles = [drone_role]
 
         # run & assert
         self.assertFalse(await storage.store_drone(message))
         fetch_storage_by_target_id.assert_called_once_with('3287')
-        message.channel.send.assert_called_once_with("25 is not between 0 and 24.")
+        message.channel.send.assert_called_once_with("24.5 is not between 0 and 24.")
 
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_storage_message_is_Hive_Mxtress(self, fetch_storage_by_target_id):
+        '''
+        Ensure that the Hive Mxtress cannot be stored.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -107,6 +128,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=None)
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_initiator_not_found(self, fetch_storage_by_target_id, fetch_drone_with_drone_id):
+        '''
+        Ensure that a non-existent initiator is rejected.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -123,6 +148,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_is_forged(self, fetch_storage_by_target_id, fetch_drone_with_drone_id):
+        '''
+        Ensure that a forged initiator is rejected.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -139,6 +168,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id")
     async def test_storage_drone_not_found(self, fetch_storage_by_target_id, fetch_drone_with_drone_id):
+        '''
+        Ensure that a non-existent target is rejected.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -160,6 +193,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_self(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
+        '''
+        Ensure that a drone can store itself.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -198,6 +235,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_hive_mxtress(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
+        '''
+        Ensure that a drone can be stored by the Hive Mxtress.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -235,6 +276,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_free_storage(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
+        '''
+        Ensure that a drone can store another drone.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -277,6 +322,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_storage_not_allowed(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage, get_trusted_users):
+        '''
+        Ensure that a drone cannot store another drone if it is not trusted.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -312,6 +361,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id")
     @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
     async def test_store_drone_free_storage_trusted(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage, get_trusted_users):
+        '''
+        Ensure that a drone can store another drone if it is trusted.
+        '''
+
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
@@ -354,6 +407,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.storage.fetch_all_storage", return_value=[])
     async def test_storage_report_empty(self, fetch_all_storage):
+        '''
+        Ensure that the storage report is correct if there are no drones in storage.
+        '''
+
         storage_cog = storage.StorageCog(bot)
 
         await test_utils.start_and_await_loop(storage_cog.report_storage)
@@ -363,6 +420,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.recharge_battery")
     @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '9813', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
     async def test_storage_report(self, fetch_all_storage, recharge):
+        '''
+        Ensure that the storage report correctly reports a drone in storage.
+        '''
+
         storage_cog = storage.StorageCog(bot)
 
         await test_utils.start_and_await_loop(storage_cog.report_storage)
@@ -372,6 +433,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.recharge_battery")
     @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '0006', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
     async def test_storage_report_hive_mxtress(self, fetch_all_storage, recharge_battery):
+        '''
+        Ensure that the storage report correctly reports a drone stored by the Hive Mxtress.
+        '''
+
         storage_cog = storage.StorageCog(bot)
 
         await test_utils.start_and_await_loop(storage_cog.report_storage)
@@ -382,6 +447,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=Drone('3287snowflake', '3287', False, False, '', datetime.now()))
     @patch("src.ai.storage.fetch_all_elapsed_storage", return_value=[Storage('elapse_storage_id', '9813', '3287', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() - timedelta(minutes=4)))])
     async def test_release_timed(self, fetch_all_elapsed_storage, fetch_drone_with_drone_id, delete_storage):
+        '''
+        Ensure that a drone is released once the storage time has elapsed.
+        '''
+
         # setup
         stored_member = AsyncMock()
         bot.guilds[0].get_member.return_value = stored_member
@@ -397,6 +466,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         delete_storage.assert_called_once_with('elapse_storage_id')
 
     async def test_release_unauthorized(self):
+        '''
+        Ensure that a drone without a moderator role cannot release a drone from storage.
+        '''
+
         for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER]:
             # setup
             role_mock = Mock()
@@ -412,6 +485,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.storage.convert_id_to_member")
     @patch("src.ai.storage.delete_storage")
     async def test_release(self, delete_storage, convert_id_to_member, fetch_storage_by_target_id):
+        '''
+        Ensure that a drone with any moderator role can release a stored drone.
+        '''
+
         for role in roles.MODERATION_ROLES:
             # setup
             role_mock = Mock()
@@ -439,3 +516,63 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             convert_id_to_member.reset_mock()
             stored_member.reset_mock()
             delete_storage.reset_mock()
+
+    def test_message_format(self):
+        '''
+        Ensure that the message regular expression correctly matches or rejects messages.
+        '''
+
+        # Ensure that valid messages are accepted.
+        messages = [
+            ('1234', '5678', '1', 'Test message'),
+            ('1234', '5678', '1.', 'Test message'),
+            ('1234', '5678', '1.2', 'Test message'),
+            ('1234', '5678', '1.23', 'Test message'),
+            ('1234', '5678', '0.23', 'Test message'),
+            ('1234', '5678', '.23', 'Test message'),
+        ]
+
+        for message in messages:
+            [matches] = re.findall(storage.MESSAGE_FORMAT, ' :: '.join(message))
+            self.assertEqual(message, matches)
+
+        # Ensure that invalid messages are rejected.
+        messages = [
+            # Missing reason text.
+            ('1234', '5678', '1', ''),
+            # More than two integer digits.
+            ('1234', '5678', '123.', 'Test message'),
+            # More than two decimal digits.
+            ('1234', '5678', '.123', 'Test message'),
+            # Invalid drone ID.
+            ('123', '5678', '1.23', 'Test message'),
+            # Invalid target drone ID.
+            ('1234', '567', '0.23', 'Test message'),
+            # Non-numeric storage time.
+            ('1234', '5678', 'one', 'Test message'),
+        ]
+
+        for message in messages:
+            matches = re.findall(storage.MESSAGE_FORMAT, ' :: '.join(message))
+            self.assertEqual(0, len(matches))
+
+    def test_format_time(self):
+        '''
+        Ensure that time values are formatted correctly.
+        '''
+
+        tests = [
+            (0, '0'),
+            (0.1, '0.1'),
+            (0.12, '0.12'),
+            (0.123, '0.12'),
+            (1, '1'),
+            (10, '10'),
+            (12.0, '12'),
+            (12.1, '12.1'),
+            (12.12, '12.12'),
+            (12.123, '12.12'),
+        ]
+
+        for (time, expected) in tests:
+            self.assertEqual(expected, storage.format_time(time))
