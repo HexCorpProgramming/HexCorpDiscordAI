@@ -7,7 +7,9 @@ from src.resources import HIVE_MXTRESS_USER_ID
 class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
 
     bot = AsyncMock()
+    bot.add_command = Mock()
     cog = TrustedUserCog(bot)
+    cog = cog._inject(bot)
 
     def setUp(self):
         self.hive_mxtress = AsyncMock()
@@ -76,7 +78,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.context.author = self.drone_member
 
         # run
-        await self.cog.add_trusted_user(self.cog, self.context, self.trusted_user_member.name)
+        await self.cog.add_trusted_user(self.context, self.trusted_user_member.name)
 
         # assert
         self.trusted_user_member.send.assert_called_once_with("\"⬡-Drone #3287\" is requesting to add you as a trusted user. This request will expire in 24 hours. To accept or reject this request, reply to this message. (y/n)")
@@ -94,7 +96,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         get_trusted_users.return_value = [self.hive_mxtress.id]
 
         # run
-        await self.cog.add_trusted_user(self.cog, self.context, self.trusted_user_member.name)
+        await self.cog.add_trusted_user(self.context, self.trusted_user_member.name)
 
         # assert
         self.context.reply.assert_called_once_with("No user with name \"Drone 9813\" found.")
@@ -110,7 +112,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.context.author = self.drone_member
 
         # run
-        await self.cog.add_trusted_user(self.cog, self.context, self.trusted_user_member.name)
+        await self.cog.add_trusted_user(self.context, self.trusted_user_member.name)
 
         # assert
         self.context.reply.assert_called_once_with("Can not add yourself to your list of trusted users.")
@@ -126,7 +128,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         self.context.author = self.drone_member
 
         # run
-        await self.cog.add_trusted_user(self.cog, self.context, self.trusted_user_member.name)
+        await self.cog.add_trusted_user(self.context, self.trusted_user_member.name)
 
         # assert
         self.context.reply.assert_called_once_with("User with name \"⬡-Drone #9813\" is already trusted.")
@@ -321,7 +323,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         # setup
 
         # run
-        await self.cog.remove_trusted_user(self.cog, self.context, self.trusted_user_member.name)
+        await self.cog.remove_trusted_user(self.context, self.trusted_user_member.name)
 
         # assert
         remove_trusted_user.assert_called_once()

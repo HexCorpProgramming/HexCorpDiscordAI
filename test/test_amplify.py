@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from src.channels import OFFICE, TRANSMISSIONS_CHANNEL
 import src.ai.amplify as amplify
 
@@ -19,7 +19,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
         '''
+        bot = AsyncMock()
+        bot.add_command = Mock()
         amplification_cog = amplify.AmplificationCog()
+        amplification_cog = amplification_cog._inject(bot)
 
         drone = AsyncMock()
         drone.display_avatar.url = "Pretty avatar"
@@ -37,7 +40,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
 
         generate_battery_message.return_value = "3287 :: Beep boop!"
 
-        await amplification_cog.amplify(amplification_cog, context, message, target_channel)
+        await amplification_cog.amplify(context, message, target_channel)
         webhook_proxy.assert_called_once_with(
             message_content="3287 :: Beep boop!",
             message_username="3287",
@@ -52,25 +55,28 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         '''
         only works when called by the Hive Mxtress in the Hex Office channel.
         '''
+        bot = AsyncMock()
+        bot.add_command = Mock()
         amplification_cog = amplify.AmplificationCog()
+        amplification_cog = amplification_cog._inject(bot)
 
         context = AsyncMock()
         context.channel.name = OFFICE
 
         # In Office, is Mxtress.
         has_role.return_value = True
-        self.assertTrue(await amplification_cog.amplify(amplification_cog, context, "Hello world", AsyncMock()))
+        self.assertTrue(await amplification_cog.amplify(context, "Hello world", AsyncMock()))
 
         # In Office, not Mxtress.
         has_role.return_value = False
-        self.assertFalse(await amplification_cog.amplify(amplification_cog, context, "Hello world", AsyncMock()))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock()))
 
         context.channel.name = TRANSMISSIONS_CHANNEL
 
         # Out of office, is Mxtress
         has_role.return_value = True
-        self.assertFalse(await amplification_cog.amplify(amplification_cog, context, "Hello world", AsyncMock()))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock()))
 
         # Out of office, not Mxtress.
         has_role.return_value = False
-        self.assertFalse(await amplification_cog.amplify(amplification_cog, context, "Hello world", AsyncMock()))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock()))
