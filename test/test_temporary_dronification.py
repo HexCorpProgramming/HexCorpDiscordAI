@@ -8,7 +8,9 @@ from src.roles import HIVE_MXTRESS
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
 
     bot = AsyncMock()
+    bot.add_command = Mock()
     cog = TemporaryDronificationCog(bot)
+    cog = cog._inject(bot)
 
     def setUp(self):
         self.bot.reset_mock()
@@ -31,7 +33,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         is_drone.return_value = False
 
         # run
-        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+        await self.cog.temporarily_dronify(context, target, hours)
 
         # assert
         is_drone.assert_called_once_with(target)
@@ -58,7 +60,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         is_drone.return_value = True
 
         # run
-        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+        await self.cog.temporarily_dronify(context, target, hours)
 
         # assert
         is_drone.assert_called_once_with(target)
@@ -82,7 +84,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         hours = 4
         is_drone.return_value = False
         # run
-        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+        await self.cog.temporarily_dronify(context, target, hours)
 
         # assert
         is_drone.assert_called_once_with(target)
@@ -105,7 +107,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         is_drone.return_value = False
 
         # run
-        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+        await self.cog.temporarily_dronify(context, target, hours)
 
         # assert
         context.reply.assert_called_once_with("Hours must be greater than 0.")
@@ -128,7 +130,7 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         is_drone.return_value = False
 
         # run
-        await self.cog.temporarily_dronify(self.cog, context, target, hours)
+        await self.cog.temporarily_dronify(context, target, hours)
 
         # assert
         is_drone.assert_called_once_with(target)
