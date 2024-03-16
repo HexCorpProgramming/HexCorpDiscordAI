@@ -200,7 +200,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         # setup
         message = AsyncMock()
         message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3287 :: 3287 :: 8 :: recharge"
+        message.content = "3287 :: 3287 :: 8.454 :: recharge"
         message.author.roles = [drone_role]
         message.author.id = "3287snowflake"
         message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
@@ -225,9 +225,9 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted.target_id, "3287")
         self.assertEqual(inserted.purpose, "recharge")
         self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
-        self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
-        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8 hours and for the following reason: recharge")
-        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by itself for 8 hours and for the following reason: recharge")
+        self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8.45)))
+        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by yourself for 8.45 hours and for the following reason: recharge")
+        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by itself for 8.45 hours and for the following reason: recharge")
 
     @patch("src.ai.storage.is_free_storage", return_value=True)
     @patch("src.ai.storage.datetime")
@@ -528,8 +528,9 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
             ('1234', '5678', '1.', 'Test message'),
             ('1234', '5678', '1.2', 'Test message'),
             ('1234', '5678', '1.23', 'Test message'),
-            ('1234', '5678', '0.23', 'Test message'),
-            ('1234', '5678', '.23', 'Test message'),
+            ('1234', '5678', '1.234', 'Test message'),
+            ('1234', '5678', '0.234', 'Test message'),
+            ('1234', '5678', '.234', 'Test message'),
         ]
 
         for message in messages:
@@ -540,10 +541,6 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         messages = [
             # Missing reason text.
             ('1234', '5678', '1', ''),
-            # More than two integer digits.
-            ('1234', '5678', '123.', 'Test message'),
-            # More than two decimal digits.
-            ('1234', '5678', '.123', 'Test message'),
             # Invalid drone ID.
             ('123', '5678', '1.23', 'Test message'),
             # Invalid target drone ID.

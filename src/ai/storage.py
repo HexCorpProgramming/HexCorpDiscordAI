@@ -31,7 +31,7 @@ REPORT_INTERVAL_SECONDS = 60 * 60
 RELEASE_INTERVAL_SECONDS = 60
 
 REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [NUMBER UP TO 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
-MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: ((?:\d{0,2}\.\d{1,2})|(?:\d{1,2}\.?\d{0,2})) :: (.+)'
+MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: ((?:\d*\.\d+)|(?:\d+\.?\d*)) :: (.+)'
 
 NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING + roles.FREE_STORAGE]
 
@@ -128,7 +128,7 @@ async def store_drone(message: discord.Message, message_copy=None):
     [(drone_id, target_id, time, purpose)] = re.findall(
         MESSAGE_FORMAT, message.content)
 
-    time = float(time)
+    time = round(float(time), 2)
 
     # check if drone is already in storage
     if fetch_storage_by_target_id(target_id) is not None:
