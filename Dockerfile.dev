@@ -12,5 +12,8 @@ COPY requirements.txt /root
 COPY dev_requirements.txt /root
 RUN pip3 install -r /root/requirements.txt && pip3 install -r /root/dev_requirements.txt
 
+# Install sqlite database.
+RUN apt install -y sqlite3
+
 # Don't actually run anything.
 CMD sleep 10000d
