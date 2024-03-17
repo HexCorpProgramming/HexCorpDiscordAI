@@ -6,7 +6,7 @@ import discord
 from src.ai.speech_optimization import status_code_regex
 from src.bot_utils import get_id
 from src.db.drone_dao import (get_battery_minutes_remaining,
-                              set_battery_minutes_remaining)
+                              set_battery_minutes_remaining, is_battery_powered)
 from src.resources import MAX_BATTERY_CAPACITY_MINS
 
 mantra_counters: Dict[str, int] = {}
@@ -14,7 +14,7 @@ mantra_counters: Dict[str, int] = {}
 
 async def check_for_mantra(message: discord.Message, message_copy=None):
     code_match = status_code_regex.match(message.content)
-    if code_match and message.channel.name == 'hive-repetitions':
+    if code_match and message.channel.name == 'hive-repetitions' and is_battery_powered(message.author):
         await handle_mantra(message, code_match)
 
 
