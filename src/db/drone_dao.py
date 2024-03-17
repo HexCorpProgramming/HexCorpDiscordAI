@@ -5,7 +5,7 @@ from typing import List, Optional
 import discord
 
 from src.db.data_objects import Drone, map_to_object, map_to_objects
-from src.db.database import change, fetchall, fetchone
+from src.db.database import change, fetchall, fetchone, fetchcolumn
 from src.resources import HIVE_MXTRESS_USER_ID, MAX_BATTERY_CAPACITY_MINS
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
@@ -32,14 +32,14 @@ def insert_drone(drone: Drone):
     change('INSERT INTO drone(id, drone_id, optimized, glitched, trusted_users, last_activity, temporary_until, associate_name) VALUES (:id, :drone_id, :optimized, :glitched, :trusted_users, :last_activity, :temporary_until, :associate_name)', vars(drone))
 
 
-def fetch_drone_with_drone_id(drone_id: str) -> Drone:
+def fetch_drone_with_drone_id(drone_id: str) -> Drone | None:
     '''
     Finds a drone with the given drone_id.
     '''
     return map_to_object(fetchone('SELECT * FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id}), Drone)
 
 
-def fetch_drone_with_id(discord_id: int) -> Drone:
+def fetch_drone_with_id(discord_id: int) -> Drone | None:
     '''
     Finds a drone with the given discord_id.
     '''
@@ -80,8 +80,8 @@ def get_used_drone_ids() -> List[str]:
     '''
     Returns all IDs currently used by drones.
     '''
-    # TODO: unpacking a single column could be extracted into a function
-    return [row['drone_id'] for row in fetchall('SELECT drone_id from drone', {})]
+
+    return fetchcolumn('SELECT drone_id FROM drone')
 
 
 def update_droneOS_parameter(drone: discord.Member, column: str, value: bool):
@@ -214,8 +214,10 @@ def get_trusted_users(discord_id: int) -> List[int]:
     '''
     Finds the list of trusted users for the drone with the given discord ID.
     '''
-    trusted_users_text = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})['trusted_users']
-    return parse_trusted_users_text(trusted_users_text)
+
+    row = fetchone('SELECT trusted_users FROM drone WHERE id = :discord', {'discord': discord_id})
+
+    return parse_trusted_users_text(row['trusted_users']) if row is not None else []
 
 
 def parse_trusted_users_text(trusted_users_text: str) -> List[int]:

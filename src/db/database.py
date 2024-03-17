@@ -2,13 +2,18 @@ import glob
 import logging
 import sqlite3
 from hashlib import sha256
+from typing import List
 
 LOGGER = logging.getLogger('ai')
 
 DB_FILE = 'ai.db'
 
 
-def dictionary_row_factory(cursor, row):
+def dictionary_row_factory(cursor: sqlite3.Cursor, row):
+    '''
+    Convert a row from a tuple into a dictionary keyed by column name.
+    '''
+
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
@@ -64,7 +69,7 @@ def change(query: str, params):
         conn.commit()
 
 
-def fetchall(query: str, params):
+def fetchall(query: str, params) -> dict:
     '''
     Executes a given query and retrieves the result. Does not change data.
     '''
@@ -75,12 +80,25 @@ def fetchall(query: str, params):
         return c.fetchall()
 
 
-def fetchone(query: str, params):
+def fetchone(query: str, params) -> dict | None:
     '''
     Executes a given query and retrieves a single result. Does not change data.
+    Returns None if there is no row to fetch.
     '''
     with sqlite3.connect(DB_FILE) as conn:
         conn.row_factory = dictionary_row_factory
         c = conn.cursor()
         c.execute(query, params)
         return c.fetchone()
+
+
+def fetchcolumn(query: str, params=()) -> List[str]:
+    '''
+    Executes a given query and retrives a single column from all rows. Does not change data.
+    '''
+
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.row_factory = lambda cursor, row: row[0]
+        c = conn.cursor()
+        c.execute(query, params)
+        return c.fetchall()
