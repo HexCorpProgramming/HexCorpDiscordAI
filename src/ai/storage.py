@@ -30,8 +30,8 @@ REPORT_INTERVAL_SECONDS = 60 * 60
 # currently 1 minute
 RELEASE_INTERVAL_SECONDS = 60
 
-REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [INTEGER BETWEEN 1 - 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
-MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: (\d+) :: (.*)'
+REJECT_MESSAGE = 'Invalid input format. Use `[DRONE ID HERE] :: [TARGET DRONE HERE] :: [NUMBER UP TO 24 HERE] :: [RECORDED PURPOSE OF STORAGE HERE]` (exclude brackets).'
+MESSAGE_FORMAT = r'^(\d{4}) :: (\d{4}) :: ((?:\d*\.\d+)|(?:\d+\.?\d*)) :: (.+)'
 
 NON_REMOVABLE_ROLES = roles.MODERATION_ROLES + [roles.EVERYONE, roles.NITRO_BOOSTER, roles.GLITCHED, roles.SPEECH_OPTIMIZATION, roles.ID_PREPENDING + roles.FREE_STORAGE]
 
@@ -98,6 +98,21 @@ class StorageCog(Cog):
             self.stored_role = get(self.bot.guilds[0].roles, name=roles.STORED)
 
 
+def format_time(time: float) -> str:
+    '''
+    Take a number of hours as a floating point value and format it for display.
+
+    The number is formatted to a maximum of two decimal places.
+    Trailing zeros after the decimal point are removed.
+
+    8.000 => '8'
+    8.100 => '8.1'
+    8.123 => '8.12'
+    '''
+
+    return '{:.2f}'.format(time).rstrip('0').rstrip('.')
+
+
 async def store_drone(message: discord.Message, message_copy=None):
     if message.channel.name != STORAGE_FACILITY:
         return False
@@ -113,14 +128,16 @@ async def store_drone(message: discord.Message, message_copy=None):
     [(drone_id, target_id, time, purpose)] = re.findall(
         MESSAGE_FORMAT, message.content)
 
+    time = round(float(time), 2)
+
     # check if drone is already in storage
     if fetch_storage_by_target_id(target_id) is not None:
         await message.channel.send(f'{target_id} is already in storage.')
         return False
 
     # validate time
-    if not 0 < int(time) <= 24:
-        await message.channel.send(f'{time} is not between 0 and 24.')
+    if not 0 < time <= 24:
+        await message.channel.send(f'{format_time(time)} is not between 0 and 24.')
         return False
 
     # check if target is the Hive Mxtress
@@ -163,7 +180,7 @@ async def store_drone(message: discord.Message, message_copy=None):
     return False
 
 
-async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, time, purpose, message: discord.Message, message_copy=None):
+async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, time: float, purpose, message: discord.Message, message_copy=None):
     '''
     Initate storage process on drone. Assumes target is already valid and can be freely stored.
     '''
@@ -173,13 +190,13 @@ async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, t
     former_roles = filter_out_non_removable_roles(member.roles)
     await member.remove_roles(*former_roles)
     await member.add_roles(stored_role)
-    stored_until = str(datetime.now() + timedelta(hours=int(time)))
+    stored_until = str(datetime.now() + timedelta(hours=time))
     stored_drone = StorageDO(str(uuid4()), drone_id, target_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
     insert_storage(stored_drone)
 
     # Inform the drone that they have been stored.
     storage_chambers = get(message.guild.channels, name=STORAGE_CHAMBERS)
-    plural = "hour" if int(time) == 1 else "hours"
+    plural = "hour" if time == 1 else "hours"
     if drone_id == target_id:
         drone_id = "yourself"
         drone_id_thirdperson = "itself"
@@ -187,8 +204,8 @@ async def initiate_drone_storage(drone_to_store: DroneDO, drone_id, target_id, t
         drone_id = drone_id_thirdperson = "the Hive Mxtress"
     else:
         drone_id_thirdperson = drone_id
-    await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {time} {plural} and for the following reason: {purpose}")
-    await message.channel.send(f"Drone {target_id} has been stored away in the Hive Storage Chambers by {drone_id_thirdperson} for {time} {plural} and for the following reason: {purpose}")
+    await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {drone_id} for {format_time(time)} {plural} and for the following reason: {purpose}")
+    await message.channel.send(f"Drone {target_id} has been stored away in the Hive Storage Chambers by {drone_id_thirdperson} for {format_time(time)} {plural} and for the following reason: {purpose}")
 
     return False
 
@@ -219,7 +236,7 @@ async def release(context, stored_drone: str):
     return True
 
 
-def hours_from_now(target: datetime) -> int:
+def hours_from_now(target: datetime) -> float:
     '''
     Calculates for a given datetime, how many hours are left from now.
     '''
