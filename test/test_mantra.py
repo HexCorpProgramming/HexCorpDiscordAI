@@ -137,6 +137,25 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(mantra.mantra_counters[drone_id], 1)
         increase_battery_by_five_percent.assert_not_called()
 
+    @patch("src.ai.mantra.increase_battery_by_five_percent")
+    @patch.dict("src.ai.mantra.mantra_counters", {})
+    async def test_increment_counter_skipped_first(self, increase_battery_by_five_percent):
+        # init
+        message = AsyncMock()
+        message.author.display_name = "⬡-Drone #9813"
+
+        drone_id = "9813"
+
+        code_match = Mock()
+        code_match.group.return_value = "302"
+
+        # run
+        await mantra.handle_mantra(message, code_match)
+
+        # assert
+        self.assertFalse(mantra.mantra_counters[drone_id], 0)
+        increase_battery_by_five_percent.assert_not_called()
+
     @patch("src.ai.mantra.get_battery_minutes_remaining")
     @patch("src.ai.mantra.set_battery_minutes_remaining")
     async def test_increase_battery_by_five_percent(self, set_battery_minutes_remaining, get_battery_minutes_remaining):

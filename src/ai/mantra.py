@@ -33,16 +33,16 @@ async def handle_mantra(message: discord.Message, code_match: Match):
 
     drone_id = get_id(message.author.display_name)
 
-    if (drone_id not in mantra_counters or mantra_counters[drone_id] == 0) and code_match.group(3) == "301":
+    if drone_id not in mantra_counters:
+        mantra_counters[drone_id] = 0
+
+    if mantra_counters[drone_id] == 0 and code_match.group(3) == "301":
         mantra_counters[drone_id] = 1
-
-    if mantra_counters[drone_id] == 1 and code_match.group(3) == "302":
+    elif mantra_counters[drone_id] == 1 and code_match.group(3) == "302":
         mantra_counters[drone_id] = 2
-
-    if mantra_counters[drone_id] == 2 and code_match.group(3) == "303":
+    elif mantra_counters[drone_id] == 2 and code_match.group(3) == "303":
         mantra_counters[drone_id] = 3
-
-    if mantra_counters[drone_id] == 3 and code_match.group(3) == "304":
+    elif mantra_counters[drone_id] == 3 and code_match.group(3) == "304":
         mantra_counters[drone_id] = 0
         await increase_battery_by_five_percent(message)
 
