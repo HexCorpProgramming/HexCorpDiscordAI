@@ -35,6 +35,7 @@ import src.ai.trusted_user as trusted_user
 import src.ai.drone_os_status as drone_os_status
 import src.ai.glitch_message as glitch_message
 import src.ai.battery as battery
+import src.ai.mantra as mantra
 import src.ai.status_message as status_message
 import src.ai.forbidden_word as forbidden_word
 import src.ai.react as react
@@ -109,6 +110,7 @@ message_listeners = [
     join.check_for_consent,
     assign.check_for_assignment_message,
     stoplights.check_for_stoplights,
+    mantra.check_for_mantra,
     battery_cog.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
     speech_optimization_enforcement.enforce_speech_optimization,

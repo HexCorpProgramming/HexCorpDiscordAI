@@ -15,7 +15,8 @@ from src.bot_utils import COMMAND_PREFIX
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.data_objects import Drone as DroneDO
 from src.db.data_objects import Storage as StorageDO
-from src.db.drone_dao import fetch_drone_with_drone_id, is_free_storage, get_trusted_users
+from src.db.drone_dao import (fetch_drone_with_drone_id, get_trusted_users,
+                              is_free_storage)
 from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
