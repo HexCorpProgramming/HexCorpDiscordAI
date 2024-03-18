@@ -33,7 +33,7 @@ async def handle_mantra(message: discord.Message, code_match: Match):
 
     drone_id = get_id(message.author.display_name)
 
-    if drone_id not in mantra_counters and code_match.group(3) == "301":
+    if (drone_id not in mantra_counters or mantra_counters[drone_id] == 0) and code_match.group(3) == "301":
         mantra_counters[drone_id] = 1
 
     if mantra_counters[drone_id] == 1 and code_match.group(3) == "302":
