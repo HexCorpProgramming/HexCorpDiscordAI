@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Dict, List
 from src.ai.data_objects import MessageCopy
 from src.db.data_objects import Storage
+from src.db.database import connect
 
 from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
@@ -16,7 +17,7 @@ from src.id_converter import convert_ids_to_members
 from src.resources import (BRIEF_HIVE_MXTRESS, DRONE_AVATAR,
                            HOURS_OF_RECHARGE_PER_HOUR, MAX_BATTERY_CAPACITY_MINS)
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, HIVE_MXTRESS, has_role
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.db.drone_dao import (deincrement_battery_minutes_remaining,
                               get_all_drone_batteries,
                               get_battery_minutes_remaining,
@@ -34,7 +35,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @commands.command(usage=f"{COMMAND_PREFIX}energize 3287", brief=[BRIEF_HIVE_MXTRESS])
+    @command(usage=f"{COMMAND_PREFIX}energize 3287", brief=[BRIEF_HIVE_MXTRESS])
     async def energize(self, context, *drone_ids):
         '''
         Hive Mxtress only command.
@@ -56,7 +57,7 @@ class BatteryCog(commands.Cog):
                                                    message_avatar=DRONE_AVATAR if identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
                                                    webhook=channel_webhook)
 
-    @commands.command(usage=f"{COMMAND_PREFIX}drain 3287", brief=[BRIEF_HIVE_MXTRESS])
+    @command(usage=f"{COMMAND_PREFIX}drain 3287", brief=[BRIEF_HIVE_MXTRESS])
     async def drain(self, context, *drone_ids):
         '''
         Hive Mxtress only command.
@@ -96,6 +97,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries[drone_id] = 15
 
     @tasks.loop(minutes=1)
+    @connect()
     async def track_active_battery_drain(self):
         LOGGER.info("Draining battery from active drones.")
 
@@ -124,6 +126,7 @@ class BatteryCog(commands.Cog):
         self.draining_batteries = draining_batteries
 
     @tasks.loop(minutes=1)
+    @connect()
     async def track_drained_batteries(self):
         # Every drone has a battery. If battery_minutes = 0, give the Drained role.
         # If battery_minutes > 0 and it has the Drained role, remove it.
@@ -145,6 +148,7 @@ class BatteryCog(commands.Cog):
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
 
     @tasks.loop(minutes=1)
+    @connect()
     async def warn_low_battery_drones(self):
         '''
         DMs any drone below 30% battery to remind them to charge.

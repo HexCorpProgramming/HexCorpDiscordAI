@@ -1,11 +1,11 @@
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 
 import src.id_converter as id_converter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.channels import OFFICE
 from src.resources import BRIEF_HIVE_MXTRESS, DRONE_AVATAR
 from src.roles import HIVE_MXTRESS, has_role

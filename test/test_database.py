@@ -1,12 +1,12 @@
 from unittest import TestCase
-from src.db.database import change, dictionary_row_factory, fetchall, fetchcolumn, fetchone, prepare
+from src.db.database import change, connect, dictionary_row_factory, fetchall, fetchcolumn, fetchone, prepare
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 
 class TestDatabase(TestCase):
     @classmethod
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def setUpClass(cls):
         '''
         Initialize the database schema in "test.db" before running the tests.
@@ -30,7 +30,7 @@ class TestDatabase(TestCase):
 
         Path.unlink('test.db')
 
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def test_prepare_check(self):
         '''
         Ensure that preparing fails if a hash is incorrect.
@@ -42,7 +42,7 @@ class TestDatabase(TestCase):
         # Ensure an exception is raised.
         self.assertRaises(Exception, prepare)
 
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def test_fetchcolumn(self):
         '''
         Test the operation of fetchcolumn.
@@ -56,7 +56,7 @@ class TestDatabase(TestCase):
         rows = fetchcolumn('SELECT id, drone_id FROM drone')
         self.assertEqual([11, 22], rows)
 
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def test_fetchone(self):
         '''
         Test the operation of fetchcolumn.
@@ -70,7 +70,7 @@ class TestDatabase(TestCase):
         row = fetchone('SELECT id, drone_id FROM drone WHERE id = 0', {})
         self.assertEqual(None, row)
 
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def test_fetchall(self):
         '''
         Test the operation of fetchcolumn.
@@ -84,7 +84,7 @@ class TestDatabase(TestCase):
         rows = fetchall('SELECT id, drone_id FROM drone WHERE id = 0', {})
         self.assertEqual([], rows)
 
-    @patch('src.db.database.DB_FILE', 'test.db')
+    @connect()
     def test_change(self):
         '''
         Test updating the database.

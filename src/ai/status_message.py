@@ -4,6 +4,7 @@ import random
 from discord import Game
 from discord.ext import tasks
 from discord.ext.commands import Bot, Cog
+from src.db.database import connect
 
 
 class StatusMessageCog(Cog):
@@ -28,6 +29,7 @@ class StatusMessageCog(Cog):
         ]
 
     @tasks.loop(hours=48)
+    @connect()
     async def change_status(self):
         self.LOGGER.info("Changing status.")
         await self.bot.change_presence(activity=random.choice(self.ACTIVITIES))

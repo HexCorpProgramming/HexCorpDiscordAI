@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext.commands import Bot, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
+from src.bot_utils import command as bot_command, connect
 
 import logging
 from logging import handlers
@@ -154,7 +155,7 @@ hour_tasks = [
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
-@bot.command(usage=f'{bot.command_prefix}help')
+@bot_command(usage=f'{bot.command_prefix}help', parent=bot)
 async def help(context):
     '''
     Displays this help.
@@ -202,6 +203,7 @@ async def help(context):
 
 
 @bot.event
+@connect()
 async def on_message(message: discord.Message):
     message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
 
@@ -231,11 +233,13 @@ async def on_message(message: discord.Message):
 
 
 @bot.event
+@connect()
 async def on_member_join(member: discord.Member):
     await join.on_member_join(member)
 
 
 @bot.event
+@connect()
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     drone = drone_dao.fetch_drone_with_id(member.id)
@@ -318,9 +322,14 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
     await react.delete_marked_message(reaction, user)
 
 
+@connect()
+def prepare_database():
+    database.prepare()
+
+
 def main():
     set_up_logger()
-    database.prepare()
+    prepare_database()
     bot.run(sys.argv[1])
 
 

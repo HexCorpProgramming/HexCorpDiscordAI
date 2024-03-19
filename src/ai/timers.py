@@ -5,6 +5,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 from src.ai.drone_configuration import set_can_self_configure
+from src.db.database import connect
 from src.db.drone_dao import fetch_drone_with_drone_id, update_droneOS_parameter
 from src.db.timer_dao import delete_timer, get_timers_elapsed_before
 from src.display_names import update_display_name
@@ -29,6 +30,7 @@ class TimersCog(commands.Cog):
         self.bot = bot
 
     @tasks.loop(minutes=1)
+    @connect()
     async def process_timers(self):
         '''
         Check for elapsed timers and disable configs if any are found.

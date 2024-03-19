@@ -6,13 +6,14 @@ from uuid import uuid4
 
 import discord
 from discord.ext import tasks
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 from discord.utils import get
 
 import src.roles as roles
 from src.ai.battery import recharge_battery
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
+from src.db.database import connect
 from src.db.data_objects import Drone as DroneDO
 from src.db.data_objects import Storage as StorageDO
 from src.db.drone_dao import fetch_drone_with_drone_id, is_free_storage, get_trusted_users
@@ -52,6 +53,7 @@ class StorageCog(Cog):
         await release(context, drone)
 
     @tasks.loop(hours=1)
+    @connect()
     async def report_storage(self):
 
         LOGGER.info("Reporting storage.")
@@ -79,6 +81,7 @@ class StorageCog(Cog):
             raise AttributeError("Could not find storage chambers channel.")
 
     @tasks.loop(minutes=1)
+    @connect()
     async def release_timed(self):
 
         LOGGER.info("Releasing drones in storage.")

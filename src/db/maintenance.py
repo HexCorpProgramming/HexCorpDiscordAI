@@ -3,10 +3,12 @@ import logging
 from typing import List
 from discord import Member
 from src.db.drone_dao import get_all_drones, add_new_drone_members, parse_trusted_users_text, set_trusted_users
+from src.bot_utils import connect
 
 LOGGER = logging.getLogger('ai')
 
 
+@connect()
 def sync_drones(members: List[Member]):
     '''
     Add any drones from the guild that are not currently in the database. This mostly exists as convenience in the dev environment.
@@ -14,6 +16,7 @@ def sync_drones(members: List[Member]):
     add_new_drone_members(members)
 
 
+@connect()
 def trusted_user_cleanup(members: List[Member]):
     '''
     Removes any trusted users that are not members of the guild any more.

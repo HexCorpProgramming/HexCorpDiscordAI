@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, dm_only
 from discord.ext import tasks
 from discord.utils import get
 
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
 from src.resources import BRIEF_DM_ONLY, BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
 

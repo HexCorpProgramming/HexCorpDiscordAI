@@ -5,14 +5,14 @@ from typing import Callable, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, Greedy, command, dm_only, guild_only
+from discord.ext.commands import Cog, Greedy, dm_only, guild_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,

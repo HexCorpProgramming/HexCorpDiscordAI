@@ -3,12 +3,13 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from discord.ext import tasks
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 from discord.utils import get
 
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.channels import ORDERS_REPORTING
 from src.db.data_objects import DroneOrder
+from src.db.database import connect
 from src.db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
                                     get_order_by_drone_id, insert_drone_order)
 from src.id_converter import convert_id_to_member
@@ -38,6 +39,7 @@ class OrderReportingCog(Cog):
             await report_order(context, protocol_name, protocol_time)
 
     @tasks.loop(minutes=1)
+    @connect()
     async def deactivate_drones_with_completed_orders(self):
         for order in fetch_all_drone_orders():
             LOGGER.info(f"Checking order of drone {order.drone_id} with protocol {order.protocol}")

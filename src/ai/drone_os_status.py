@@ -1,11 +1,11 @@
 import logging
 
 import discord
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog
 
 from src.db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
 from src.roles import MODERATION_ROLES, has_any_role
 
 LOGGER = logging.getLogger('ai')

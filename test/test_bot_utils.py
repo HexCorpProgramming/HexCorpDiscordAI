@@ -1,8 +1,8 @@
 from src.bot_utils import get_id
-import unittest
+from unittest import IsolatedAsyncioTestCase
 
 
-class TestBotUtils(unittest.TestCase):
+class TestBotUtils(IsolatedAsyncioTestCase):
 
     def test_get_id(self):
         # regular usage
