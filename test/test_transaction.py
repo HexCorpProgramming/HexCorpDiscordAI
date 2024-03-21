@@ -1,10 +1,10 @@
 from src.db.transaction import Transaction
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import call, Mock
 from src.db.database import change, cursor, transactions
 
 
-class TestTransaction(TestCase):
+class TestTransaction(IsolatedAsyncioTestCase):
     def setUp(self):
         '''
         Called before every test.
@@ -18,22 +18,22 @@ class TestTransaction(TestCase):
 
         self.cursor = cursor.get()
 
-    def test_automatic_commit(self):
+    async def test_automatic_commit(self):
         '''
         Ensure that nested transactions are individually committed.
         '''
 
         with Transaction():
-            change('QUERY 1')
+            await change('QUERY 1')
 
             with Transaction():
-                change('QUERY 2')
+                await change('QUERY 2')
                 with Transaction():
-                    change('QUERY 3')
+                    await change('QUERY 3')
                     # Third transaction is auto-committed here.
                 # Second transaction is auto-committed here.
 
-            change('QUERY 4')
+            await change('QUERY 4')
             # First transaction is auto-committed here.
 
         expected_calls = [
@@ -51,23 +51,23 @@ class TestTransaction(TestCase):
 
         self.cursor.execute.assert_has_calls(expected_calls)
 
-    def test_inner_rollback(self):
+    async def test_inner_rollback(self):
         '''
         Ensure that the inner transaction is rolled back if it throws.
         '''
 
         with Transaction():
-            change('QUERY 1')
+            await change('QUERY 1')
 
             try:
                 with Transaction():
-                    change('QUERY 2')
+                    await change('QUERY 2')
                     raise RuntimeError()
             except RuntimeError:
                 # Inner transaction is rolled back.
                 pass
 
-            change('QUERY 3')
+            await change('QUERY 3')
             # Outer transaction is auto-committed here.
 
         expected_calls = [
@@ -82,17 +82,17 @@ class TestTransaction(TestCase):
 
         self.cursor.execute.assert_has_calls(expected_calls)
 
-    def test_outer_rollback(self):
+    async def test_outer_rollback(self):
         '''
         Ensure that the transaction is rolled back if the outer transaction throws.
         '''
 
         try:
             with Transaction():
-                change('QUERY 1')
+                await change('QUERY 1')
 
                 with Transaction():
-                    change('QUERY 2')
+                    await change('QUERY 2')
                     # Inner transaction is auto-committed here.
 
                 # Outer transaction fails.

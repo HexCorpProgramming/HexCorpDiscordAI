@@ -41,13 +41,13 @@ class OrderReportingCog(Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def deactivate_drones_with_completed_orders(self):
-        for order in fetch_all_drone_orders():
+        for order in await fetch_all_drone_orders():
             LOGGER.info(f"Checking order of drone {order.drone_id} with protocol {order.protocol}")
             if datetime.now() > datetime.fromisoformat(order.finish_time):
                 # find drone to deactivate
-                member_to_deactivate = convert_id_to_member(self.bot.guilds[0], order.drone_id)
+                member_to_deactivate = await convert_id_to_member(self.bot.guilds[0], order.drone_id)
                 await self.orders_reporting_channel.send(f"{member_to_deactivate.mention} Drone {order.drone_id} Deactivate.\nDrone {order.drone_id}, good drone.")
-                delete_drone_order(order.id)
+                await delete_drone_order(order.id)
 
     @deactivate_drones_with_completed_orders.before_loop
     async def get_orders_reporting_channel(self):
@@ -60,7 +60,7 @@ async def report_order(context, protocol_name, protocol_time: int):
     drone_id = get_id(context.author.display_name)
     if not has_role(context.author, DRONE):
         return  # No non-drones allowed.
-    current_order = get_order_by_drone_id(drone_id)
+    current_order = await get_order_by_drone_id(drone_id)
 
     if current_order is not None:
         await context.send(f"HexDrone #{drone_id} is already undertaking the {current_order.protocol} protocol.")
@@ -76,5 +76,5 @@ async def report_order(context, protocol_name, protocol_time: int):
     created_order = DroneOrder(
         str(uuid4()), drone_id, protocol_name, finish_time)
     LOGGER.info("ActiveOrder object created. Inserting order.")
-    insert_drone_order(created_order)
+    await insert_drone_order(created_order)
     LOGGER.info("Active order inserted and committed to DB.")

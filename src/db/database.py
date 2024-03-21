@@ -5,8 +5,8 @@ from hashlib import sha256
 from typing import List
 from src.db.connection import cursor, transactions
 from src.db.transaction import Transaction
-from contextvars import copy_context
 from inspect import iscoroutinefunction
+from asyncio import create_task, sleep
 
 LOGGER = logging.getLogger('ai')
 
@@ -35,14 +35,17 @@ def connect(filename='ai.db'):
         It will return a new function that runs the decorated function in a new execution context.
         '''
 
-        if (iscoroutinefunction(func)):
-            async def run_with_connection(*args, **kwargs):
-                '''
-                Open a connection to the databse and then run func().
-                '''
+        if not iscoroutinefunction(func):
+            raise Exception('Database functions must be async')
 
-                # Open a new connection to the database.
-                with sqlite3.connect(filename) as connection:
+        async def run_with_connection(*args, **kwargs):
+            '''
+            Open a connection to the databse and then run func().
+            '''
+
+            # Open a new connection to the database.
+            while True:
+                with sqlite3.connect(filename, timeout=0.1) as connection:
                     # Fetch the connection's cursor.
                     db_cursor = connection.cursor()
 
@@ -54,47 +57,44 @@ def connect(filename='ai.db'):
                     with Transaction():
                         return await func(*args, **kwargs)
 
-            # Return a function that runs in the new context.
-            async def runner(*args, **kwargs):
-                # Create a new execution context.
-                execution_context = copy_context()
+        async def runner(*args, **kwargs):
+            # Run the decorated function in a new execution context.
+            return await create_task(run_with_connection(*args, *kwargs))
 
-                # Run the decorated function within the new execution context.
-                return await execution_context.run(run_with_connection, *args, **kwargs)
-
-            return runner
-
-        else:
-
-            def run_with_connection(*args, **kwargs):
-                '''
-                Open a connection to the databse and then run func().
-                '''
-
-                # Open a new connection to the database.
-                with sqlite3.connect(filename) as connection:
-                    # Fetch the connection's cursor.
-                    db_cursor = connection.cursor()
-
-                    # Set up the execution context's cursor and transaction stack.
-                    cursor.set(db_cursor)
-                    transactions.set([])
-
-                    # Open a new transaction and run the decorated code.
-                    with Transaction():
-                        return func(*args, **kwargs)
-
-            # Return a function that runs in the new context.
-            def runner(*args, **kwargs):
-                # Create a new execution context.
-                execution_context = copy_context()
-
-                # Run the decorated function within the new execution context.
-                return execution_context.run(run_with_connection, *args, **kwargs)
-
-            return runner
+        return runner
 
     return decorator
+
+
+def retry_loop(func):
+    '''
+    Function decorator to retry a function if the database is locked.
+    '''
+
+    if not iscoroutinefunction(func):
+        raise Exception('retry_loop can only be used to decorate async functions')
+
+    async def loop(*args, **kwargs):
+        '''
+        Call func() in a loop, retrying if OperationalError is thrown.
+        '''
+
+        retries = 5
+
+        while retries:
+            retries -= 1
+
+            try:
+                return await func(*args, **kwargs)
+            except sqlite3.OperationalError:
+                # Rethrow the exception if we have run out of retries.
+                if retries == 0:
+                    raise
+
+                # Wait for the deadlock to clear.
+                await sleep(0.2)
+
+    return loop
 
 
 def dictionary_row_factory(cursor: sqlite3.Cursor, row):
@@ -145,7 +145,8 @@ def prepare():
     LOGGER.info(f'DB schema after migration {c.fetchall()}')
 
 
-def change(query: str, params=()):
+@retry_loop
+async def change(query: str, params=()):
     '''
     Executes a given query.
     '''
@@ -154,7 +155,8 @@ def change(query: str, params=()):
     c.execute(query, params)
 
 
-def fetchall(query: str, params=()) -> dict:
+@retry_loop
+async def fetchall(query: str, params=()) -> dict:
     '''
     Executes a given query and retrieves the result. Does not change data.
     '''
@@ -165,7 +167,8 @@ def fetchall(query: str, params=()) -> dict:
     return c.fetchall()
 
 
-def fetchone(query: str, params=()) -> dict | None:
+@retry_loop
+async def fetchone(query: str, params=()) -> dict | None:
     '''
     Executes a given query and retrieves a single result. Does not change data.
     Returns None if there is no row to fetch.
@@ -177,7 +180,8 @@ def fetchone(query: str, params=()) -> dict | None:
     return c.fetchone()
 
 
-def fetchcolumn(query: str, params=()) -> List[str]:
+@retry_loop
+async def fetchcolumn(query: str, params=()) -> List[str]:
     '''
     Executes a given query and retrives a single column from all rows. Does not change data.
     '''

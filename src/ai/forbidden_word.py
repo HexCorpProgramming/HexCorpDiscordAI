@@ -21,13 +21,13 @@ LOGGER = logging.getLogger("ai")
 
 async def deny_thoughts(message: discord.Message, message_copy):
 
-    if not is_drone(message.author):  # Associates are allowed to think.
+    if not await is_drone(message.author):  # Associates are allowed to think.
         return
 
     emoji_replacement = get(message.guild.emojis, name=DRONE_EMOJI)
 
     LOGGER.info("Expunging all thoughts.")
-    for banned_word in get_all_forbidden_words():
+    for banned_word in await get_all_forbidden_words():
         for match in re.findall(banned_word.regex, message_copy.content, flags=re.IGNORECASE):
             message_copy.content = message_copy.content.replace(match, "\_" * len(match), 1)
 
@@ -49,7 +49,7 @@ class ForbiddenWordCog(Cog):
         Lets the Hive Mxtress add a word to the list of forbidden words. The pattern is a regular expression.
         '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-            insert_forbidden_word(ForbiddenWord(id, pattern))
+            await insert_forbidden_word(ForbiddenWord(id, pattern))
             await context.send(f"Successfully added forbidden word `{id}` with pattern `{pattern}`.")
         else:
             await context.send("This command can only be used by the Hive Mxtress in their office.")
@@ -62,7 +62,7 @@ class ForbiddenWordCog(Cog):
         '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
             card = discord.Embed(color=0xff66ff, title="Forbidden words", description="These are the currently configured forbidden words.")
-            for forbidden_word in get_all_forbidden_words():
+            for forbidden_word in await get_all_forbidden_words():
                 card.add_field(name=forbidden_word.id, value=f"Pattern: `{forbidden_word.regex}`", inline=False)
 
             await context.send(embed=card)
@@ -76,7 +76,7 @@ class ForbiddenWordCog(Cog):
         Remove one of the forbidden words.
         '''
         if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-            delete_forbidden_word_by_id(id)
+            await delete_forbidden_word_by_id(id)
             await context.send(f"Successfully removed forbidden word with name `{id}`.")
         else:
             await context.send("This command can only be used by the Hive Mxtress in their office.")

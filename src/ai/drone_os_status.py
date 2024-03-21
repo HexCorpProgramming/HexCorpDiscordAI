@@ -18,15 +18,15 @@ class DroneOsStatusCog(Cog):
         '''
         Displays all the DroneOS information you have access to about a drone.
         '''
-        response = get_status(drone_id, context.author.id, context)
+        response = await get_status(drone_id, context.author.id, context)
         if response is None:
             await context.author.send(f"No drone with ID {drone_id} found.")
         if response is not None:
             await context.author.send(embed=response)
 
 
-def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
-    drone = fetch_drone_with_drone_id(drone_id)
+async def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
+    drone = await fetch_drone_with_drone_id(drone_id)
 
     if drone is None:
         return None
@@ -37,7 +37,7 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
 
     member = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
 
-    trusted_users = get_trusted_users(drone.id)
+    trusted_users = await get_trusted_users(drone.id)
     is_trusted_user = requesting_user in trusted_users
     is_drone_self = requesting_user == drone.id
     is_moderation = has_any_role(member, MODERATION_ROLES)
@@ -63,7 +63,7 @@ def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
         .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
         .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
         .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
-        .add_field(name="Battery percentage", value=f"{get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")\
+        .add_field(name="Battery percentage", value=f"{await get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")\
         .add_field(name="Free storage", value=boolean_to_enabled_disabled(drone.free_storage))
 
     # create list of trusted users

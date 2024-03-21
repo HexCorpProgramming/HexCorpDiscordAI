@@ -4,11 +4,11 @@ from unittest.mock import patch, Mock
 from src.db.maintenance import trusted_user_cleanup
 
 
-class MaintenanceTest(unittest.TestCase):
+class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.db.maintenance.set_trusted_users")
     @patch("src.db.maintenance.get_all_drones")
-    def test_trusted_user_cleanup(self, get_all_drones, set_trusted_users):
+    async def test_trusted_user_cleanup(self, get_all_drones, set_trusted_users):
         # init
         drone_with_dangling_users = Mock()
         drone_with_dangling_users.trusted_users = "1|2"
@@ -25,7 +25,7 @@ class MaintenanceTest(unittest.TestCase):
         members = [associate]
 
         # run
-        trusted_user_cleanup(members)
+        await trusted_user_cleanup(members)
 
         # assert
-        set_trusted_users.called_once_with(3, "1")
+        set_trusted_users.assert_called_once_with(3, [1])

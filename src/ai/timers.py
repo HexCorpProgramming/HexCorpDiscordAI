@@ -38,12 +38,12 @@ class TimersCog(commands.Cog):
 
         LOGGER.info("Checking for elapsed timers.")
 
-        for elapsed_timer in get_timers_elapsed_before(datetime.now()):
-            drone = fetch_drone_with_drone_id(elapsed_timer.drone_id)
-            drone_member = convert_id_to_member(self.bot.guilds[0], drone.drone_id)
-            update_droneOS_parameter(drone_member, elapsed_timer.mode, False)
-            delete_timer(elapsed_timer.id)
+        for elapsed_timer in await get_timers_elapsed_before(datetime.now()):
+            drone = await fetch_drone_with_drone_id(elapsed_timer.drone_id)
+            drone_member = await convert_id_to_member(self.bot.guilds[0], drone.drone_id)
+            await update_droneOS_parameter(drone_member, elapsed_timer.mode, False)
+            await delete_timer(elapsed_timer.id)
             await drone_member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[elapsed_timer.mode]))
             await update_display_name(drone_member)
-            set_can_self_configure(drone_member)
+            await set_can_self_configure(drone_member)
             LOGGER.info(f"Elapsed timer for {drone_member.display_name}; toggled off {elapsed_timer.mode}")

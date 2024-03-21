@@ -242,12 +242,12 @@ async def on_member_join(member: discord.Member):
 @connect()
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    drone = drone_dao.fetch_drone_with_id(member.id)
+    drone = await drone_dao.fetch_drone_with_id(member.id)
     if drone:
-        drone_configuration.remove_drone_from_db(drone.drone_id)
+        await drone_configuration.remove_drone_from_db(drone.drone_id)
 
     # remove the user from all trusted user lists
-    trusted_user.remove_trusted_user_on_all(member.id)
+    await trusted_user.remove_trusted_user_on_all(member.id)
 
 
 @bot.event
@@ -256,9 +256,9 @@ async def on_ready():
 
     LOGGER.info("Performing startup maintenance.")
     LOGGER.info("Syncing drones between Discord and DB.")
-    maintenance.sync_drones(bot.guilds[0].members)
+    await maintenance.sync_drones(bot.guilds[0].members)
     LOGGER.info("Trimming trusted users not in the guild anymore.")
-    maintenance.trusted_user_cleanup(bot.guilds[0].members)
+    await maintenance.trusted_user_cleanup(bot.guilds[0].members)
 
     LOGGER.info("Starting timing agnostic tasks.")
     for task in timing_agnostic_tasks:
@@ -323,13 +323,13 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
 
 
 @connect()
-def prepare_database():
+async def prepare_database():
     database.prepare()
 
 
 def main():
     set_up_logger()
-    prepare_database()
+    asyncio.run(prepare_database())
     bot.run(sys.argv[1])
 
 

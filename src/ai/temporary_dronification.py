@@ -45,7 +45,7 @@ class TemporaryDronificationCog(Cog):
     async def release_temporary_drones(self):
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
-        for drone in fetch_all_elapsed_temporary_dronification():
+        for drone in await fetch_all_elapsed_temporary_dronification():
             await unassign_drone(guild.get_member(drone.id))
 
     @guild_only()
@@ -61,7 +61,7 @@ class TemporaryDronificationCog(Cog):
             return
 
         # exclude drones
-        if is_drone(target):
+        if await is_drone(target):
             await context.reply(f"{target.display_name} is already a drone.")
             return
 

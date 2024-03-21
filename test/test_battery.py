@@ -20,7 +20,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         storage_record = Mock()
         storage_record.target_id = 5890
 
-        battery.recharge_battery(storage_record)
+        await battery.recharge_battery(storage_record)
 
         set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
 
@@ -36,7 +36,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member = AsyncMock()
         member.display_name = "⬢-Drone #3287"
 
-        battery.drain_battery(member)
+        await battery.drain_battery(member)
 
         get_bat_mins.assert_called_once_with(member=member)
         set_bat_mins.assert_called_once_with(member=member, minutes=320 - MAX_BATTERY_CAPACITY_MINS / 10)
@@ -52,7 +52,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         storage_record = Mock()
         storage_record.target_id = 5890
 
-        battery.recharge_battery(storage_record)
+        await battery.recharge_battery(storage_record)
 
         set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)
 
