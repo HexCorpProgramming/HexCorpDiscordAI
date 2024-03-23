@@ -13,9 +13,9 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.amplify.identity_enforcable", return_value=False)
     @patch("src.ai.amplify.has_role", return_value=True)
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
-    @patch("src.ai.amplify.id_converter.convert_ids_to_members")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable, generate_battery_message):
+    @patch("src.ai.amplify.fetch_drone_with_id")
+    async def test_webhook_called_with_appropriate_message(self, fetch_drone_with_id, webhook_proxy, get_webhook, has_role, identity_enforceable, generate_battery_message):
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
         '''
@@ -24,23 +24,26 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         amplification_cog = amplify.AmplificationCog()
         amplification_cog = amplification_cog._inject(bot)
 
-        drone = AsyncMock()
-        drone.display_avatar.url = "Pretty avatar"
-        drone.display_name = "3287"
-        id_converter.return_value = set(drone)
+        member = AsyncMock()
+        member.display_avatar.url = "Pretty avatar"
+        member.display_name = "3287"
 
         webhook = AsyncMock()
         get_webhook.return_value = webhook
 
         context = AsyncMock()
-        context.message.mentions = [drone]
+        context.message.mentions = [member]
         context.channel.name = OFFICE
         message = "Beep boop!"
         target_channel = AsyncMock()
 
-        generate_battery_message.return_value = "3287 :: Beep boop!"
+        generate_battery_message.side_effect = lambda drone, msg: msg
 
-        await amplification_cog.amplify(context, message, target_channel, drones='')
+        drone = Mock()
+        drone.drone_id = 3287
+        fetch_drone_with_id.return_value = drone
+
+        await amplification_cog.amplify(context, message, target_channel, members=[member])
         webhook_proxy.assert_called_once_with(
             message_content="3287 :: Beep boop!",
             message_username="3287",
@@ -65,21 +68,21 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
 
         # In Office, is Mxtress.
         has_role.return_value = True
-        self.assertTrue(await amplification_cog.amplify(context, "Hello world", AsyncMock(), drones=''))
+        self.assertTrue(await amplification_cog.amplify(context, "Hello world", AsyncMock(), members=[]))
 
         # In Office, not Mxtress.
         has_role.return_value = False
-        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), drones=''))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), members=[]))
 
         context.channel.name = TRANSMISSIONS_CHANNEL
 
         # Out of office, is Mxtress
         has_role.return_value = True
-        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), drones=''))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), members=[]))
 
         # Out of office, not Mxtress.
         has_role.return_value = False
-        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), drones=''))
+        self.assertFalse(await amplification_cog.amplify(context, "Hello world", AsyncMock(), members=[]))
 
     @patch("src.ai.amplify.has_role")
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
@@ -87,7 +90,8 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.amplify.get_id")
     @patch("src.ai.amplify.generate_battery_message")
     @patch("src.ai.amplify.identity_enforcable")
-    async def test_with_count(self, identity_enforcable, generate_battery_message, get_id, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+    @patch("src.ai.amplify.fetch_drone_with_id")
+    async def test_with_count(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, get_id, proxy_message_by_webhook, get_webhook_for_channel, has_role):
         '''
         Ensure that a count of users can be specified.
         '''
@@ -118,5 +122,50 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
 
         identity_enforcable.return_value = False
 
-        self.assertTrue(await amplification_cog.amplify(context, "Hello world", target_channel, drones='count = 3'))
+        # The drones to be looked up from the members.
+        drones = [Mock(), Mock()]
+        drones[0].drone_id = 1234
+        drones[1].drone_id = 5678
+        fetch_drone_with_id.side_effect = drones
+
+        self.assertTrue(await amplification_cog.amplify(context, "Hello world", target_channel, members=[], count=3))
         self.assertEqual(2, len(proxy_message_by_webhook.mock_calls))
+
+    @patch("src.ai.amplify.has_role")
+    @patch("src.ai.amplify.webhook.get_webhook_for_channel")
+    @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
+    @patch("src.ai.amplify.get_id")
+    @patch("src.ai.amplify.generate_battery_message")
+    @patch("src.ai.amplify.identity_enforcable")
+    @patch("src.ai.amplify.fetch_drone_with_id")
+    async def test_with_non_drone_mention(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, get_id, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+        '''
+        Ensure that an @mention of a non-drone does not cause an error.
+        '''
+
+        bot = AsyncMock()
+        bot.add_command = Mock()
+        amplification_cog = amplify.AmplificationCog()
+        amplification_cog = amplification_cog._inject(bot)
+
+        context = AsyncMock()
+        context.channel.name = OFFICE
+
+        # The channel to which the message will be sent.
+        target_channel = Mock()
+        target_channel.members = [Mock()]
+        target_channel.name = 'general'
+
+        # The @mentioned member.
+        member = Mock()
+
+        # The member is not a drone.
+        fetch_drone_with_id.return_value = None
+
+        # Mock helper functions to return what they were passed.
+        get_id.side_effect = lambda a: a
+        generate_battery_message.side_effect = lambda a, b: b
+
+        identity_enforcable.return_value = False
+
+        self.assertTrue(await amplification_cog.amplify(context, "Hello world", target_channel, members=[member]))
