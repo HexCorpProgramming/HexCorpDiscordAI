@@ -1,18 +1,18 @@
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, Greedy, command, dm_only, guild_only
+from discord.ext.commands import Cog, Greedy, dm_only, guild_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
@@ -159,7 +159,7 @@ class DroneConfigurationCog(Cog):
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
         # And remove drained role if added.
         for drone in drones:
-            set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
+            await set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
             await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 
@@ -172,11 +172,11 @@ async def rename_drone(context, old_id: str, new_id: str):
     LOGGER.info("IDs to rename drone to and from are both valid.")
 
     # check for collisions
-    collision = fetch_drone_with_drone_id(new_id)
+    collision = await fetch_drone_with_drone_id(new_id)
     if collision is None:
-        drone = fetch_drone_with_drone_id(old_id)
+        drone = await fetch_drone_with_drone_id(old_id)
         member = context.guild.get_member(drone.id)
-        rename_drone_in_db(old_id, new_id)
+        await rename_drone_in_db(old_id, new_id)
         await member.edit(nick=f'⬡-Drone #{new_id}')
         await update_display_name(member)
         await context.send(f"Successfully renamed drone {old_id} to {new_id}.")
@@ -185,7 +185,7 @@ async def rename_drone(context, old_id: str, new_id: str):
 
 
 async def unassign_drone(target: discord.Member):
-    drone = fetch_drone_with_id(target.id)
+    drone = await fetch_drone_with_id(target.id)
     guild = target.guild
     # check for existence
     if drone is None:
@@ -197,20 +197,20 @@ async def unassign_drone(target: discord.Member):
     await target.add_roles(get(guild.roles, name=ASSOCIATE))
 
     # remove from DB
-    remove_drone_from_db(drone.drone_id)
+    await remove_drone_from_db(drone.drone_id)
     await target.send(f"Drone with ID {drone.drone_id} unassigned.")
 
 
-def remove_drone_from_db(drone_id: str):
+async def remove_drone_from_db(drone_id: str):
     # delete all references and then the actual drone entry
-    delete_drone_order_by_drone_id(drone_id)
-    delete_storage_by_target_id(drone_id)
-    delete_drone_by_drone_id(drone_id)
-    delete_timers_by_drone_id(drone_id)
+    await delete_drone_order_by_drone_id(drone_id)
+    await delete_storage_by_target_id(drone_id)
+    await delete_drone_by_drone_id(drone_id)
+    await delete_timers_by_drone_id(drone_id)
 
 
 async def emergency_release(context, drone_id: str):
-    drone_member = convert_id_to_member(context.guild, drone_id)
+    drone_member = await convert_id_to_member(context.guild, drone_id)
 
     if drone_member is None:
         await context.channel.send(f"No drone with ID {drone_id} found.")
@@ -218,27 +218,27 @@ async def emergency_release(context, drone_id: str):
 
     await release(context, drone_id)
 
-    update_droneOS_parameter(drone_member, "id_prepending", False)
-    update_droneOS_parameter(drone_member, "optimized", False)
-    update_droneOS_parameter(drone_member, "identity_enforcement", False)
-    update_droneOS_parameter(drone_member, "glitched", False)
-    update_droneOS_parameter(drone_member, "is_battery_powered", False)
+    await update_droneOS_parameter(drone_member, "id_prepending", False)
+    await update_droneOS_parameter(drone_member, "optimized", False)
+    await update_droneOS_parameter(drone_member, "identity_enforcement", False)
+    await update_droneOS_parameter(drone_member, "glitched", False)
+    await update_droneOS_parameter(drone_member, "is_battery_powered", False)
     await drone_member.remove_roles(get(context.guild.roles, name=SPEECH_OPTIMIZATION), get(context.guild.roles, name=GLITCHED), get(context.guild.roles, name=ID_PREPENDING), get(context.guild.roles, name=IDENTITY_ENFORCEMENT), get(context.guild.roles, name=BATTERY_POWERED), get(context.guild.roles, name=BATTERY_DRAINED))
     await update_display_name(drone_member)
 
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
 
 
-def can_toggle_permissions_for(toggling_user: discord.Member,
-                               toggled_user: discord.Member
-                               ) -> bool:
-    trusted_users = get_trusted_users(toggled_user.id)
+async def can_toggle_permissions_for(toggling_user: discord.Member,
+                                     toggled_user: discord.Member
+                                     ) -> bool:
+    trusted_users = await get_trusted_users(toggled_user.id)
     if toggling_user.id == HIVE_MXTRESS_USER_ID:
         return True
     if toggling_user.id in trusted_users:
         return True
     if toggling_user.id == toggled_user.id:
-        return can_self_configure(toggled_user)
+        return await can_self_configure(toggled_user)
     return False
 
 
@@ -255,7 +255,7 @@ async def toggle_parameter(context,
                            drones: List[discord.Member],
                            toggle_column: str,
                            role: discord.Role,
-                           is_toggle_activated: Callable[[discord.Member], bool],
+                           is_toggle_activated: Callable[[discord.Member], Coroutine[Any, Any, bool]],
                            toggle_on_message: Callable[[], str],
                            toggle_on_timed_message: Callable[[int], str],
                            toggle_off_message: Callable[[], str],
@@ -263,31 +263,31 @@ async def toggle_parameter(context,
     channel_webhook = await webhook.get_webhook_for_channel(context.channel)
 
     for drone in drones:
-        if can_toggle_permissions_for(context.author, drone):
+        if await can_toggle_permissions_for(context.author, drone):
             message = ""
-            if is_toggle_activated(drone):
-                update_droneOS_parameter(drone, toggle_column, False)
+            if await is_toggle_activated(drone):
+                await update_droneOS_parameter(drone, toggle_column, False)
                 await drone.remove_roles(role)
                 message = toggle_off_message()
 
-                set_can_self_configure(drone)
+                await set_can_self_configure(drone)
 
                 # remove any open timers for this mode
-                delete_timers_by_drone_id_and_mode(fetch_drone_with_id(drone.id).drone_id, toggle_column)
+                await delete_timers_by_drone_id_and_mode((await fetch_drone_with_id(drone.id)).drone_id, toggle_column)
 
             else:
-                update_droneOS_parameter(drone, toggle_column, True)
+                await update_droneOS_parameter(drone, toggle_column, True)
                 await drone.add_roles(role)
                 message = toggle_on_message()
 
                 configured_by_self = (drone.id == context.author.id)
-                update_droneOS_parameter(drone, "can_self_configure", configured_by_self)
+                await update_droneOS_parameter(drone, "can_self_configure", configured_by_self)
 
                 # create a new timer
                 if minutes > 0:
                     end_time = str(datetime.now() + timedelta(minutes=minutes))
-                    timer = Timer(str(uuid4()), fetch_drone_with_id(drone.id).drone_id, toggle_column, end_time)
-                    insert_timer(timer)
+                    timer = Timer(str(uuid4()), (await fetch_drone_with_id(drone.id)).drone_id, toggle_column, end_time)
+                    await insert_timer(timer)
                     message = toggle_on_timed_message(minutes)
                     LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
 
@@ -297,18 +297,18 @@ async def toggle_parameter(context,
                 drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.display_avatar.url if not identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.display_avatar.url if not await identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
 
 
-def set_can_self_configure(drone: discord.Member):
+async def set_can_self_configure(drone: discord.Member):
     still_configured = is_configured(drone)
     if not still_configured:
-        update_droneOS_parameter(drone, "can_self_configure", True)
+        await update_droneOS_parameter(drone, "can_self_configure", True)
 
 
 async def toggle_free_storage(target: discord.Member):
-    drone = fetch_drone_with_id(target.id)
+    drone = await fetch_drone_with_id(target.id)
     guild = target.guild
 
     # check for existence
@@ -316,11 +316,11 @@ async def toggle_free_storage(target: discord.Member):
         await target.send("You are not a drone. Cannot toggle this parameter.")
         return
 
-    if is_free_storage(target):
-        update_droneOS_parameter(target, "free_storage", False)
+    if await is_free_storage(target):
+        await update_droneOS_parameter(target, "free_storage", False)
         await target.remove_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
     else:
-        update_droneOS_parameter(target, "free_storage", True)
+        await update_droneOS_parameter(target, "free_storage", True)
         await target.add_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage enabled. You can now be stored by anyone.")

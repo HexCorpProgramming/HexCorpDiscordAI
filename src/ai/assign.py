@@ -55,7 +55,7 @@ async def create_drone(guild: discord.Guild,
     associate_name = target.display_name
 
     assigned_nick = ''
-    used_ids = get_used_drone_ids() + RESERVED_IDS
+    used_ids = await get_used_drone_ids() + RESERVED_IDS
     assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
     if assigned_id is not None:
         if assigned_id in used_ids:  # make sure display name number doesnt conflict
@@ -84,5 +84,5 @@ async def create_drone(guild: discord.Guild,
 
     # add new drone to DB
     new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until, can_self_configure=True, associate_name=associate_name)
-    insert_drone(new_drone)
+    await insert_drone(new_drone)
     await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')

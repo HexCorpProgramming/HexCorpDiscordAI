@@ -7,14 +7,14 @@ import src.roles as roles
 class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status_no_drone(self, fetch_drone_with_drone_id):
+    async def test_status_no_drone(self, fetch_drone_with_drone_id):
         # setup
         fetch_drone_with_drone_id.return_value = None
 
         context = Mock()
 
         # run
-        status = get_status('9814', 782638723, context)
+        status = await get_status('9814', 782638723, context)
 
         # assert
         self.assertIsNone(status)
@@ -22,7 +22,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status_not_trusted(self, fetch_drone_with_drone_id, get_trusted_users):
+    async def test_status_not_trusted(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
         drone.id = 7263486234
@@ -45,7 +45,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         context.bot.guilds = [guild]
 
         # run
-        status = get_status('9813', 782638723, context)
+        status = await get_status('9813', 782638723, context)
 
         # assert
         self.assertIsNotNone(status)
@@ -55,7 +55,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status(self, fetch_drone_with_drone_id, get_trusted_users):
+    async def test_status(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
         drone.id = 7263486234
@@ -83,7 +83,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         context.bot.guilds = [guild]
 
         # run
-        status = get_status('9813', requesting_user_id, context)
+        status = await get_status('9813', requesting_user_id, context)
 
         # assert
         self.assertIsNotNone(status)
@@ -100,7 +100,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status_on_self(self, fetch_drone_with_drone_id, get_trusted_users):
+    async def test_status_on_self(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
         drone.id = 7263486234
@@ -132,7 +132,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         context.bot.guilds = [guild]
 
         # run
-        status = get_status('9813', drone.id, context)
+        status = await get_status('9813', drone.id, context)
 
         # assert
         self.assertIsNotNone(status)
@@ -152,7 +152,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status_on_self_dangling_trusted_user(self, fetch_drone_with_drone_id, get_trusted_users):
+    async def test_status_on_self_dangling_trusted_user(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
         drone.id = 7263486234
@@ -184,7 +184,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         context.bot.guilds = [guild]
 
         # run
-        status = get_status('9813', drone.id, context)
+        status = await get_status('9813', drone.id, context)
 
         # assert
         self.assertIsNotNone(status)
@@ -204,7 +204,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_drone_id")
-    def test_status_as_moderator(self, fetch_drone_with_drone_id, get_trusted_users):
+    async def test_status_as_moderator(self, fetch_drone_with_drone_id, get_trusted_users):
         # setup
         drone = Mock()
         drone.id = 7263486234
@@ -232,7 +232,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         context.bot.guilds = [guild]
 
         # run
-        status = get_status('9813', requesting_user_id, context)
+        status = await get_status('9813', requesting_user_id, context)
 
         # assert
         self.assertIsNotNone(status)

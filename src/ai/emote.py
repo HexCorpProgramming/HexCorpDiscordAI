@@ -2,11 +2,11 @@ import logging
 import re
 
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
 
 LOGGER = logging.getLogger('ai')
 

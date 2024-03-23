@@ -1,11 +1,11 @@
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 
 import src.id_converter as id_converter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id
 from src.channels import OFFICE
 from src.resources import BRIEF_HIVE_MXTRESS, DRONE_AVATAR
 from src.roles import HIVE_MXTRESS, has_role
@@ -19,7 +19,7 @@ class AmplificationCog(Cog):
         '''
         Allows the Hive Mxtress to speak through other drones.
         '''
-        member_drones = id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
+        member_drones = await id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
 
         if not has_role(context.author, HIVE_MXTRESS) or context.channel.name != OFFICE:
             return False
@@ -28,10 +28,10 @@ class AmplificationCog(Cog):
 
         for drone in member_drones:
 
-            formatted_message = generate_battery_message(drone, f"{get_id(drone.display_name)} :: {message}")
+            formatted_message = await generate_battery_message(drone, f"{get_id(drone.display_name)} :: {message}")
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=drone.display_name,
-                                                   message_avatar=drone.display_avatar.url if not identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                                   message_avatar=drone.display_avatar.url if not await identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
         return True
