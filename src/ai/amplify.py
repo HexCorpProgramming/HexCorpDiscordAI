@@ -21,7 +21,7 @@ class AmplificationCog(Cog):
 
     @guild_only()
     @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287', rest_is_raw=True)
-    async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[Union[discord.Member, DroneMemberConverter]], count: Optional[NamedParameterConverter('hive', int)] = 0):
+    async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[Union[discord.Member, DroneMemberConverter]], count: Optional[NamedParameterConverter('hive', int)] = 0):  # noqa: F821
         '''
         Allows the Hive Mxtress to speak through other drones.
         '''
