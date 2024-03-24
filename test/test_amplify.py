@@ -87,11 +87,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.amplify.has_role")
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    @patch("src.ai.amplify.get_id")
     @patch("src.ai.amplify.generate_battery_message")
     @patch("src.ai.amplify.identity_enforcable")
     @patch("src.ai.amplify.fetch_drone_with_id")
-    async def test_with_count(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, get_id, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+    async def test_with_count(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, proxy_message_by_webhook, get_webhook_for_channel, has_role):
         '''
         Ensure that a count of users can be specified.
         '''
@@ -117,7 +116,6 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         has_role.side_effect = [True, True, True, False]
 
         # Mock helper functions to return what they were passed.
-        get_id.side_effect = lambda a: a
         generate_battery_message.side_effect = lambda a, b: b
 
         identity_enforcable.return_value = False
@@ -134,11 +132,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.amplify.has_role")
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    @patch("src.ai.amplify.get_id")
     @patch("src.ai.amplify.generate_battery_message")
     @patch("src.ai.amplify.identity_enforcable")
     @patch("src.ai.amplify.fetch_drone_with_id")
-    async def test_with_non_drone_mention(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, get_id, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+    async def test_with_non_drone_mention(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, proxy_message_by_webhook, get_webhook_for_channel, has_role):
         '''
         Ensure that an @mention of a non-drone does not cause an error.
         '''
@@ -163,7 +160,6 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_id.return_value = None
 
         # Mock helper functions to return what they were passed.
-        get_id.side_effect = lambda a: a
         generate_battery_message.side_effect = lambda a, b: b
 
         identity_enforcable.return_value = False
