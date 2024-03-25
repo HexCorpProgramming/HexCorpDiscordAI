@@ -1,7 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
+from typing import Union
+from src.validation_error import ValidationError
 
+from discord import Member
 from discord.ext import tasks
 from discord.ext.commands import Cog, guild_only
 from discord.utils import get
@@ -12,8 +15,10 @@ from src.db.data_objects import DroneOrder
 from src.db.database import connect
 from src.db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
                                     get_order_by_drone_id, insert_drone_order)
+from src.db.drone_dao import fetch_drone_with_id
 from src.id_converter import convert_id_to_member
 from src.roles import DRONE, has_role
+from src.ai.commands import DroneMemberConverter
 
 LOGGER = logging.getLogger('ai')
 
@@ -37,6 +42,49 @@ class OrderReportingCog(Cog):
 
         if context.channel.name == ORDERS_REPORTING:
             await report_order(context, protocol_name, protocol_time)
+
+    @command(usage=f'{COMMAND_PREFIX}report_complete "Order Name" 1234 Order description...', rest_is_raw=True)
+    async def report_complete(self, context, order_name: str, member: Union[Member | DroneMemberConverter], *, order_description: str):
+        # Check that the command was issued in the correct channel.
+        if context.channel.name != ORDERS_REPORTING:
+            raise ValidationError(f'This command may only be used in #{ORDERS_REPORTING}')
+
+        # Check that the correct parameters were supplied.
+        if not order_name or not order_description:
+            raise ValidationError('Please supply an order name and description')
+
+        # Find the member's drone record.
+        drone = await fetch_drone_with_id(member.id)
+
+        if drone is None:
+            raise ValidationError('The specified member is not a drone')
+
+        # Find the order.
+        order = await get_order_by_drone_id(drone.drone_id)
+
+        if order is None:
+            raise ValidationError(f'Drone {drone.drone_id} does not have an order in progress')
+
+        # Mark the order as complete.
+        await delete_drone_order(order.id)
+
+        # Delete the original message.
+        await context.message.delete()
+
+        # Output the task summary message.
+        report = ('===Drone Report===\n'
+                  f'Drone ID: {order.drone_id}\n'
+                  f'Objective: {order_name}\n'
+                  f'Issuer: {drone.drone_id}\n'
+                  '\n'
+                  'Report Details:\n'
+                  f'{order_description}\n'
+                  '\n'
+                  'End report.')
+
+        await context.channel.send(report)
+
+        LOGGER.info(f'Drone {drone.drone_id} order #{order.id}: {order.protocol}')
 
     @tasks.loop(minutes=1)
     @connect()
