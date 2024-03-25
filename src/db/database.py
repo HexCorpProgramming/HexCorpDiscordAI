@@ -59,7 +59,7 @@ def connect(filename='ai.db'):
 
         async def runner(*args, **kwargs):
             # Run the decorated function in a new execution context.
-            return await create_task(run_with_connection(*args, *kwargs))
+            return await create_task(run_with_connection(*args, **kwargs))
 
         return runner
 

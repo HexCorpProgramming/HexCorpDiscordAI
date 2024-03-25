@@ -2,9 +2,11 @@ import discord
 from discord.ext.commands import BadArgument, Context, Converter
 
 from src.id_converter import convert_id_to_member
+from src.db.database import connect
 
 
 class DroneMemberConverter(Converter):
+    @connect()
     async def convert(self, context: Context, argument: str) -> discord.Member:
         '''
         Converts a given argument to a Member that is a drone. Raises BadArgument otherwise.

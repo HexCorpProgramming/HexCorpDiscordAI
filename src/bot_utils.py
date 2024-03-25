@@ -45,6 +45,7 @@ def command(*args, **kwargs):
         # They both need to be the same, and to match the name of the command function.
         # Override the name here so it's the same as the command function's name.
         connect_func.__name__ = kwargs['name']
+        connect_func.__wrapped__ = func
 
         bot_func = bot_command(*args, **kwargs)(connect_func)
 
