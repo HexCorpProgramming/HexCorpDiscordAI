@@ -45,8 +45,6 @@ def connect(filename='ai.db'):
 
             # Open a new connection to the database.
             while True:
-                LOGGER.debug('Connecting to database ' + filename)
-
                 with sqlite3.connect(filename, timeout=0.1) as connection:
                     # Fetch the connection's cursor.
                     db_cursor = connection.cursor()

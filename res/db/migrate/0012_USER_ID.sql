@@ -26,7 +26,8 @@ ALTER TABLE drone2 RENAME TO drone;
 
 CREATE TABLE storage2 (
     id VARCHAR(36) PRIMARY KEY,
-    stored_by INT UNSIGNED NOT NULL,
+    -- stored_by is nullable because the Hive Mxtress does not have a drone record.
+    stored_by INT UNSIGNED,
     target_id INT UNSIGNED NOT NULL,
     purpose VARCHAR(255) NOT NULL,
     roles TEXT NOT NULL,

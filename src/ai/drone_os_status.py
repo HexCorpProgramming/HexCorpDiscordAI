@@ -1,12 +1,14 @@
 import logging
+from typing import Union
 
 import discord
 from discord.ext.commands import Cog, command
 
-from src.db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
+from src.db.drone_dao import fetch_drone_with_id, get_trusted_users, get_battery_percent_remaining, get_battery_type
 from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.bot_utils import COMMAND_PREFIX
 from src.roles import MODERATION_ROLES, has_any_role
+from src.ai.commands import DroneMemberConverter
 
 LOGGER = logging.getLogger('ai')
 
@@ -14,33 +16,34 @@ LOGGER = logging.getLogger('ai')
 class DroneOsStatusCog(Cog):
 
     @command(usage=f'{COMMAND_PREFIX}drone_status 9813', brief=[BRIEF_DRONE_OS])
-    async def drone_status(self, context, drone_id: str):
+    async def drone_status(self, context, member: Union[discord.Member, DroneMemberConverter]):
         '''
         Displays all the DroneOS information you have access to about a drone.
         '''
-        response = await get_status(drone_id, context.author.id, context)
+        response = await get_status(member, context.author.id, context)
         if response is None:
-            await context.author.send(f"No drone with ID {drone_id} found.")
+            await context.author.send('The specified member is not a drone')
         if response is not None:
             await context.author.send(embed=response)
 
 
-async def get_status(drone_id: str, requesting_user: int, context) -> discord.Embed:
-    drone = await fetch_drone_with_drone_id(drone_id)
+async def get_status(member: discord.Member, requesting_user: int, context) -> discord.Embed:
+    drone = await fetch_drone_with_id(member.id)
 
     if drone is None:
         return None
 
-    embed = discord.Embed(color=0xff66ff, title=f"Status for {drone_id}") \
+    embed = discord.Embed(color=0xff66ff, title=f"Status for {drone.drone_id}") \
         .set_thumbnail(url=DRONE_AVATAR) \
         .set_footer(text="HexCorp DroneOS")
 
-    member = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
+    author = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
+    battery_type = await get_battery_type(member)
 
     trusted_users = await get_trusted_users(drone.discord_id)
     is_trusted_user = requesting_user in trusted_users
     is_drone_self = requesting_user == drone.discord_id
-    is_moderation = has_any_role(member, MODERATION_ROLES)
+    is_moderation = has_any_role(author, MODERATION_ROLES)
 
     # return early when this request is not authorized
     if not is_trusted_user and not is_drone_self and not is_moderation:
@@ -53,7 +56,7 @@ async def get_status(drone_id: str, requesting_user: int, context) -> discord.Em
     if is_moderation:
         embed.description = "You are a moderator and have access to this drone's data."
     if is_drone_self:
-        embed.description = f"Welcome, ⬡-Drone #{drone_id}"
+        embed.description = f"Welcome, ⬡-Drone #{drone.drone_id}"
 
     # assemble embed content
     embed = embed.set_thumbnail(url=DRONE_AVATAR) \
@@ -63,7 +66,8 @@ async def get_status(drone_id: str, requesting_user: int, context) -> discord.Em
         .add_field(name="ID prepending required", value=boolean_to_enabled_disabled(drone.id_prepending)) \
         .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
         .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
-        .add_field(name="Battery percentage", value=f"{await get_battery_percent_remaining(battery_minutes = drone.battery_minutes)}%")\
+        .add_field(name="Battery type", value=battery_type.name)\
+        .add_field(name="Battery percentage", value=f"{await get_battery_percent_remaining(member)}%")\
         .add_field(name="Free storage", value=boolean_to_enabled_disabled(drone.free_storage))
 
     # create list of trusted users
