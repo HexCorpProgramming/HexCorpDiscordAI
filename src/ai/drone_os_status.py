@@ -1,11 +1,11 @@
 import logging
 
 import discord
-from discord.ext.commands import Cog
+from discord.ext.commands import Cog, command
 
 from src.db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, get_battery_percent_remaining
 from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
-from src.bot_utils import command, COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX
 from src.roles import MODERATION_ROLES, has_any_role
 
 LOGGER = logging.getLogger('ai')
@@ -37,9 +37,9 @@ async def get_status(drone_id: str, requesting_user: int, context) -> discord.Em
 
     member = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
 
-    trusted_users = await get_trusted_users(drone.id)
+    trusted_users = await get_trusted_users(drone.discord_id)
     is_trusted_user = requesting_user in trusted_users
-    is_drone_self = requesting_user == drone.id
+    is_drone_self = requesting_user == drone.discord_id
     is_moderation = has_any_role(member, MODERATION_ROLES)
 
     # return early when this request is not authorized

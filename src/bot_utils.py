@@ -1,9 +1,11 @@
 import re
-from typing import Optional
+from typing import Callable, Optional, TypeVar
 from src.db.database import connect
-from discord.ext.commands import command as bot_command
+from discord.ext.commands import command as bot_command, check, Context, PrivateMessageOnly
+from discord.utils import get
 
 COMMAND_PREFIX = 'hc!'
+T = TypeVar('T')
 
 
 def get_id(username: str) -> Optional[str]:
@@ -15,6 +17,30 @@ def get_id(username: str) -> Optional[str]:
         return None
     else:
         return found.group()
+
+
+def dm_only() -> Callable[[T], T]:
+    '''
+    A decorator factory for making a command only usable in a direct message.
+
+    This has an exception for TestBot because one bot cannot DM another.
+    '''
+
+    def predicate(ctx: Context) -> bool:
+        '''
+        Raise a PrivateMessageOnly exception if the message is not a DM,
+        unless the sender is TestBot.
+        '''
+
+        if ctx.guild is not None:
+            test_bot = get(ctx.guild.members, display_name='TestBot')
+
+            if ctx.author.id != test_bot.id:
+                raise PrivateMessageOnly()
+
+        return True
+
+    return check(predicate)
 
 
 def command(*args, **kwargs):
@@ -45,6 +71,7 @@ def command(*args, **kwargs):
         # They both need to be the same, and to match the name of the command function.
         # Override the name here so it's the same as the command function's name.
         connect_func.__name__ = kwargs['name']
+        connect_func.__wrapped__ = func
 
         bot_func = bot_command(*args, **kwargs)(connect_func)
 

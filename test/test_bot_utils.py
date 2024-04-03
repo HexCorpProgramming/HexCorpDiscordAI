@@ -77,6 +77,7 @@ class TestBotUtils(IsolatedAsyncioTestCase):
         await do_prepare()
 
         @command(parent=parent)
+        @connect()
         async def command1(ctx):
             '''
             Simulate a bot command.
@@ -84,21 +85,21 @@ class TestBotUtils(IsolatedAsyncioTestCase):
 
             # Record the database cursor inside the command.
             ctx.log('Inserting drone 1000')
-            await change('INSERT INTO drone(id, drone_id) VALUES (1, "1000")')
+            await change('INSERT INTO drone(discord_id, drone_id) VALUES (1, "1000")')
             ctx.log('Inserted drone 1000')
             await sleep(0.2)
             ctx.log('Rolling back drone 1000')
             raise Exception('Roll back')
 
         @command(parent=parent)
+        @connect()
         async def command2(ctx):
             '''
             Simulate a bot command.
             '''
-
             await sleep(0.1)
             ctx.log('Inserting drone 2000')
-            await change('INSERT INTO drone(id, drone_id) VALUES (2, "2000")')
+            await change('INSERT INTO drone(discord_id, drone_id) VALUES (2, "2000")')
             ctx.log('Inserted drone 2000')
             await sleep(0.2)
             ctx.log('Committing drone 2000')
@@ -122,13 +123,13 @@ class TestBotUtils(IsolatedAsyncioTestCase):
         @connect()
         async def do_check():
             # Check that drone 1000 is not in the database
-            self.assertIsNone(await fetchone('SELECT 1 FROM drone WHERE id = 1'))
+            self.assertIsNone(await fetchone('SELECT 1 FROM drone WHERE discord_id = 1'))
 
             # Check that drone 2000 is in the database
-            self.assertIsNotNone(await fetchone('SELECT 1 FROM drone WHERE id = 2'))
+            self.assertIsNotNone(await fetchone('SELECT 1 FROM drone WHERE discord_id = 2'))
 
             # Clean up
-            await change('DELETE FROM drone WHERE id = 2')
+            await change('DELETE FROM drone WHERE discord_id = 2')
 
         await do_check()
 

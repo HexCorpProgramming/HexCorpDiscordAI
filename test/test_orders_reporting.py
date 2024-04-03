@@ -7,6 +7,7 @@ import src.roles as roles
 import src.channels as channels
 import src.ai.orders_reporting as orders_reporting
 from src.db.data_objects import DroneOrder
+from src.db.drone_dao import Drone
 import test.test_utils as test_utils
 
 drone_role = Mock()
@@ -29,16 +30,16 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         bot.reset_mock()
         orders_reporting_channel.reset_mock()
 
-    @patch("src.ai.orders_reporting.convert_id_to_member")
+    @patch("src.ai.orders_reporting.fetch_drone_with_id", return_value=Drone('5890snowflake', '5890'))
     @patch("src.ai.orders_reporting.delete_drone_order")
-    @patch("src.ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890', 'beep booping', str(datetime.now() + timedelta(minutes=-1)))])
-    async def test_check_for_completed_orders_completed(self, fetch_all_drone_orders, delete_drone_order, convert_id_to_member):
+    @patch("src.ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890snowflake', 'beep booping', str(datetime.now() + timedelta(minutes=-1)))])
+    async def test_check_for_completed_orders_completed(self, fetch_all_drone_orders, delete_drone_order, fetch_drone_with_id):
         # setup
         activated_member = AsyncMock()
         activated_member.id = '5890snowflake'
         activated_member.mention = '<5890mention>'
 
-        convert_id_to_member.return_value = activated_member
+        bot.guilds[0].get_member.return_value = activated_member
 
         orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
 
@@ -46,11 +47,11 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         await test_utils.start_and_await_loop(orders_reporting_cog.deactivate_drones_with_completed_orders)
 
         # assert
-        convert_id_to_member.assert_called_once_with(bot.guilds[0], '5890')
+        fetch_drone_with_id.assert_called_once_with('5890snowflake')
         delete_drone_order.assert_called_once_with('mocked_order_id')
         orders_reporting_channel.send.assert_called_once_with('<5890mention> Drone 5890 Deactivate.\nDrone 5890, good drone.')
 
-    @patch("src.ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890', 'beep booping', str(datetime.now() + timedelta(minutes=25)))])
+    @patch("src.ai.orders_reporting.fetch_all_drone_orders", return_value=[DroneOrder('mocked_order_id', '5890snowflake', 'beep booping', str(datetime.now() + timedelta(minutes=25)))])
     async def test_check_for_completed_orders_none_completed(self, fetch_all_drone_orders):
         # setup
         orders_reporting_cog = orders_reporting.OrderReportingCog(bot)
@@ -68,6 +69,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         # setup
         context = AsyncMock()
         context.channel.name = channels.STORAGE_FACILITY
+        context.author.id = '5890snowflake'
         context.author.display_name = '⬡-Drone #5890'
         context.author.roles = [drone_role]
         context.guild = bot.guilds[0]
@@ -81,7 +83,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         # assert
         get_order_by_drone_id.assert_called_once_with('5890')
         context.send.assert_called_once_with("If safe and willing to do so, Drone 5890 Activate.\nDrone 5890 will elaborate on its exact tasks before proceeding with them.")
-        self.assertEqual(insert_drone_order.call_args.args[0].drone_id, '5890')
+        self.assertEqual(insert_drone_order.call_args.args[0].discord_id, '5890snowflake')
         self.assertEqual(insert_drone_order.call_args.args[0].protocol, 'beep booping')
         self.assertEqual(insert_drone_order.call_args.args[0].finish_time, str(fixed_now + timedelta(minutes=23)))
 
@@ -101,7 +103,7 @@ class OrdersReportingTest(unittest.IsolatedAsyncioTestCase):
         orders_reporting_channel.send.assert_not_called()
         insert_drone_order.assert_not_called()
 
-    @patch("src.ai.orders_reporting.get_order_by_drone_id", return_value=DroneOrder(str(uuid4()), '5890', 'boop beeping', str(datetime.now() + timedelta(minutes=5))))
+    @patch("src.ai.orders_reporting.get_order_by_drone_id", return_value=DroneOrder(str(uuid4()), '5890snowflake', 'boop beeping', str(datetime.now() + timedelta(minutes=5))))
     @patch("src.ai.orders_reporting.insert_drone_order")
     async def test_report_order_already_has_an_order(self, insert_drone_order, get_order_by_drone_id):
         # setup

@@ -2,10 +2,10 @@ import logging
 import re
 
 import discord
-from discord.ext.commands import Cog, Context, guild_only
+from discord.ext.commands import Cog, command, Context, guild_only
 from discord.utils import get
 
-from src.bot_utils import command, COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX
 from src.channels import OFFICE
 from src.db.data_objects import ForbiddenWord
 from src.db.drone_dao import is_drone
