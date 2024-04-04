@@ -185,9 +185,14 @@ async def rename_drone(context, old_id: str, new_id: str):
 async def unassign_drone(target: discord.Member):
     drone = await fetch_drone_with_id(target.id)
     guild = target.guild
+
     # check for existence
     if drone is None:
-        await target.send("You are not a drone. Can not unassign.")
+        try:
+            await target.send("You are not a drone. Can not unassign.")
+        except Exception:
+            # Sending will fail if target is a Discord bot.
+            pass
         return
 
     await target.edit(nick=drone.associate_name)
@@ -196,7 +201,12 @@ async def unassign_drone(target: discord.Member):
 
     # remove from DB
     await delete_drone_by_drone_id(drone.drone_id)
-    await target.send(f"Drone with ID {drone.drone_id} unassigned.")
+
+    try:
+        await target.send(f"Drone with ID {drone.drone_id} unassigned.")
+    except Exception:
+        # Sending will fail if target is a Discord bot.
+        pass
 
 
 async def emergency_release(context, drone_id: str):
