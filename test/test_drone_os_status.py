@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, Mock
 from src.ai.drone_os_status import get_status
 import src.roles as roles
-from src.db.drone_dao import Drone
+from src.db.drone_dao import BatteryType, Drone
 
 
 class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
@@ -59,7 +59,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_id")
     @patch("src.ai.drone_os_status.get_battery_percent_remaining", return_value=30)
-    async def test_status(self, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
+    @patch("src.ai.drone_os_status.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_status(self, get_battery_type, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
         # setup
         drone = Drone(7263486234, '9813', optimized=True, battery_minutes=300)
 
@@ -102,7 +103,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_id")
     @patch("src.ai.drone_os_status.get_battery_percent_remaining", return_value=30)
-    async def test_status_on_self(self, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
+    @patch("src.ai.drone_os_status.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_status_on_self(self, get_battery_type, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
         # setup
         drone = Drone(7263486234, '9813', optimized=True, battery_minutes=300)
 
@@ -142,8 +144,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Disabled", status.fields[1].value)
         self.assertEqual("ID prepending required", status.fields[2].name)
         self.assertEqual("Disabled", status.fields[2].value)
-        self.assertEqual("Trusted users", status.fields[7].name)
-        self.assertEqual(str(["A trustworthy user"]), status.fields[7].value)
+        self.assertEqual("Trusted users", status.fields[8].name)
+        self.assertEqual(str(["A trustworthy user"]), status.fields[8].value)
 
         fetch_drone_with_id.assert_called_once_with('9813snowflake')
         get_trusted_users.assert_called_once_with(drone.discord_id)
@@ -152,7 +154,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_id")
     @patch("src.ai.drone_os_status.get_battery_percent_remaining", return_value=30)
-    async def test_status_on_self_dangling_trusted_user(self, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
+    @patch("src.ai.drone_os_status.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_status_on_self_dangling_trusted_user(self, get_battery_type, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
         # setup
         drone = Drone(7263486234, '9813', optimized=True, battery_minutes=300)
 
@@ -192,8 +195,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Disabled", status.fields[1].value)
         self.assertEqual("ID prepending required", status.fields[2].name)
         self.assertEqual("Disabled", status.fields[2].value)
-        self.assertEqual("Trusted users", status.fields[7].name)
-        self.assertEqual(str([]), status.fields[7].value)
+        self.assertEqual("Trusted users", status.fields[8].name)
+        self.assertEqual(str([]), status.fields[8].value)
 
         fetch_drone_with_id.assert_called_once_with('9813snowflake')
         get_trusted_users.assert_called_once_with(drone.discord_id)
@@ -202,7 +205,8 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.drone_os_status.get_trusted_users")
     @patch("src.ai.drone_os_status.fetch_drone_with_id")
     @patch("src.ai.drone_os_status.get_battery_percent_remaining", return_value=30)
-    async def test_status_as_moderator(self, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
+    @patch("src.ai.drone_os_status.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_status_as_moderator(self, get_battery_type, get_battery_percent_remaining, fetch_drone_with_id, get_trusted_users):
         # setup
         drone = Drone(7263486234, optimized=True, battery_minutes=300)
 

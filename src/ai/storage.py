@@ -66,8 +66,8 @@ class StorageCog(Cog):
             for stored in stored_drones:
                 # calculate remaining hours
                 remaining_hours = hours_from_now(datetime.fromisoformat(stored.release_time))
-                stored_drone = fetch_drone_with_id(stored.target_id)
-                initiator_drone = fetch_drone_with_id(stored.initiator_id)
+                initiator_drone = await fetch_drone_with_id(stored.stored_by)
+                stored_drone = await fetch_drone_with_id(stored.target_id)
 
                 if stored.stored_by is None:
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')

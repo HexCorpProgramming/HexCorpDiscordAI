@@ -38,7 +38,6 @@ async def get_status(member: discord.Member, requesting_user: int, context) -> d
         .set_footer(text="HexCorp DroneOS")
 
     author = context.author if isinstance(context.author, discord.Member) else context.bot.guilds[0].get_member(context.author.id)
-    battery_type = await get_battery_type(member)
 
     trusted_users = await get_trusted_users(drone.discord_id)
     is_trusted_user = requesting_user in trusted_users
@@ -49,6 +48,8 @@ async def get_status(member: discord.Member, requesting_user: int, context) -> d
     if not is_trusted_user and not is_drone_self and not is_moderation:
         embed.description = "You are not registered as a trusted user of this drone."
         return embed
+
+    battery_type = await get_battery_type(member)
 
     # assemble description
     if is_trusted_user:
