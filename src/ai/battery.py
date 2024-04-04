@@ -44,7 +44,7 @@ class BatteryCog(commands.Cog):
     async def set_battery_type(self, context, member: Union[Member, DroneMemberConverter], type_name: str):
         '''
         Hive Mxtress only command.
-        Recharges a drone to 100% battery.
+        Changes the drone's battery capacity and recharge rate.
         '''
 
         if not has_role(context.message.author, HIVE_MXTRESS):

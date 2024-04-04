@@ -32,11 +32,8 @@ def dm_only() -> Callable[[T], T]:
         unless the sender is TestBot.
         '''
 
-        if ctx.guild is not None:
-            test_bot = get(ctx.guild.members, display_name='TestBot')
-
-            if ctx.author.id != test_bot.id:
-                raise PrivateMessageOnly()
+        if ctx.guild is not None and ctx.author.name != 'TestBot':
+            raise PrivateMessageOnly()
 
         return True
 

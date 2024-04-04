@@ -232,7 +232,7 @@ def ignore_self(func):
 async def on_message(message: discord.Message):
     # Don't ignore messages from the testing bot.
     # Usually process_commands() will ignore messages from bots.
-    if message.author.display_name == 'TestBot':
+    if message.author.name == 'TestBot':
         message.author.bot = False
 
     message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
