@@ -16,7 +16,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: 301"
         message.channel.name = 'hive-repetitions'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
@@ -50,7 +50,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: beep"
         message.channel.name = 'hive-repetitions'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
@@ -67,7 +67,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: 301"
         message.channel.name = 'drone-configuration'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
