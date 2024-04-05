@@ -1,10 +1,8 @@
-from src.bot_utils import get_id, command, connect
+from src.bot_utils import get_id
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import call, Mock
-from src.db.connection import cursor
-from src.db.database import change, fetchone, prepare
+from src.db.database import change, connect, fetchone, prepare
 from asyncio import gather, sleep
-from sqlite3 import Cursor
 
 
 class TestBotUtils(IsolatedAsyncioTestCase):
@@ -30,44 +28,11 @@ class TestBotUtils(IsolatedAsyncioTestCase):
         self.assertRaises(TypeError, get_id, None)
         self.assertRaises(TypeError, get_id, 9813)
 
-    async def test_command(self):
-        '''
-        Ensure that the @command decorator registers the command and opens the database connection.
-        '''
-
-        parent = Mock()
-        ctx = Mock()
-
-        @command(parent=parent)
-        async def test_command(ctx):
-            '''
-            Simulate a bot command.
-            '''
-
-            # Record the database cursor inside the command.
-            ctx.test(cursor.get())
-
-        # Check that the command was added to the bot.
-        parent.add_command.assert_called_once()
-
-        # Run the command.
-        await test_command(ctx)
-
-        # Check that the command function was actually called.
-        ctx.test.assert_called_once()
-
-        # Ensure that the cursor did not leak outside of the command's context.
-        self.assertIsNone(cursor.get(None))
-
-        # Ensure that the cursor was available inside the command's context.
-        self.assertIsInstance(ctx.test.call_args[0][0], Cursor)
-
     async def test_command_race(self):
         '''
         Ensure that the @command decorator registers the command and opens the database connection.
         '''
 
-        parent = Mock()
         ctx = Mock()
 
         @connect()
@@ -76,7 +41,6 @@ class TestBotUtils(IsolatedAsyncioTestCase):
 
         await do_prepare()
 
-        @command(parent=parent)
         @connect()
         async def command1(ctx):
             '''
@@ -91,12 +55,12 @@ class TestBotUtils(IsolatedAsyncioTestCase):
             ctx.log('Rolling back drone 1000')
             raise Exception('Roll back')
 
-        @command(parent=parent)
         @connect()
         async def command2(ctx):
             '''
             Simulate a bot command.
             '''
+
             await sleep(0.1)
             ctx.log('Inserting drone 2000')
             await change('INSERT INTO drone(discord_id, drone_id) VALUES (2, "2000")')
@@ -105,10 +69,12 @@ class TestBotUtils(IsolatedAsyncioTestCase):
             ctx.log('Committing drone 2000')
 
         # Actual order of operations:
-        #
+        # Start command 1
         # Insert drone 1000.
-        # Attempt to insert drone 2000, enter retry loop.
+        # Attempt to start command 2, enter retry loop.
         # Roll back drone 1000.
+        # Start command 2.
+        # Insert drone 2000.
         # Insert drone 2000.
         # Commit drone 2000.
         #
@@ -137,8 +103,8 @@ class TestBotUtils(IsolatedAsyncioTestCase):
         expected_calls = [
             call('Inserting drone 1000'),
             call('Inserted drone 1000'),
-            call('Inserting drone 2000'),
             call('Rolling back drone 1000'),
+            call('Inserting drone 2000'),
             call('Inserted drone 2000'),
             call('Committing drone 2000'),
         ]

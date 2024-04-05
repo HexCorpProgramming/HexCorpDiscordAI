@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext.commands import Bot, command as bot_command, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
-from src.bot_utils import connect
+from src.db.database import connect
 
 import logging
 from logging import handlers

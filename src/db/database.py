@@ -44,6 +44,10 @@ def connect(filename='ai.db'):
             Open a connection to the databse and then run func().
             '''
 
+            # Wait for the lock to be available, while allowing other tasks to run.
+            while db_lock.locked():
+                await sleep(0.1)
+
             # Open a new connection to the database.
             async with db_lock:
                 with sqlite3.connect(filename, timeout=1) as connection:
