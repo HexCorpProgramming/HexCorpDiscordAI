@@ -6,9 +6,10 @@ from typing import List
 from src.db.connection import cursor, transactions
 from src.db.transaction import Transaction
 from inspect import iscoroutinefunction
-from asyncio import create_task, sleep
+from asyncio import create_task, Lock, sleep
 
 LOGGER = logging.getLogger('ai')
+db_lock = Lock()
 
 
 def connect(filename='ai.db'):
@@ -44,8 +45,8 @@ def connect(filename='ai.db'):
             '''
 
             # Open a new connection to the database.
-            while True:
-                with sqlite3.connect(filename, timeout=0.1) as connection:
+            async with db_lock:
+                with sqlite3.connect(filename, timeout=1) as connection:
                     # Fetch the connection's cursor.
                     db_cursor = connection.cursor()
 
