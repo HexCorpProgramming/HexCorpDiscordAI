@@ -45,6 +45,8 @@ def connect(filename='ai.db'):
 
             # Open a new connection to the database.
             while True:
+                LOGGER.debug('Connecting to database ' + filename)
+
                 with sqlite3.connect(filename, timeout=0.1) as connection:
                     # Fetch the connection's cursor.
                     db_cursor = connection.cursor()
@@ -53,6 +55,9 @@ def connect(filename='ai.db'):
                     cursor.set(db_cursor)
                     transactions.set([])
 
+                    # Enable foreign key constraints.
+                    db_cursor.execute('PRAGMA foreign_keys = ON')
+
                     # Open a new transaction and run the decorated code.
                     with Transaction():
                         return await func(*args, **kwargs)
@@ -60,6 +65,9 @@ def connect(filename='ai.db'):
         async def runner(*args, **kwargs):
             # Run the decorated function in a new execution context.
             return await create_task(run_with_connection(*args, *kwargs))
+
+        runner.__name__ = func.__name__
+        runner.__wrapped__ = func
 
         return runner
 

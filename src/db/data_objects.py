@@ -18,7 +18,7 @@ def map_to_object(row, constructor):
 
 @dataclass
 class Drone:
-    id: str = None
+    discord_id: str = None
     drone_id: str = None
     optimized: bool = None
     glitched: bool = None
@@ -47,7 +47,7 @@ class Storage:
 @dataclass
 class DroneOrder:
     id: str = None
-    drone_id: str = None
+    discord_id: str = None
     protocol: str = None
     finish_time: datetime = None
 
@@ -55,7 +55,7 @@ class DroneOrder:
 @dataclass
 class Timer:
     id: str = None
-    drone_id: str = None
+    discord_id: str = None
     mode: str = None
     end_time: datetime = None
 

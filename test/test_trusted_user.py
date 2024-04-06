@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 from src.ai.trusted_user import TrustedUserCog, TrustedUserRequest, find_user_by_display_name_or_drone_id, remove_trusted_user, remove_trusted_user_on_all
 from src.resources import HIVE_MXTRESS_USER_ID
+from src.db.drone_dao import Drone
 
 
 class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
@@ -306,8 +307,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
 
         unrelated_user_id = 12405280928135
 
-        drone = Mock()
-        drone.id = 8346759834
+        drone = Drone(8346759834)
         drone.trusted_users = f"{HIVE_MXTRESS_USER_ID}|{id_of_member_leaving}|{unrelated_user_id}"
 
         fetch_all_drones_with_trusted_user.return_value = [drone]
@@ -317,7 +317,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
 
         # assert
         fetch_all_drones_with_trusted_user.assert_called_once_with(id_of_member_leaving)
-        set_trusted_users.assert_called_once_with(drone.id, [int(HIVE_MXTRESS_USER_ID), unrelated_user_id])
+        set_trusted_users.assert_called_once_with(drone.discord_id, [int(HIVE_MXTRESS_USER_ID), unrelated_user_id])
 
     @patch("src.ai.trusted_user.remove_trusted_user")
     async def test_remove_trusted_user_command(self, remove_trusted_user):

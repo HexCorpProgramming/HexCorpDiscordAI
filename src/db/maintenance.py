@@ -36,4 +36,4 @@ async def trusted_user_cleanup(members: List[Member]):
         # only do a DB change if something actually changed
         if not trimmed_trusted_users == trusted_users:
             LOGGER.debug(f'Trimming {len(trusted_users) - len(trimmed_trusted_users)} trusted users from drone {drone.drone_id}')
-            await set_trusted_users(drone.id, trimmed_trusted_users)
+            await set_trusted_users(drone.discord_id, trimmed_trusted_users)

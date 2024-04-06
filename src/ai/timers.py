@@ -6,10 +6,9 @@ from discord.utils import get
 
 from src.ai.drone_configuration import set_can_self_configure
 from src.db.database import connect
-from src.db.drone_dao import fetch_drone_with_drone_id, update_droneOS_parameter
+from src.db.drone_dao import update_droneOS_parameter
 from src.db.timer_dao import delete_timer, get_timers_elapsed_before
 from src.display_names import update_display_name
-from src.id_converter import convert_id_to_member
 from src.roles import (GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
                        SPEECH_OPTIMIZATION, BATTERY_POWERED)
 
@@ -39,8 +38,7 @@ class TimersCog(commands.Cog):
         LOGGER.info("Checking for elapsed timers.")
 
         for elapsed_timer in await get_timers_elapsed_before(datetime.now()):
-            drone = await fetch_drone_with_drone_id(elapsed_timer.drone_id)
-            drone_member = await convert_id_to_member(self.bot.guilds[0], drone.drone_id)
+            drone_member = self.bot.guilds[0].get_member(elapsed_timer.discord_id)
             await update_droneOS_parameter(drone_member, elapsed_timer.mode, False)
             await delete_timer(elapsed_timer.id)
             await drone_member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[elapsed_timer.mode]))

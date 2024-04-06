@@ -33,15 +33,8 @@ async def fetch_all_elapsed_storage() -> List[Storage]:
     return map_to_objects(await fetchall('SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage WHERE release_time < :now', {'now': datetime.now()}), Storage)
 
 
-async def fetch_storage_by_target_id(drone_id: str) -> Storage:
+async def fetch_storage_by_target_id(discord_id: int) -> Storage:
     '''
     Fetch a single storage by the target_id.
     '''
-    return map_to_object(await fetchone('SELECT id, stored_by, target_id, purpose, roles, release_time FROM storage WHERE target_id = :drone_id', {'drone_id': drone_id}), Storage)
-
-
-async def delete_storage_by_target_id(target_id: str):
-    '''
-    Deletes the storage with the given target_id.
-    '''
-    await change('DELETE FROM storage WHERE target_id = :target_id', {'target_id': target_id})
+    return map_to_object(await fetchone('SELECT * FROM storage WHERE target_id = :discord_id', {'discord_id': discord_id}), Storage)

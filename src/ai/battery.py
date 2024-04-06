@@ -8,6 +8,7 @@ from src.db.database import connect
 
 from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
+from discord.ext.commands import command
 from discord.utils import get
 
 import src.emoji as emoji
@@ -17,7 +18,7 @@ from src.id_converter import convert_ids_to_members
 from src.resources import (BRIEF_HIVE_MXTRESS, DRONE_AVATAR,
                            HOURS_OF_RECHARGE_PER_HOUR, MAX_BATTERY_CAPACITY_MINS)
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, HIVE_MXTRESS, has_role
-from src.bot_utils import command, COMMAND_PREFIX, get_id
+from src.bot_utils import COMMAND_PREFIX, get_id
 from src.db.drone_dao import (deincrement_battery_minutes_remaining,
                               get_all_drone_batteries,
                               get_battery_minutes_remaining,
@@ -46,15 +47,15 @@ class BatteryCog(commands.Cog):
 
         LOGGER.info("Energize command envoked.")
 
-        for drone in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
+        for member in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
 
-            LOGGER.info(f"Energizing {drone.display_name}")
+            LOGGER.info(f"Energizing {member.display_name}")
 
-            await set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
+            await set_battery_minutes_remaining(member=member, minutes=MAX_BATTERY_CAPACITY_MINS)
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
-                                                   message_username=drone.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
+            await webhook.proxy_message_by_webhook(message_content=f'{get_id(member.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
+                                                   message_username=member.display_name,
+                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(member, channel=context.message.channel) else (member.avatar.url if member.avatar else None),
                                                    webhook=channel_webhook)
 
     @command(usage=f"{COMMAND_PREFIX}drain 3287", brief=[BRIEF_HIVE_MXTRESS])
@@ -70,7 +71,7 @@ class BatteryCog(commands.Cog):
 
         for drone in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
 
-            if not await is_battery_powered(drone=drone):
+            if not await is_battery_powered(drone):
                 await context.send(f"{drone.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
                 continue
 
@@ -136,7 +137,7 @@ class BatteryCog(commands.Cog):
 
         for drone in await get_all_drone_batteries():
             # Intentionally different math to that in DAO b/c it always rounds down.
-            member_drone = self.bot.guilds[0].get_member(drone.id)
+            member_drone = self.bot.guilds[0].get_member(drone.discord_id)
             if member_drone is None:
                 LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
@@ -161,7 +162,7 @@ class BatteryCog(commands.Cog):
         for drone in await get_all_drone_batteries():
             if await get_battery_percent_remaining(battery_minutes=drone.battery_minutes) < 30:
                 if drone.drone_id not in self.low_battery_drones:
-                    member = self.bot.guilds[0].get_member(drone.id)
+                    member = self.bot.guilds[0].get_member(drone.discord_id)
                     LOGGER.info(f"Warning drone {drone.drone_id} of low battery.")
                     await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
                     self.low_battery_drones.append(drone.drone_id)

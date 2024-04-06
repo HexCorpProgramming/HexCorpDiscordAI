@@ -4,6 +4,7 @@ import src.ai.battery as battery
 import src.emoji as emoji
 from src.resources import MAX_BATTERY_CAPACITY_MINS
 import test.test_utils as test_utils
+from src.db.drone_dao import Drone
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
@@ -109,9 +110,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drained_role = Mock()
         discord_get.return_value = drained_role
 
-        drone_5890 = Mock()
-        drone_5890.id = "some_discord_id"
-        drone_5890.battery_minutes = 0
+        drone_5890 = Drone('5890snowflake', '5890', battery_minutes=0)
         drone_batteries.return_value = [drone_5890]
 
         battery_cog = battery.BatteryCog(bot)
@@ -156,9 +155,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         by DMing them.
         '''
 
-        drone = Mock()
-        drone.battery_minutes = 20
-        drone.drone_id = '5890'
+        drone = Drone('5890snowflake', '5890', battery_minutes=20)
         drone_batteries.return_value = [drone]
 
         bot = AsyncMock()

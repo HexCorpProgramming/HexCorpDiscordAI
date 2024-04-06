@@ -3,10 +3,10 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 
 import discord
-from discord.ext.commands import Cog, guild_only
+from discord.ext.commands import Cog, command, guild_only
 from discord.ext import tasks
 
-from src.bot_utils import command, COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX
 from src.db.database import connect
 from src.db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
 from src.ai.assign import create_drone
@@ -46,7 +46,7 @@ class TemporaryDronificationCog(Cog):
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
         for drone in await fetch_all_elapsed_temporary_dronification():
-            await unassign_drone(guild.get_member(drone.id))
+            await unassign_drone(guild.get_member(drone.discord_id))
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @AssociateName 6')
