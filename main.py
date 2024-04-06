@@ -14,6 +14,7 @@ from logging import handlers
 import sys
 
 from traceback import TracebackException
+from src.validation_error import ValidationError
 
 
 # Modules
@@ -335,6 +336,8 @@ async def on_command_error(context, error):
         await context.send(f"`{error.param.name}` is a required argument that is missing.")
     elif isinstance(error, PrivateMessageOnly):
         await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
+    elif isinstance(error.original, ValidationError):
+        await context.send(str(error.original))
     else:
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
