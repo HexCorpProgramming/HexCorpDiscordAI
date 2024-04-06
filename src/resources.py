@@ -98,6 +98,4 @@ code_map = {
     '500': 'Response :: Negative.',
 }
 
-BRIEF_HIVE_MXTRESS = "Hive Mxtress"
-BRIEF_DM_ONLY = "DM-Only"
 BRIEF_DRONE_OS = "DroneOS"

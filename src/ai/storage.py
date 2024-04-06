@@ -11,7 +11,7 @@ from discord.utils import get
 
 import src.roles as roles
 from src.ai.battery import recharge_battery
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.database import connect
 from src.db.data_objects import Drone
@@ -20,7 +20,6 @@ from src.db.drone_dao import (fetch_drone_with_drone_id, fetch_drone_with_id, ge
 from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
-from src.resources import BRIEF_HIVE_MXTRESS
 from src.ai.commands import DroneMemberConverter
 from typing import Union
 
@@ -46,7 +45,8 @@ class StorageCog(Cog):
         self.stored_role = None
 
     @guild_only()
-    @command(usage=f'{COMMAND_PREFIX}release 9813', brief=[BRIEF_HIVE_MXTRESS])
+    @hive_mxtress_only()
+    @command(usage=f'{COMMAND_PREFIX}release 9813')
     async def release(self, context, member: Union[discord.Member, DroneMemberConverter]):
         '''
         Allows the Hive Mxtress to release a drone from storage.

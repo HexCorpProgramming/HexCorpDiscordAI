@@ -9,7 +9,7 @@ from discord.ext import tasks
 from discord.ext.commands import Cog, command, guild_only
 from discord.utils import get
 
-from src.bot_utils import COMMAND_PREFIX, get_id
+from src.bot_utils import channels_only, COMMAND_PREFIX, get_id
 from src.channels import ORDERS_REPORTING
 from src.db.data_objects import DroneOrder
 from src.db.database import connect
@@ -28,7 +28,7 @@ class OrderReportingCog(Cog):
         self.bot = bot
         self.orders_reporting_channel = None
 
-    @guild_only()
+    @channels_only(ORDERS_REPORTING)
     @command(aliases=["report_order"], usage=f'{COMMAND_PREFIX}report maid 35')
     async def report(self, context, protocol_name: str, protocol_time: int):
         '''
@@ -39,8 +39,7 @@ class OrderReportingCog(Cog):
         except ValueError:
             await context.send("Your protocol time must be an integer (whole number) between 1 and 120 minutes.")
 
-        if context.channel.name == ORDERS_REPORTING:
-            await report_order(context, protocol_name, protocol_time)
+        await report_order(context, protocol_name, protocol_time)
 
     @command(usage=f'{COMMAND_PREFIX}report_complete "Order Name" 1234 Order description...', rest_is_raw=True)
     async def report_complete(self, context, order_name: str, member: Union[Member | DroneMemberConverter], *, order_description: str):

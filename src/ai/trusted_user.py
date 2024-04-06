@@ -9,7 +9,7 @@ from discord.utils import get
 
 from src.bot_utils import COMMAND_PREFIX, dm_only
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
-from src.resources import BRIEF_DM_ONLY, BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
+from src.resources import BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(hours=24)
@@ -37,7 +37,7 @@ class TrustedUserCog(Cog):
         self.trusted_user_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.trusted_user_requests))
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
+    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief=[BRIEF_DRONE_OS])
     async def add_trusted_user(self, context, trusted_user_name: str):
         '''
         Add user with the given nickname as a trusted user.
@@ -71,7 +71,7 @@ class TrustedUserCog(Cog):
         await context.reply(f"Request sent to \"{trusted_user.display_name}\". They have 24 hours to accept.")
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
+    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=[BRIEF_DRONE_OS])
     async def remove_trusted_user(self, context, user_name: str):
         '''
         Remove a given user from the list of trusted users.

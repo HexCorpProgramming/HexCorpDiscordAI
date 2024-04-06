@@ -7,11 +7,11 @@ from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import channels_only, command, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
+from src.resources import DRONE_AVATAR
 from src.db.drone_dao import fetch_drone_with_id
-from src.resources import BRIEF_HIVE_MXTRESS, DRONE_AVATAR
-from src.roles import has_role, HIVE_MXTRESS, HIVE_VOICE
+from src.roles import has_role, HIVE_VOICE
 from random import sample
 import logging
 
@@ -20,15 +20,14 @@ LOGGER = logging.getLogger('ai')
 
 class AmplificationCog(Cog):
 
-    @guild_only()
-    @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287', rest_is_raw=True)
+    @channels_only(OFFICE)
+    @hive_mxtress_only()
+    @command(usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287', rest_is_raw=True)
     async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[Union[discord.Member, DroneMemberConverter]], count: Optional[NamedParameterConverter('hive', int)] = 0):  # noqa: F821
+
         '''
         Allows the Hive Mxtress to speak through other drones.
         '''
-
-        if not has_role(context.author, HIVE_MXTRESS) or context.channel.name != OFFICE:
-            return False
 
         if count:
             # Select random channel members that have the HIVE_VOICE role.

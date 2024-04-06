@@ -5,14 +5,14 @@ from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, command, Greedy, guild_only
+from discord.ext.commands import Cog, command, Greedy, guild_only, dm_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import COMMAND_PREFIX, dm_only, get_id
+from src.bot_utils import channels_only, COMMAND_PREFIX, get_id, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
@@ -26,10 +26,9 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
-from src.resources import (BRIEF_DM_ONLY, BRIEF_DRONE_OS, BRIEF_HIVE_MXTRESS,
-                           DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
+from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
-                       DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
+                       DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
 
@@ -50,7 +49,7 @@ class DroneConfigurationCog(Cog):
             await emergency_release(context, drone_id)
 
     @dm_only()
-    @command(brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY], usage=f"{COMMAND_PREFIX}unassign")
+    @command(brief=[BRIEF_DRONE_OS], usage=f"{COMMAND_PREFIX}unassign")
     async def unassign(self, context):
         '''
         Allows a drone to go back to the status of an Associate.
@@ -58,21 +57,22 @@ class DroneConfigurationCog(Cog):
         await unassign_drone(context.bot.guilds[0].get_member(context.author.id))
 
     @dm_only()
-    @command(aliases=['free_storage', 'tfs'], brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY], usage=f"{COMMAND_PREFIX}toggle_free_storage")
+    @command(aliases=['free_storage', 'tfs'], brief=[BRIEF_DRONE_OS], usage=f"{COMMAND_PREFIX}toggle_free_storage")
     async def toggle_free_storage(self, context):
         '''
         Allows a drone to choose whether to be stored by anyone, or just its trusted users and the Hive Mxtress. Defaults to trusted users only.
         '''
         await toggle_free_storage(context.bot.guilds[0].get_member(context.author.id))
 
-    @guild_only()
-    @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}rename 1234 3412')
+    @channels_only(OFFICE)
+    @hive_mxtress_only()
+    @command(briefusage=f'{COMMAND_PREFIX}rename 1234 3412')
     async def rename(self, context, old_id, new_id):
         '''
         Allows the Hive Mxtress to change the ID of a drone.
         '''
-        if context.channel.name == OFFICE and has_role(context.author, HIVE_MXTRESS):
-            await rename_drone(context, old_id, new_id)
+
+        await rename_drone(context, old_id, new_id)
 
     @guild_only()
     @command(aliases=['tid'], brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}toggle_id_prepending 5890 9813')
