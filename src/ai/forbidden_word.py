@@ -2,10 +2,10 @@ import logging
 import re
 
 import discord
-from discord.ext.commands import Cog, Context
+from discord.ext.commands import Cog, command, Context, guild_only
 from discord.utils import get
 
-from src.bot_utils import channels_only, command, COMMAND_PREFIX, hive_mxtress_only
+from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import ForbiddenWord
 from src.db.drone_dao import is_drone

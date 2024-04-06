@@ -4,5 +4,5 @@ import sqlite3
 
 # The database connection, stored per execution context.
 # Defaults to empty, which will raise an error.
-cursor: sqlite3.Cursor = ContextVar('cursor')
-transactions: List[int] = ContextVar('transactions')
+cursor: ContextVar[sqlite3.Cursor] = ContextVar('cursor')
+transactions: ContextVar[List[int]] = ContextVar('transactions')

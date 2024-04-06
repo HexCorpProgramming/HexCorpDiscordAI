@@ -13,17 +13,13 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.timers.set_can_self_configure")
     @patch("src.ai.timers.update_display_name")
-    @patch("src.ai.timers.convert_id_to_member")
     @patch("src.ai.timers.update_droneOS_parameter")
-    @patch("src.ai.timers.fetch_drone_with_drone_id")
     @patch("src.ai.timers.delete_timer")
     @patch("src.ai.timers.get_timers_elapsed_before")
     async def test_process_timers(self,
                                   get_timers_elapsed_before,
                                   delete_timer,
-                                  fetch_drone_with_drone_id,
                                   update_droneOS_parameter,
-                                  convert_id_to_member,
                                   update_display_name,
                                   set_can_self_configure):
         # setup
@@ -44,14 +40,13 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         timer = Timer(timer_id, drone.drone_id, 'optimized', datetime.now() - timedelta(minutes=2))
 
         get_timers_elapsed_before.return_value = [timer]
-        convert_id_to_member.return_value = drone_member
-        fetch_drone_with_drone_id.return_value = drone
+        bot.guilds[0].get_member.return_value = drone_member
 
         # run
         await test_utils.start_and_await_loop(timer_cog.process_timers)
 
         # assert
-        convert_id_to_member.assert_called_once_with(bot.guilds[0], timer.drone_id)
+        bot.guilds[0].get_member.assert_called_once_with(timer.discord_id)
         drone_member.remove_roles.assert_called_once_with(optimized_role)
         delete_timer.assert_called_once_with(timer_id)
         update_display_name.assert_called_once_with(drone_member)
@@ -59,17 +54,13 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.timers.set_can_self_configure")
     @patch("src.ai.timers.update_display_name")
-    @patch("src.ai.timers.convert_id_to_member")
     @patch("src.ai.timers.update_droneOS_parameter")
-    @patch("src.ai.timers.fetch_drone_with_drone_id")
     @patch("src.ai.timers.delete_timer")
     @patch("src.ai.timers.get_timers_elapsed_before")
     async def test_process_timers_battery(self,
                                           get_timers_elapsed_before,
                                           delete_timer,
-                                          fetch_drone_with_drone_id,
                                           update_droneOS_parameter,
-                                          convert_id_to_member,
                                           update_display_name,
                                           set_can_self_configure):
         # setup
@@ -90,14 +81,13 @@ class TimersTest(unittest.IsolatedAsyncioTestCase):
         timer = Timer(timer_id, drone.drone_id, 'is_battery_powered', datetime.now() - timedelta(minutes=2))
 
         get_timers_elapsed_before.return_value = [timer]
-        convert_id_to_member.return_value = drone_member
-        fetch_drone_with_drone_id.return_value = drone
+        bot.guilds[0].get_member.return_value = drone_member
 
         # run
         await test_utils.start_and_await_loop(timer_cog.process_timers)
 
         # assert
-        convert_id_to_member.assert_called_once_with(bot.guilds[0], timer.drone_id)
+        bot.guilds[0].get_member.assert_called_once_with(timer.discord_id)
         drone_member.remove_roles.assert_called_once_with(battery_powered_role)
         delete_timer.assert_called_once_with(timer_id)
         update_display_name.assert_called_once_with(drone_member)
