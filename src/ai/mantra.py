@@ -22,7 +22,7 @@ async def check_for_mantra(message: discord.Message, message_copy=None):
     '''
 
     code_match = status_code_regex.match(message.content)
-    if code_match and message.channel.name == REPETITIONS and is_battery_powered(message.author):
+    if code_match and message.channel.name == REPETITIONS and await is_battery_powered(message.author):
         await handle_mantra(message, code_match)
 
 
@@ -52,10 +52,10 @@ async def increase_battery_by_five_percent(message: discord.Message):
     Increases the battery of the given drone by 5 percent capping at 100% capacity.
     Acknowledges the mantra repetitions by sending a message in the mantra channel as well.
     '''
-    minutes_remaining = get_battery_minutes_remaining(message.author)
+    minutes_remaining = await get_battery_minutes_remaining(message.author)
     if minutes_remaining >= MAX_BATTERY_CAPACITY_MINS:
         await message.channel.send("Good drone. Battery already at 100%.")
         return
 
     await message.channel.send("Good drone. Battery has been recharged by 5%.")
-    set_battery_minutes_remaining(message.author, minutes=min(minutes_remaining + MAX_BATTERY_CAPACITY_MINS / 20, MAX_BATTERY_CAPACITY_MINS))
+    await set_battery_minutes_remaining(message.author, minutes=min(minutes_remaining + MAX_BATTERY_CAPACITY_MINS / 20, MAX_BATTERY_CAPACITY_MINS))

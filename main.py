@@ -52,7 +52,7 @@ from src.db import drone_dao
 from src.db import maintenance
 
 # Constants
-from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
+from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 # Data objects
 from src.ai.data_objects import MessageCopy
 
@@ -185,16 +185,22 @@ async def help(context):
         command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
-        if command.brief is not None:
-            if BRIEF_DM_ONLY in command.brief:
-                command_description += "\n This command can only be used in DMs with the AI."
+        # Get a list of the names of check function decorators, eg 'dm_only'.
+        checks = [check.__qualname__.split('.')[0] for check in command.checks]
 
-            if BRIEF_HIVE_MXTRESS in command.brief:
-                Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
-            elif BRIEF_DRONE_OS in command.brief:
-                droneOS_card.add_field(name=command_name, value=command_description, inline=False)
-            else:
-                commands_card.add_field(name=command_name, value=command_description, inline=False)
+        # Find the @channels_only() check, if there is one.
+        channels_check = next(filter(lambda check: hasattr(check, 'channels'), command.checks), None)
+
+        if 'dm_only' in checks:
+            command_description += "\n This command can only be used in DMs with the AI."
+
+        if 'channels_only' in checks:
+            command_description += "\n This command can only be used in " + channels_check.channels
+
+        if 'hive_mxtress_only' in checks:
+            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
+        elif 'drone_os' in checks:
+            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
         else:
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 

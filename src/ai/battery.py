@@ -14,10 +14,10 @@ import src.emoji as emoji
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
 from src.id_converter import convert_ids_to_members
-from src.resources import (BRIEF_HIVE_MXTRESS, DRONE_AVATAR,
+from src.resources import (DRONE_AVATAR,
                            HOURS_OF_RECHARGE_PER_HOUR, MAX_BATTERY_CAPACITY_MINS)
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, HIVE_MXTRESS, has_role
-from src.bot_utils import command, COMMAND_PREFIX, get_id
+from src.bot_utils import command, COMMAND_PREFIX, get_id, hive_mxtress_only
 from src.db.drone_dao import (deincrement_battery_minutes_remaining,
                               get_all_drone_batteries,
                               get_battery_minutes_remaining,
@@ -35,14 +35,13 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @command(usage=f"{COMMAND_PREFIX}energize 3287", brief=[BRIEF_HIVE_MXTRESS])
+    @hive_mxtress_only()
+    @command(usage=f"{COMMAND_PREFIX}energize 3287")
     async def energize(self, context, *drone_ids):
         '''
         Hive Mxtress only command.
         Recharges a drone to 100% battery.
         '''
-        if not has_role(context.message.author, HIVE_MXTRESS):
-            return
 
         LOGGER.info("Energize command envoked.")
 
@@ -57,7 +56,8 @@ class BatteryCog(commands.Cog):
                                                    message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
                                                    webhook=channel_webhook)
 
-    @command(usage=f"{COMMAND_PREFIX}drain 3287", brief=[BRIEF_HIVE_MXTRESS])
+    @hive_mxtress_only()
+    @command(usage=f"{COMMAND_PREFIX}drain 3287")
     async def drain(self, context, *drone_ids):
         '''
         Hive Mxtress only command.

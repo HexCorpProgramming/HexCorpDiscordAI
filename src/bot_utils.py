@@ -1,9 +1,49 @@
 import re
-from typing import Optional
+from discord.ext.commands import check, command as bot_command, Context, CheckFailure
 from src.db.database import connect
-from discord.ext.commands import command as bot_command
+from src.roles import HIVE_MXTRESS, has_role
+from typing import Callable, Optional, TypeVar
 
 COMMAND_PREFIX = 'hc!'
+T = TypeVar("T")
+
+
+def channels_only(*channels: str) -> Callable[[T], T]:
+    '''
+    Only allow a command to be used within the given channels.
+    Channels is a list of channel names.
+    '''
+
+    channel_names = ', '.join(['#' + c for c in channels])
+
+    def predicate(ctx: Context) -> bool:
+        '''
+        Check that the message's context is one of the allowed channels.
+        '''
+
+        if ctx.guild is None or ctx.channel.name not in channels:
+            raise CheckFailure(f'The {ctx.command.name} command is only available in {channel_names}')
+
+        return True
+
+    # Attach the list of permitted channels to the predicate so it can be inspected by the help command.
+    predicate.channels = channel_names
+
+    return check(predicate)
+
+
+def hive_mxtress_only() -> Callable[[T], T]:
+    '''
+    Only allow a command to be used by the Hive Mxtress.
+    '''
+
+    def predicate(ctx: Context) -> bool:
+        '''
+        Check that the message's author is the Hive Mxtress.
+        '''
+        return has_role(ctx.author, HIVE_MXTRESS)
+
+    return check(predicate)
 
 
 def get_id(username: str) -> Optional[str]:
@@ -45,6 +85,7 @@ def command(*args, **kwargs):
         # They both need to be the same, and to match the name of the command function.
         # Override the name here so it's the same as the command function's name.
         connect_func.__name__ = kwargs['name']
+        connect_func.__wrapped__ = func
 
         bot_func = bot_command(*args, **kwargs)(connect_func)
 
