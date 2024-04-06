@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, dm_only
 from discord.ext import tasks
 from discord.utils import get
 
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
 from src.resources import BRIEF_DM_ONLY, BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
 
@@ -45,7 +45,7 @@ class TrustedUserCog(Cog):
         Use quotation marks if the username contains spaces.
         This command is used in DMs with the AI.
         '''
-        trusted_user = find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
+        trusted_user = await find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
 
         if trusted_user is None:
             await context.reply(f"No user with name \"{trusted_user_name}\" found.")
@@ -55,7 +55,7 @@ class TrustedUserCog(Cog):
             await context.reply("Can not add yourself to your list of trusted users.")
             return
 
-        trusted_users = get_trusted_users(context.author.id)
+        trusted_users = await get_trusted_users(context.author.id)
 
         if trusted_user.id in trusted_users:
             await context.reply(f"User with name \"{trusted_user.display_name}\" is already trusted.")
@@ -100,9 +100,9 @@ class TrustedUserCog(Cog):
                 LOGGER.info("Consent given for trusted user addition. Writing to DB...")
 
                 # get trusted user list and append new trusted user
-                trusted_users = get_trusted_users(request.issuer.id)
+                trusted_users = await get_trusted_users(request.issuer.id)
                 trusted_users.append(request.target.id)
-                set_trusted_users(request.issuer.id, trusted_users)
+                await set_trusted_users(request.issuer.id, trusted_users)
 
                 # notify user and drone of successful addition
                 await message.reply(f"Consent noted. You have been added as a trusted user of \"{drone_name}\".")
@@ -124,13 +124,13 @@ class TrustedUserCog(Cog):
 
 
 async def remove_trusted_user(context, trusted_user_name: str):
-    trusted_user = find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
+    trusted_user = await find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
 
     if trusted_user is None:
         await context.reply(f"No user with name \"{trusted_user_name}\" found.")
         return
 
-    trusted_users = get_trusted_users(context.author.id)
+    trusted_users = await get_trusted_users(context.author.id)
 
     if str(trusted_user.id) == HIVE_MXTRESS_USER_ID:
         await context.reply("Can not remove the Hive Mxtress as a trusted user.")
@@ -141,11 +141,11 @@ async def remove_trusted_user(context, trusted_user_name: str):
         return
 
     trusted_users.remove(trusted_user.id)
-    set_trusted_users(context.author.id, trusted_users)
+    await set_trusted_users(context.author.id, trusted_users)
     await context.reply(f"Successfully removed trusted user \"{trusted_user.display_name}\".")
 
 
-def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> Optional[discord.Member]:
+async def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> Optional[discord.Member]:
     user = get(guild.members, display_name=id)
 
     if user is None:
@@ -154,18 +154,18 @@ def find_user_by_display_name_or_drone_id(id: str, guild: discord.Guild) -> Opti
     if user is not None:
         return user
 
-    drone = get_discord_id_of_drone(id)
+    drone = await get_discord_id_of_drone(id)
     if drone is not None:
         return guild.get_member(drone)
 
     return None
 
 
-def remove_trusted_user_on_all(trusted_user_id: int):
+async def remove_trusted_user_on_all(trusted_user_id: int):
     '''
     Removes the trusted user with the given discord ID from all trusted_users lists of all drones.
     '''
-    for drone in fetch_all_drones_with_trusted_user(trusted_user_id):
+    for drone in await fetch_all_drones_with_trusted_user(trusted_user_id):
         trusted_users = parse_trusted_users_text(drone.trusted_users)
         trusted_users.remove(trusted_user_id)
-        set_trusted_users(drone.id, trusted_users)
+        await set_trusted_users(drone.id, trusted_users)

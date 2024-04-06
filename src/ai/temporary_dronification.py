@@ -3,10 +3,11 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, guild_only
 from discord.ext import tasks
 
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
+from src.db.database import connect
 from src.db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
 from src.ai.assign import create_drone
 from src.ai.drone_configuration import unassign_drone
@@ -34,15 +35,17 @@ class TemporaryDronificationCog(Cog):
         self.bot = bot
 
     @tasks.loop(minutes=1)
+    @connect()
     async def clean_dronification_requests(self):
         now = datetime.now()
         self.dronfication_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests))
 
     @tasks.loop(minutes=1)
+    @connect()
     async def release_temporary_drones(self):
         LOGGER.info("Looking for temporary drones to release.")
         guild = self.bot.guilds[0]
-        for drone in fetch_all_elapsed_temporary_dronification():
+        for drone in await fetch_all_elapsed_temporary_dronification():
             await unassign_drone(guild.get_member(drone.id))
 
     @guild_only()
@@ -58,7 +61,7 @@ class TemporaryDronificationCog(Cog):
             return
 
         # exclude drones
-        if is_drone(target):
+        if await is_drone(target):
             await context.reply(f"{target.display_name} is already a drone.")
             return
 

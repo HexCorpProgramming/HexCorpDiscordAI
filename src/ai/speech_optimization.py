@@ -96,7 +96,7 @@ async def optimize_speech(message: discord.Message, message_copy):
     '''
 
     # Do not attempt to optimize non-drones.
-    if not is_drone(message.author):
+    if not await is_drone(message.author):
         return False
 
     # No optimization in the moderation channels

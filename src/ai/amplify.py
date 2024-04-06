@@ -1,6 +1,7 @@
 import discord
 from discord.ext.commands import Cog, command, Greedy, guild_only
 
+
 from typing import Optional, Union
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
@@ -49,6 +50,6 @@ class AmplificationCog(Cog):
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=member.display_name,
-                                                   message_avatar=member.display_avatar.url if not identity_enforcable(member, channel=target_channel) else DRONE_AVATAR,
+                                                   message_avatar=member.display_avatar.url if not await identity_enforcable(member, channel=target_channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
         return True

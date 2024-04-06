@@ -128,10 +128,10 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
     if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         return False
 
-    if is_glitched(message.author):
+    if await is_glitched(message.author):
         glitch_amount = MAX_GLITCH_AMOUNT * 2
-    elif is_battery_powered(message.author) and get_battery_percent_remaining(message.author) < 30:
-        glitch_amount = (MAX_GLITCH_AMOUNT - get_battery_percent_remaining(message.author)) * 2
+    elif await is_battery_powered(message.author) and await get_battery_percent_remaining(message.author) < 30:
+        glitch_amount = (MAX_GLITCH_AMOUNT - await get_battery_percent_remaining(message.author)) * 2
     else:
         LOGGER.info("Not glitching message (drone is neither glitched nor low battery).")
         return False

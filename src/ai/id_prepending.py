@@ -10,7 +10,7 @@ LOGGER = logging.getLogger('ai')
 
 
 async def check_if_prepending_necessary(message: discord.Message, message_copy=None):
-    if is_prepending_id(message.author) and message.channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
+    if await is_prepending_id(message.author) and message.channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         drone_id = get_id(message.author.display_name)
         if message.content.startswith(f"{drone_id} :: ") or message.content.startswith(COMMAND_PREFIX):
             return False

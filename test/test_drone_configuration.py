@@ -121,12 +121,12 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.drone_configuration.delete_drone_order_by_drone_id")
     @patch("src.ai.drone_configuration.delete_storage_by_target_id")
     @patch("src.ai.drone_configuration.delete_drone_by_drone_id")
-    def test_remove_drone_from_db(self, delete_drone_by_drone_id, delete_storage_by_target_id, delete_drone_order_by_drone_id, delete_timers_by_drone_id):
+    async def test_remove_drone_from_db(self, delete_drone_by_drone_id, delete_storage_by_target_id, delete_drone_order_by_drone_id, delete_timers_by_drone_id):
         # setup
         to_remove = "1234"
 
         # run
-        drone_configuration.remove_drone_from_db(to_remove)
+        await drone_configuration.remove_drone_from_db(to_remove)
 
         # assert
         delete_drone_by_drone_id.assert_called_once_with(to_remove)

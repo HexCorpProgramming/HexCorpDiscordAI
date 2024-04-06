@@ -33,33 +33,33 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
 
         self.cog.trusted_user_requests = []
 
-    def test_successful_find_user_by_display_name(self):
+    async def test_successful_find_user_by_display_name(self):
         # setup
         # run
-        found_user = find_user_by_display_name_or_drone_id(self.trusted_user_member.display_name, self.context.bot.guilds[0])
+        found_user = await find_user_by_display_name_or_drone_id(self.trusted_user_member.display_name, self.context.bot.guilds[0])
 
         # assert
         self.assertEqual(self.trusted_user_member, found_user)
 
     @patch("src.ai.trusted_user.get_discord_id_of_drone")
-    def test_successful_find_user_by_drone_id(self, get_discord_id_of_drone):
+    async def test_successful_find_user_by_drone_id(self, get_discord_id_of_drone):
         # setup
         get_discord_id_of_drone.return_value = self.drone_member.id
 
         # run
-        found_user = find_user_by_display_name_or_drone_id("3287", self.context.bot.guilds[0])
+        found_user = await find_user_by_display_name_or_drone_id("3287", self.context.bot.guilds[0])
 
         # assert
         self.assertEqual(self.drone_member, found_user)
         get_discord_id_of_drone.assert_called_once_with("3287")
 
     @patch("src.ai.trusted_user.get_discord_id_of_drone")
-    def test_unsuccessful_find_user_by_display_name_or_drone_id(self, get_discord_id_of_drone):
+    async def test_unsuccessful_find_user_by_display_name_or_drone_id(self, get_discord_id_of_drone):
         # setup
         get_discord_id_of_drone.return_value = None
 
         # run
-        found_user = find_user_by_display_name_or_drone_id("0000", self.context.bot.guilds[0])
+        found_user = await find_user_by_display_name_or_drone_id("0000", self.context.bot.guilds[0])
 
         # assert
         self.assertIsNone(found_user)
@@ -139,7 +139,8 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.trusted_user.get_trusted_users")
     async def test_trusted_user_response_accepted(self, get_trusted_users, set_trusted_users):
         # setup
-        question_message_id = AsyncMock()
+        question_message_id = Mock()
+        get_trusted_users.return_value = Mock()
 
         target = self.trusted_user_member
         issuer = self.drone_member
@@ -153,7 +154,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         message.reference.message.id = question_message_id
         message.reference.resolved.id = question_message_id
         message.author = target
-        message.guild = AsyncMock()
+        message.guild = Mock()
 
         # run
         await self.cog.trusted_user_response(message, None)
@@ -312,7 +313,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         fetch_all_drones_with_trusted_user.return_value = [drone]
 
         # run
-        remove_trusted_user_on_all(id_of_member_leaving)
+        await remove_trusted_user_on_all(id_of_member_leaving)
 
         # assert
         fetch_all_drones_with_trusted_user.assert_called_once_with(id_of_member_leaving)
