@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from src.channels import TRANSMISSIONS_CHANNEL, OFFICE
 import src.ai.amplify as amplify
 from test.utils import assert_command_error, assert_command_successful, cog
@@ -30,7 +30,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         webhook = AsyncMock()
         get_webhook.return_value = webhook
 
-        message = bot.create_message(OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" hex-office 3287', mentions=[drone])
+        message = bot.create_message(OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" hex-office 3287', mentions=[member])
 
         generate_battery_message.side_effect = lambda drone, msg: msg
 
@@ -42,7 +42,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
             webhook=webhook
         )
 
-        generate_battery_message.assert_called_once_with(drone, "3287 :: Beep boop!")
+        generate_battery_message.assert_called_once_with(member, "3287 :: Beep boop!")
 
     @patch("src.bot_utils.has_role")
     @patch("src.ai.amplify.id_converter", new_callable=AsyncMock)

@@ -1,5 +1,5 @@
 import discord
-from discord.ext.commands import Cog, command, Greedy, guild_only
+from discord.ext.commands import Cog, command, Greedy
 
 
 from typing import Optional, Union
@@ -7,7 +7,7 @@ from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import channels_only, command, COMMAND_PREFIX, hive_mxtress_only
+from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
 from src.resources import DRONE_AVATAR
 from src.db.drone_dao import fetch_drone_with_id

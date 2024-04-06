@@ -1,6 +1,5 @@
 import re
-from discord.ext.commands import check, Context, CheckFailure, PrivateMessageOnly
-from src.db.database import connect
+from discord.ext.commands import check, Context, CheckFailure
 from src.roles import HIVE_MXTRESS, has_role
 from typing import Callable, Optional, TypeVar
 

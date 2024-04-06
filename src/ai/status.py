@@ -3,7 +3,7 @@ from pathlib import Path
 from collections.abc import Callable, Coroutine
 from typing import Any, List
 from discord import Embed, Message
-from discord.ext.commands import Cog, command, Context, guild_only
+from discord.ext.commands import Cog, command, Context
 from src.bot_utils import channels_only
 
 from src.bot_utils import COMMAND_PREFIX

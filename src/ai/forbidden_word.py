@@ -2,7 +2,7 @@ import logging
 import re
 
 import discord
-from discord.ext.commands import Cog, command, Context, guild_only
+from discord.ext.commands import Cog, command, Context
 from discord.utils import get
 
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only

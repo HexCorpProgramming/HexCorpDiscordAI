@@ -6,7 +6,7 @@ from src.validation_error import ValidationError
 
 from discord import Member
 from discord.ext import tasks
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, command
 from discord.utils import get
 
 from src.bot_utils import channels_only, COMMAND_PREFIX, get_id
