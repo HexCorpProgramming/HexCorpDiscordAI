@@ -29,7 +29,7 @@ async def get_order_by_drone_id(drone_id: str) -> DroneOrder:
     '''
     Gets current order if given drone has one.
     '''
-    return map_to_object(await fetchone('SELECT protocol FROM drone_order WHERE drone_id = :drone_id', {'drone_id': drone_id}), DroneOrder)
+    return map_to_object(await fetchone('SELECT * FROM drone_order WHERE drone_id = :drone_id', {'drone_id': drone_id}), DroneOrder)
 
 
 async def delete_drone_order_by_drone_id(drone_id: str):
