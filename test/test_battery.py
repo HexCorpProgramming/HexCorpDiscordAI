@@ -2,32 +2,33 @@ import unittest
 from unittest.mock import AsyncMock, patch, Mock
 import src.ai.battery as battery
 import src.emoji as emoji
-from src.resources import MAX_BATTERY_CAPACITY_MINS
 import test.test_utils as test_utils
-from src.db.drone_dao import Drone
+from src.db.drone_dao import BatteryType, Drone
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=20)
     @patch("src.ai.battery.set_battery_minutes_remaining")
-    async def test_recharge_battery(self, set_bat_mins, get_bat_mins):
+    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'High', 480, 240))
+    async def test_recharge_battery(self, get_battery_type, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        storage_record = Mock()
-        storage_record.target_id = 5890
+        member = Mock()
+        member.id = '5890snowflake'
 
-        await battery.recharge_battery(storage_record)
+        await battery.recharge_battery(member)
 
-        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=20 + (60 * 4))
+        set_bat_mins.assert_called_once_with(member, 20 + 240)
 
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=320)
     @patch("src.ai.battery.set_battery_minutes_remaining")
-    async def test_manually_drain_battery(self, set_bat_mins, get_bat_mins):
+    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_manually_drain_battery(self, get_battery_type, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
@@ -39,23 +40,24 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         await battery.drain_battery(member)
 
-        get_bat_mins.assert_called_once_with(member=member)
-        set_bat_mins.assert_called_once_with(member=member, minutes=320 - MAX_BATTERY_CAPACITY_MINS / 10)
+        get_bat_mins.assert_called_once_with(member)
+        set_bat_mins.assert_called_once_with(member, 320 - 480 / 10)
 
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
     @patch("src.ai.battery.set_battery_minutes_remaining")
-    async def test_recharge_battery_no_overcharge(self, set_bat_mins, get_bat_mins):
+    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_recharge_battery_no_overcharge(self, get_battery_type, set_bat_mins, get_bat_mins):
         '''
         The recharge battery function should not call
         set_battery_minutes_remaining with more than the maximum capacity (480)
         '''
 
-        storage_record = Mock()
-        storage_record.target_id = 5890
+        member = Mock()
+        member.id = '5890snowflake'
 
-        await battery.recharge_battery(storage_record)
+        await battery.recharge_battery(member)
 
-        set_bat_mins.assert_called_once_with(drone_id=5890, minutes=480)
+        set_bat_mins.assert_called_once_with(member, 480)
 
     @patch("src.ai.battery.deincrement_battery_minutes_remaining")
     async def test_track_active_battery_drain(self, deincrement):
@@ -149,7 +151,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member.remove_roles.assert_called_once_with(drained_role)
 
     @patch("src.ai.battery.get_all_drone_batteries")
-    async def test_warn_low_battery_drones(self, drone_batteries):
+    @patch("src.ai.battery.get_battery_percent_remaining", return_value=10)
+    async def test_warn_low_battery_drones(self, get_battery_percent_remaining, drone_batteries):
         '''
         The AI Mxtress should warn drones with less than 30 percent battery
         by DMing them.
@@ -172,7 +175,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         self.assertTrue('5890' in battery_cog.low_battery_drones)
 
     @patch("src.ai.battery.get_all_drone_batteries")
-    async def test_drone_not_warned_more_than_one(self, drone_batteries):
+    @patch("src.ai.battery.get_battery_percent_remaining", return_value=30)
+    async def test_drone_not_warned_more_than_one(self, get_battery_percent_remaining, drone_batteries):
         '''
         The AI Mxtress should only DM low battery drones once. If a drone
         has already been warned it should not be warned again until it is
@@ -198,7 +202,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member.send.assert_not_called()
 
     @patch("src.ai.battery.get_all_drone_batteries")
-    async def test_remove_recharged_drones(self, drone_batteries):
+    @patch("src.ai.battery.get_battery_percent_remaining", return_value=50)
+    async def test_remove_recharged_drones(self, get_battery_percent_remaining, drone_batteries):
         '''
         The AI Mxtress should remove drones from the list of warned drones
         once they are recharged above 30%.

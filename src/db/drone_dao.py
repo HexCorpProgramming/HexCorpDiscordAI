@@ -4,9 +4,9 @@ from typing import List, Optional
 
 import discord
 
-from src.db.data_objects import Drone, map_to_object, map_to_objects
+from src.db.data_objects import BatteryType, Drone, map_to_object, map_to_objects
 from src.db.database import change, fetchall, fetchone, fetchcolumn
-from src.resources import HIVE_MXTRESS_USER_ID, MAX_BATTERY_CAPACITY_MINS
+from src.resources import HIVE_MXTRESS_USER_ID
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
 
@@ -21,8 +21,11 @@ async def add_new_drone_members(members: List[discord.Member]):
         if has_any_role(member, [DRONE, STORED]):
 
             if await fetchone("SELECT 1 FROM drone WHERE discord_id=:id", {"id": member.id}) is None:
-                new_drone = Drone(member.id, get_id(member.display_name), False, False, HIVE_MXTRESS_USER_ID, datetime.now())
-                await insert_drone(new_drone)
+                drone_id = get_id(member.display_name)
+
+                if drone_id:
+                    new_drone = Drone(member.id, drone_id, False, False, HIVE_MXTRESS_USER_ID, datetime.now(), associate_name=member.display_name)
+                    await insert_drone(new_drone)
 
 
 async def insert_drone(drone: Drone):
@@ -51,7 +54,7 @@ async def get_all_drones() -> List[Drone]:
 
 
 async def get_all_drone_batteries() -> List[Drone]:
-    return map_to_objects(await fetchall('SELECT discord_id, drone_id, battery_minutes FROM drone', {}), Drone)
+    return map_to_objects(await fetchall('SELECT * FROM drone', {}), Drone)
 
 
 async def rename_drone_in_db(old_id: str, new_id: str):
@@ -164,50 +167,46 @@ async def deincrement_battery_minutes_remaining(member: Optional[discord.Member]
         raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
 
 
-async def set_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None, minutes: int = 0):
+async def set_battery_minutes_remaining(member: discord.Member, minutes: int):
     '''
-    Automatically sets value of battery_minutes to the specified amount.
-    Raises a ValueError if drone is not found.
+    Sets the value of battery_minutes to the specified amount.
     '''
-    if member is not None:
-        await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
-    elif drone_id is not None:
-        await change('UPDATE drone SET battery_minutes = :minutes WHERE drone_id = :drone_id', {'minutes': max(0, minutes), 'drone_id': drone_id})
-    else:
-        raise ValueError("Could not set drone battery minutes remaining. No Discord member or drone ID provided in function call.")
+
+    await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
 
 
-async def get_battery_minutes_remaining(member: Optional[discord.Member] = None, drone_id: Optional[str] = None) -> int:
+async def get_battery_minutes_remaining(member: discord.Member) -> int:
     '''
     Gets value of battery_minutes from drone table based on a given drone's Discord ID.
-    Returns -1 if drone is not found.
+    Raises an Exception if the drone is not found.
     '''
-    if member is not None:
-        battery_minutes = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': member.id})['battery_minutes']
-        if battery_minutes is None:
-            return -1
-        else:
-            return battery_minutes
-    elif drone_id is not None:
-        battery_minutes = await fetchone('SELECT battery_minutes FROM drone WHERE drone_id = :drone_id', {'drone_id': drone_id})['battery_minutes']
-        if battery_minutes is None:
-            return -1
-        else:
-            return battery_minutes
+
+    drone = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': member.id})
+
+    if drone is None:
+        raise Exception('No drone record for member ' + str(member.id))
+
+    return drone['battery_minutes']
 
 
-async def get_battery_percent_remaining(drone: Optional[discord.Member] = None, battery_minutes: Optional[int] = None) -> int:
+async def get_battery_percent_remaining(member: discord.Member) -> int:
     '''
     Gets value of battery_minutes as a percentage.
-    Raises a ValueError if drone is not found.
+    Raises an Exception if drone is not found.
     '''
-    if battery_minutes is not None:
-        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
-    elif drone is not None:
-        battery_minutes = await get_battery_minutes_remaining(drone)
-        return round(battery_minutes / MAX_BATTERY_CAPACITY_MINS * 100)
-    else:
-        raise ValueError("No valid parameters given to get_battery_percent_remaining()")
+
+    result = await fetchone(
+        'SELECT round(drone.battery_minutes / battery_types.capacity * 100) AS percent '
+        'FROM drone '
+        'INNER JOIN battery_types ON battery_types.id = drone.battery_type_id '
+        'WHERE drone.discord_id = :discord_id',
+        {'discord_id': member.id}
+    )
+
+    if result is None:
+        raise Exception('No drone record for member ' + str(member.id))
+
+    return int(result['percent'])
 
 
 async def get_trusted_users(discord_id: int) -> List[int]:
@@ -258,3 +257,41 @@ async def is_free_storage(drone: Drone) -> bool:
     '''
     free_storage_drone = await fetchone('SELECT free_storage FROM drone WHERE discord_id = :discord', {'discord': drone.discord_id})
     return free_storage_drone is not None and bool(free_storage_drone['free_storage'])
+
+
+async def get_battery_type(member: discord.Member) -> BatteryType:
+    '''
+    Fetch the battery type information for the given member.
+
+    Raises an exception if the member is not a drone.
+    '''
+
+    query = (
+        'SELECT battery_types.* '
+        'FROM battery_types '
+        'INNER JOIN drone ON drone.battery_type_id = battery_types.id '
+        'WHERE drone.discord_id = :discord_id'
+    )
+
+    result = map_to_object(await fetchone(query, {'discord_id': member.id}), BatteryType)
+
+    if result is None:
+        raise Exception('Failed to get battery type for member ' + str(member.id))
+
+    return result
+
+
+async def get_battery_types() -> List[BatteryType]:
+    '''
+    Fetch all the battery types.
+    '''
+
+    return map_to_objects(await fetchall('SELECT * FROM battery_types'), BatteryType)
+
+
+async def set_battery_type(member: discord.Member, type: BatteryType) -> None:
+    '''
+    Set the battery type for a drone.
+    '''
+
+    await change('UPDATE drone SET battery_type_id = :type_id WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})

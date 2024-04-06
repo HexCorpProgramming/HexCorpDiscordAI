@@ -3,7 +3,7 @@ import logging
 from typing import List
 from discord import Member
 from src.db.drone_dao import get_all_drones, add_new_drone_members, parse_trusted_users_text, set_trusted_users
-from src.bot_utils import connect
+from src.db.database import connect
 
 LOGGER = logging.getLogger('ai')
 

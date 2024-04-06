@@ -6,9 +6,8 @@ import discord
 from src.ai.speech_optimization import status_code_regex
 from src.bot_utils import get_id
 from src.channels import REPETITIONS
-from src.db.drone_dao import (get_battery_minutes_remaining,
+from src.db.drone_dao import (get_battery_type, get_battery_minutes_remaining,
                               set_battery_minutes_remaining, is_battery_powered)
-from src.resources import MAX_BATTERY_CAPACITY_MINS
 
 mantra_counters: Dict[str, int] = {}
 '''
@@ -53,9 +52,11 @@ async def increase_battery_by_five_percent(message: discord.Message):
     Acknowledges the mantra repetitions by sending a message in the mantra channel as well.
     '''
     minutes_remaining = await get_battery_minutes_remaining(message.author)
-    if minutes_remaining >= MAX_BATTERY_CAPACITY_MINS:
+    battery_type = await get_battery_type(message.author)
+
+    if minutes_remaining >= battery_type.capacity:
         await message.channel.send("Good drone. Battery already at 100%.")
         return
 
+    await set_battery_minutes_remaining(message.author, min(minutes_remaining + battery_type.capacity / 20, battery_type.capacity))
     await message.channel.send("Good drone. Battery has been recharged by 5%.")
-    await set_battery_minutes_remaining(message.author, minutes=min(minutes_remaining + MAX_BATTERY_CAPACITY_MINS / 20, MAX_BATTERY_CAPACITY_MINS))

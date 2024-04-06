@@ -16,8 +16,7 @@ from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.database import connect
 from src.db.data_objects import Drone
 from src.db.data_objects import Storage as Storage
-from src.db.drone_dao import (fetch_drone_with_drone_id, get_trusted_users,
-                              is_free_storage)
+from src.db.drone_dao import (fetch_drone_with_drone_id, fetch_drone_with_id, get_trusted_users, is_free_storage)
 from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
@@ -66,12 +65,15 @@ class StorageCog(Cog):
         else:
             for stored in stored_drones:
                 # calculate remaining hours
-                remaining_hours = hours_from_now(
-                    datetime.fromisoformat(stored.release_time))
-                if stored.stored_by == '0006':
-                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                remaining_hours = hours_from_now(datetime.fromisoformat(stored.release_time))
+                initiator_drone = await fetch_drone_with_id(stored.stored_by)
+                stored_drone = await fetch_drone_with_id(stored.target_id)
+
+                if stored.stored_by is None:
+                    await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
                 else:
-                    await self.storage_channel.send(f'`Drone #{stored.target_id}`, stored away by `Drone #{stored.stored_by}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+                    await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by `Drone #{initiator_drone.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
+
                 await recharge_battery(stored)
 
     @report_storage.before_loop
@@ -198,7 +200,7 @@ async def initiate_drone_storage(drone_to_store: Drone, initiator: Drone, time: 
     await member.remove_roles(*former_roles)
     await member.add_roles(stored_role)
     stored_until = str(datetime.now() + timedelta(hours=time))
-    storage = Storage(str(uuid4()), initiator.discord_id, drone_to_store.discord_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
+    storage = Storage(str(uuid4()), initiator.discord_id if initiator.drone_id != '0006' else None, drone_to_store.discord_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
     await insert_storage(storage)
 
     # Inform the drone that they have been stored.

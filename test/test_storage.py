@@ -283,7 +283,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         drone_member.remove_roles.assert_called_once_with(drone_role, development_role)
         drone_member.add_roles.assert_called_once_with(stored_role)
         inserted = insert_storage.call_args.args[0]
-        self.assertEqual(inserted.stored_by, "0006snowflake")
+        self.assertEqual(inserted.stored_by, None)
         self.assertEqual(inserted.target_id, "3287snowflake")
         self.assertEqual(inserted.purpose, "recharge")
         self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
@@ -439,25 +439,37 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.storage.recharge_battery")
     @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '9813', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
-    async def test_storage_report(self, fetch_all_storage, recharge):
+    @patch("src.ai.storage.fetch_drone_with_id")
+    async def test_storage_report(self, fetch_drone_with_id, fetch_all_storage, recharge):
         '''
         Ensure that the storage report correctly reports a drone in storage.
         '''
 
         storage_cog = storage.StorageCog(bot)
+        drones = [
+            Drone('9813snowflake', '9813'),
+            Drone('3287snowflake', '3287'),
+        ]
+        fetch_drone_with_id.side_effect = drones
 
         await test_utils.start_and_await_loop(storage_cog.report_storage)
 
         storage_cog.storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by `Drone #9813`. Remaining time in storage: 4.0 hours')
 
     @patch("src.ai.storage.recharge_battery")
-    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '0006', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
-    async def test_storage_report_hive_mxtress(self, fetch_all_storage, recharge_battery):
+    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), None, '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
+    @patch("src.ai.storage.fetch_drone_with_id")
+    async def test_storage_report_hive_mxtress(self, fetch_drone_with_id, fetch_all_storage, recharge_battery):
         '''
         Ensure that the storage report correctly reports a drone stored by the Hive Mxtress.
         '''
 
         storage_cog = storage.StorageCog(bot)
+        drones = [
+            None,
+            Drone('3287snowflake', '3287'),
+        ]
+        fetch_drone_with_id.side_effect = drones
 
         await test_utils.start_and_await_loop(storage_cog.report_storage)
 

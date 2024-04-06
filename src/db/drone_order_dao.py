@@ -30,7 +30,7 @@ async def get_order_by_drone_id(drone_id: str) -> DroneOrder | None:
     Gets current order if given drone has one.
     '''
     return map_to_object(await fetchone('SELECT drone_order.* FROM drone_order '
-                                        'INNER JOIN drone ON drone.discord_id = protocol.discord_id '
+                                        'INNER JOIN drone ON drone.discord_id = drone_order.discord_id '
                                         'WHERE drone.drone_id = :drone_id', {'drone_id': drone_id}), DroneOrder)
 
 

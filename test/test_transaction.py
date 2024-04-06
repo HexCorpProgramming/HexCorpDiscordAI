@@ -39,12 +39,12 @@ class TestTransaction(IsolatedAsyncioTestCase):
         expected_calls = [
             call('BEGIN TRANSACTION'),
             call('QUERY 1', ()),
-            call('SAVEPOINT ?', 2),
+            call('SAVEPOINT :id', {'id': 2}),
             call('QUERY 2', ()),
-            call('SAVEPOINT ?', 3),
+            call('SAVEPOINT :id', {'id': 3}),
             call('QUERY 3', ()),
-            call('RELEASE SAVEPOINT ?', 3),
-            call('RELEASE SAVEPOINT ?', 2),
+            call('RELEASE SAVEPOINT :id', {'id': 3}),
+            call('RELEASE SAVEPOINT :id', {'id': 2}),
             call('QUERY 4', ()),
             call('COMMIT TRANSACTION'),
         ]
@@ -73,9 +73,9 @@ class TestTransaction(IsolatedAsyncioTestCase):
         expected_calls = [
             call('BEGIN TRANSACTION'),
             call('QUERY 1', ()),
-            call('SAVEPOINT ?', 2),
+            call('SAVEPOINT :id', {'id': 2}),
             call('QUERY 2', ()),
-            call('ROLLBACK TO SAVEPOINT ?', 2),
+            call('ROLLBACK TO SAVEPOINT :id', {'id': 2}),
             call('QUERY 3', ()),
             call('COMMIT TRANSACTION'),
         ]
@@ -103,9 +103,9 @@ class TestTransaction(IsolatedAsyncioTestCase):
         expected_calls = [
             call('BEGIN TRANSACTION'),
             call('QUERY 1', ()),
-            call('SAVEPOINT ?', 2),
+            call('SAVEPOINT :id', {'id': 2}),
             call('QUERY 2', ()),
-            call('RELEASE SAVEPOINT ?', 2),
+            call('RELEASE SAVEPOINT :id', {'id': 2}),
             call('ROLLBACK TRANSACTION'),
         ]
 

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext.commands import Bot, command as bot_command, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
-from src.bot_utils import connect
+from src.db.database import connect
 
 import logging
 from logging import handlers
@@ -233,7 +233,7 @@ def ignore_self(func):
 async def on_message(message: discord.Message):
     # Don't ignore messages from the testing bot.
     # Usually process_commands() will ignore messages from bots.
-    if message.author.display_name == 'TestBot':
+    if message.author.name == 'TestBot':
         message.author.bot = False
 
     message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)

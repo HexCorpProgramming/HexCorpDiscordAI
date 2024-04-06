@@ -54,7 +54,7 @@ class Transaction:
         if len(self.transactions) == 0:
             self.cursor.execute('BEGIN TRANSACTION')
         else:
-            self.cursor.execute('SAVEPOINT ?', (Transaction.next_savepoint_id))
+            self.cursor.execute('SAVEPOINT :id', {'id': Transaction.next_savepoint_id})
 
         # Add the savepoint ID to the stack.
         self.savepoint_id = Transaction.next_savepoint_id
@@ -82,7 +82,7 @@ class Transaction:
         if len(self.transactions) == 0:
             self.cursor.execute('COMMIT TRANSACTION')
         else:
-            self.cursor.execute('RELEASE SAVEPOINT ?', self.savepoint_id)
+            self.cursor.execute('RELEASE SAVEPOINT :id', {'id': self.savepoint_id})
 
         self.completed = True
 
@@ -107,6 +107,6 @@ class Transaction:
         if len(self.transactions) == 0:
             self.cursor.execute('ROLLBACK TRANSACTION')
         else:
-            self.cursor.execute('ROLLBACK TO SAVEPOINT ?', self.savepoint_id)
+            self.cursor.execute('ROLLBACK TO SAVEPOINT :id', {'id': self.savepoint_id})
 
         self.completed = True

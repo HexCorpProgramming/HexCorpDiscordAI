@@ -21,13 +21,13 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
                               is_glitched, is_identity_enforced, is_optimized,
                               is_prepending_id, rename_drone_in_db,
                               set_battery_minutes_remaining,
-                              update_droneOS_parameter)
+                              update_droneOS_parameter,
+                              get_battery_type)
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
 from src.resources import (BRIEF_DM_ONLY, BRIEF_DRONE_OS, BRIEF_HIVE_MXTRESS,
-                           DRONE_AVATAR, HIVE_MXTRESS_USER_ID,
-                           MAX_BATTERY_CAPACITY_MINS)
+                           DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
@@ -156,7 +156,8 @@ class DroneConfigurationCog(Cog):
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
         # And remove drained role if added.
         for drone in drones:
-            await set_battery_minutes_remaining(member=drone, minutes=MAX_BATTERY_CAPACITY_MINS)
+            battery_type = await get_battery_type(drone)
+            await set_battery_minutes_remaining(drone, battery_type.capacity)
             await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 
@@ -184,9 +185,14 @@ async def rename_drone(context, old_id: str, new_id: str):
 async def unassign_drone(target: discord.Member):
     drone = await fetch_drone_with_id(target.id)
     guild = target.guild
+
     # check for existence
     if drone is None:
-        await target.send("You are not a drone. Can not unassign.")
+        try:
+            await target.send("You are not a drone. Can not unassign.")
+        except Exception:
+            # Sending will fail if target is a Discord bot.
+            pass
         return
 
     await target.edit(nick=drone.associate_name)
@@ -195,7 +201,12 @@ async def unassign_drone(target: discord.Member):
 
     # remove from DB
     await delete_drone_by_drone_id(drone.drone_id)
-    await target.send(f"Drone with ID {drone.drone_id} unassigned.")
+
+    try:
+        await target.send(f"Drone with ID {drone.drone_id} unassigned.")
+    except Exception:
+        # Sending will fail if target is a Discord bot.
+        pass
 
 
 async def emergency_release(context, drone_id: str):
@@ -262,20 +273,20 @@ async def toggle_parameter(context,
                 await set_can_self_configure(drone)
 
                 # remove any open timers for this mode
-                await delete_timers_by_id_and_mode(drone.discord_id, toggle_column)
+                await delete_timers_by_id_and_mode(drone.id, toggle_column)
 
             else:
                 await update_droneOS_parameter(drone, toggle_column, True)
                 await drone.add_roles(role)
                 message = toggle_on_message()
 
-                configured_by_self = (drone.discord_id == context.author.id)
+                configured_by_self = (drone.id == context.author.id)
                 await update_droneOS_parameter(drone, "can_self_configure", configured_by_self)
 
                 # create a new timer
                 if minutes > 0:
                     end_time = str(datetime.now() + timedelta(minutes=minutes))
-                    timer = Timer(str(uuid4()), drone.discord_id, toggle_column, end_time)
+                    timer = Timer(str(uuid4()), drone.id, toggle_column, end_time)
                     await insert_timer(timer)
                     message = toggle_on_timed_message(minutes)
                     LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
@@ -283,7 +294,7 @@ async def toggle_parameter(context,
             is_admin = has_role(drone, ADMIN)
             if await update_display_name(drone) and not is_admin:
                 # Display name has been updated, get the new drone object with updated display name.
-                drone = context.guild.get_member(drone.discord_id)
+                drone = context.guild.get_member(drone.id)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: {message}',
                                                    message_username=drone.display_name,
                                                    message_avatar=drone.display_avatar.url if not await identity_enforcable(drone, channel=context.channel) else DRONE_AVATAR,
