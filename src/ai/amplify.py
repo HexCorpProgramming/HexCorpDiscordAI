@@ -40,12 +40,12 @@ class AmplificationCog(Cog):
 
         for member in members:
 
-            drone = fetch_drone_with_id(discord_id=member.id)
+            drone = await fetch_drone_with_id(discord_id=member.id)
 
             if drone is None:
                 continue
 
-            formatted_message = generate_battery_message(drone, f"{drone.drone_id} :: {message}")
+            formatted_message = await generate_battery_message(member, f"{drone.drone_id} :: {message}")
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=member.display_name,

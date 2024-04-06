@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from src.channels import TRANSMISSIONS_CHANNEL, OFFICE
 import src.ai.amplify as amplify
 from test.utils import assert_command_error, assert_command_successful, cog
@@ -16,8 +16,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.bot_utils.has_role", return_value=True)
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
+    @patch("src.ai.amplify.fetch_drone_with_id")
+    @patch("src.ai.commands.convert_id_to_member")
     @cog(amplify.AmplificationCog)
-    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, id_converter, get_webhook, has_role, identity_enforceable, generate_battery_message, bot):
+    async def test_webhook_called_with_appropriate_message(self, convert_id_to_member, fetch_drone_with_id, webhook_proxy, get_webhook, has_role, identity_enforceable, generate_battery_message, bot):
 
         '''
         should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
@@ -26,6 +28,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         member = AsyncMock()
         member.display_avatar.url = "Pretty avatar"
         member.display_name = "3287"
+        convert_id_to_member.return_value = member
+
+        drone = MagicMock()
+        drone.drone_id = "3287"
 
         webhook = AsyncMock()
         get_webhook.return_value = webhook
@@ -33,6 +39,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         message = bot.create_message(OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" hex-office 3287', mentions=[member])
 
         generate_battery_message.side_effect = lambda drone, msg: msg
+        fetch_drone_with_id.return_value = drone
 
         await assert_command_successful(bot, message)
         webhook_proxy.assert_called_once_with(
@@ -45,31 +52,34 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         generate_battery_message.assert_called_once_with(member, "3287 :: Beep boop!")
 
     @patch("src.bot_utils.has_role")
-    @patch("src.ai.amplify.id_converter", new_callable=AsyncMock)
+    @patch("src.ai.commands.convert_id_to_member", return_value=Mock(id=3287))
+    @patch("src.ai.amplify.fetch_drone_with_id")
     @cog(amplify.AmplificationCog)
-    async def test_does_not_work_if_not_Mxtress(self, id_converter, has_role, bot):
+    async def test_does_not_work_if_not_Mxtress(self, fetch_drone_with_id, convert_id_to_member, has_role, bot):
         '''
         only works when called by the Hive Mxtress in the Hex Office channel.
         '''
 
-        message = bot.create_message(OFFICE, COMMAND_PREFIX + 'amplify "Hello" hex-office 3287')
+        content = COMMAND_PREFIX + 'amplify "Hello" hex-office 3287'
 
         # In Office, is Mxtress.
+        message = bot.create_message(OFFICE, content)
         has_role.return_value = True
         await assert_command_successful(bot, message)
-        id_converter.convert_ids_to_members.assert_called_once()
+        fetch_drone_with_id.assert_called_once()
 
         # In Office, not Mxtress.
+        message = bot.create_message(OFFICE, content)
         has_role.return_value = False
         await assert_command_error(bot, message)
 
-        message.channel.name = TRANSMISSIONS_CHANNEL
-
         # Out of office, is Mxtress
+        message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
         has_role.return_value = True
         await assert_command_error(bot, message)
 
         # Out of office, not Mxtress.
+        message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
         has_role.return_value = False
         await assert_command_error(bot, message)
 
@@ -102,7 +112,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         target_channel.members[1].display_name = '5678'
 
         # Give only two channel members out of three have the required role.
-        has_role.side_effect = [True, True, True, False]
+        has_role.side_effect = [True, True, False]
 
         # Mock helper functions to return what they were passed.
         generate_battery_message.side_effect = lambda a, b: b

@@ -74,6 +74,12 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             Content: The message's text.
             '''
 
+            guild = MagicMock()
+
+            # These are called by the discord.Member parameter converter.
+            guild.get_member_named.return_value = None
+            guild.query_members = AsyncMock(return_value=[])
+
             message = AsyncMock(mentions=[], author=author)
             channel = get(channels, name=channel_name)
 
@@ -83,9 +89,10 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
                 channel = MagicMock(spec=TextChannel)
                 channel.name = channel_name
                 message.channel = channel
-                message.guild.text_channels.append(channel)
+                guild.text_channels.append(channel)
 
-            message.guild.text_channels = channels
+            guild.text_channels = channels
+            message.guild = guild
             message.content = content
 
             for n, v in kwargs.items():
