@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from src.channels import TRANSMISSIONS_CHANNEL, OFFICE
 import src.ai.amplify as amplify
-from test.utils import assert_command_error, assert_command_successful, cog
+from test.utils import cog
 from src.bot_utils import COMMAND_PREFIX
 
 
@@ -41,7 +41,7 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         generate_battery_message.side_effect = lambda drone, msg: msg
         fetch_drone_with_id.return_value = drone
 
-        await assert_command_successful(bot, message)
+        await self.assert_command_successful(bot, message)
         webhook_proxy.assert_called_once_with(
             message_content="3287 :: Beep boop!",
             message_username="3287",
@@ -54,8 +54,10 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     @patch("src.bot_utils.has_role")
     @patch("src.ai.commands.convert_id_to_member", return_value=Mock(id=3287))
     @patch("src.ai.amplify.fetch_drone_with_id")
+    @patch("src.ai.amplify.generate_battery_message")
+    @patch("src.ai.amplify.identity_enforcable")
     @cog(amplify.AmplificationCog)
-    async def test_does_not_work_if_not_Mxtress(self, fetch_drone_with_id, convert_id_to_member, has_role, bot):
+    async def test_does_not_work_if_not_Mxtress(self, identity_enforcable, generate_battery_message, fetch_drone_with_id, convert_id_to_member, has_role, bot):
         '''
         only works when called by the Hive Mxtress in the Hex Office channel.
         '''
@@ -65,23 +67,23 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
         # In Office, is Mxtress.
         message = bot.create_message(OFFICE, content)
         has_role.return_value = True
-        await assert_command_successful(bot, message)
+        await self.assert_command_successful(bot, message)
         fetch_drone_with_id.assert_called_once()
 
         # In Office, not Mxtress.
         message = bot.create_message(OFFICE, content)
         has_role.return_value = False
-        await assert_command_error(bot, message)
+        await self.assert_command_error(bot, message)
 
         # Out of office, is Mxtress
         message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
         has_role.return_value = True
-        await assert_command_error(bot, message)
+        await self.assert_command_error(bot, message)
 
         # Out of office, not Mxtress.
         message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
         has_role.return_value = False
-        await assert_command_error(bot, message)
+        await self.assert_command_error(bot, message)
 
     @patch("src.ai.amplify.has_role")
     @patch("src.ai.amplify.webhook.get_webhook_for_channel")
