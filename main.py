@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime, timedelta
 
 import discord
-from discord.ext.commands import Bot, command as bot_command, MissingRequiredArgument
+from discord.ext.commands import Bot, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
 from src.db.database import connect
 
@@ -158,7 +158,7 @@ hour_tasks = [
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
-@bot_command(usage=f'{bot.command_prefix}help', parent=bot)
+@bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
     '''
     Displays this help.
