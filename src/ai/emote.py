@@ -7,6 +7,7 @@ from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
 from src.bot_utils import COMMAND_PREFIX
+from src.validation_error import ValidationError
 
 LOGGER = logging.getLogger('ai')
 
@@ -24,22 +25,23 @@ class EmoteCog(Cog):
         '''
         Let the AI say things using emotes.
         '''
+
         if context.channel.name not in DRONE_HIVE_CHANNELS:
-            reply = generate_big_text(context.channel, sentence)
-            if reply:
-                await context.send(reply)
+            await context.send(generate_big_text(context.channel, sentence))
 
 
 def clean_sentence(sentence):
-    # Removes custom emojis (<:name:id>) and returns the lowercase version
+    '''
+    Remove custom emojis (<:name:id>) and returns the lowercase version.
+    '''
+
     return re.sub(r'<:(.*?):\d{18}>', '', sentence).lower()
 
 
 def generate_big_text(channel: discord.TextChannel, sentence):
-
-    LOGGER.debug("In generate_big_text function.")
-
-    LOGGER.debug("Sanatizing sentence of custom emojis.")
+    '''
+    Replace text with matching emojis.
+    '''
 
     sentence = clean_sentence(sentence)
 
@@ -64,14 +66,11 @@ def generate_big_text(channel: discord.TextChannel, sentence):
             reply += str(emoji)
 
     message_length = len(reply)
-    LOGGER.debug(f"About to send big-text message of length {message_length}")
 
-    if message_length > 0 and message_length <= 2000:
-        LOGGER.info(f"Sending big-text message of length {message_length} and content '{sentence}'")
-        return f"> {reply}"
-    elif message_length > 2000:
-        LOGGER.info("big-text message was too long to send.")
-        return None
-    else:
-        LOGGER.debug("big-text request message contained no acceptable content.")
-        return None
+    if message_length > 2000:
+        raise ValidationError('Message is too long.')
+
+    if message_length == 0:
+        raise ValidationError('Message contained no acceptable content.')
+
+    return f"> {reply}"
