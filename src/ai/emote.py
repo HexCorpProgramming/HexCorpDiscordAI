@@ -21,13 +21,23 @@ class EmoteCog(Cog):
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}emote "beep boop"', aliases=['big', 'emote'])
-    async def bigtext(self, context, sentence):
+    async def bigtext(self, context, *, sentence: str):
         '''
         Let the AI say things using emotes.
         '''
 
         if context.channel.name not in DRONE_HIVE_CHANNELS:
-            await context.send(generate_big_text(context.channel, sentence))
+            reply = generate_big_text(context.channel, sentence)
+
+            message_length = len(reply)
+
+            if message_length > 2000:
+                raise ValidationError('Message is too long.')
+
+            if message_length == 0:
+                raise ValidationError('Message contained no acceptable content.')
+
+            await context.send('> ' + reply)
 
 
 def clean_sentence(sentence):
@@ -57,7 +67,7 @@ def generate_big_text(channel: discord.TextChannel, sentence):
             emoji_name = f"hex_{character}"
         elif character in exceptional_characters:
             emoji_name = f"{exceptional_characters[character]}"
-        if character == ':' and colon_before:
+        elif character == ':' and colon_before:
             emoji_name = "hex_dc"
 
         colon_before = character == ":" and not colon_before
@@ -65,12 +75,4 @@ def generate_big_text(channel: discord.TextChannel, sentence):
         if emoji_name is not None and (emoji := get(channel.guild.emojis, name=emoji_name)) is not None:
             reply += str(emoji)
 
-    message_length = len(reply)
-
-    if message_length > 2000:
-        raise ValidationError('Message is too long.')
-
-    if message_length == 0:
-        raise ValidationError('Message contained no acceptable content.')
-
-    return f"> {reply}"
+    return reply

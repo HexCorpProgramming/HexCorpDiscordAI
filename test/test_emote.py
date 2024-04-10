@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch, AsyncMock
 import discord
-from src.ai.emote import generate_big_text
-from src.validation_error import ValidationError
+from src.ai.emote import generate_big_text, EmoteCog
+from test.utils import cog
 
 
-class TestEmote(unittest.TestCase):
+class TestEmote(unittest.IsolatedAsyncioTestCase):
 
     mock_guild = AsyncMock(data={"id": 5890}, state=None)
 
@@ -17,7 +17,7 @@ class TestEmote(unittest.TestCase):
     mock_channel.guild = mock_guild
     mock_guild.emojis = [normal_mock_emoji, double_colon_emoji, extra_custom_emoji]
 
-    normal_response = f"> {str(normal_mock_emoji)*4}"
+    normal_response = str(normal_mock_emoji) * 4
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generate_big_text_generates_big_text_normally(self, mocked_get):
@@ -27,23 +27,25 @@ class TestEmote(unittest.TestCase):
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "    "), TestEmote.normal_response)
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
-    def test_return_none_if_generated_text_too_long(self, mocked_get):
-        with self.assertRaises(ValidationError):
-            generate_big_text(TestEmote.mock_channel, "9813 is such a good development drone that i could write about how wonderful they are and the bigtext generator would return none because there are too many good things to say about it")
+    @cog(EmoteCog)
+    async def test_return_none_if_generated_text_too_long(self, mocked_get, bot):
+        message = bot.create_message('general', 'hc!emote 9813 is such a good development drone that i could write about how wonderful they are and the bigtext generator would return none because there are too many good things to say about it')
+        await self.assert_command_error(bot, message)
 
-        with self.assertRaises(ValidationError):
-            generate_big_text(TestEmote.mock_channel, "and since we need to do two tests i'd like to mention that 3287 is also a sweet little thing and 5890 always loves to have it around even when it bullies it by calling it a good drone and making it blush")
+        message = bot.create_message('general', 'hc!emote and since we need to do two tests i\'d like to mention that 3287 is also a sweet little thing and 5890 always loves to have it around even when it bullies it by calling it a good drone and making it blush')
+        await self.assert_command_error(bot, message)
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
-    def test_return_none_if_input_contains_no_convertible_material(self, mocked_get):
-        with self.assertRaises(ValidationError):
-            generate_big_text(TestEmote.mock_channel, "ʰᵉʷʷᵒˀˀ")
+    @cog(EmoteCog)
+    async def test_return_none_if_input_contains_no_convertible_material(self, mocked_get, bot):
+        message = bot.create_message('general', 'hc!emote ʰᵉʷʷᵒˀˀ')
+        await self.assert_command_error(bot, message)
 
-        with self.assertRaises(ValidationError):
-            generate_big_text(TestEmote.mock_channel, "ᵐʷˢᶦᵗᵉʳ_ᵒᵇᵃᵐᵃˀ")
+        message = bot.create_message('general', 'hc!emote ᵐʷˢᶦᵗᵉʳ_ᵒᵇᵃᵐᵃˀ')
+        await self.assert_command_error(bot, message)
 
-        with self.assertRaises(ValidationError):
-            generate_big_text(TestEmote.mock_channel, "_____")
+        message = bot.create_message('general', 'hc!emote _____')
+        await self.assert_command_error(bot, message)
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generator_removes_custom_emojis_from_input(self, mocked_get):
@@ -54,5 +56,5 @@ class TestEmote(unittest.TestCase):
         self.assertEqual(generate_big_text(TestEmote.mock_channel, "BEEP"), generate_big_text(TestEmote.mock_channel, "beep"))
 
     def test_two_consecutive_colons_are_converted_to_a_single_emoji(self):
-        self.assertEqual(generate_big_text(TestEmote.mock_channel, "::"), f"> {str(TestEmote.double_colon_emoji)}")
-        self.assertEqual(generate_big_text(TestEmote.mock_channel, ":::"), f"> {str(TestEmote.double_colon_emoji)}")
+        self.assertEqual(generate_big_text(TestEmote.mock_channel, "::"), str(TestEmote.double_colon_emoji))
+        self.assertEqual(generate_big_text(TestEmote.mock_channel, ":::"), str(TestEmote.double_colon_emoji))
