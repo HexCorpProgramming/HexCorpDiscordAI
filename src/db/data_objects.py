@@ -26,6 +26,7 @@ class Drone:
     last_activity: datetime = None
     id_prepending: bool = None
     identity_enforcement: bool = None
+    third_person_enforcement: bool = None
     can_self_configure: bool = None
     temporary_until: datetime = None
     is_battery_powered: bool = None

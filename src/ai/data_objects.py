@@ -15,6 +15,7 @@ class MessageCopy:
         display_name: Optional[str] = None,
         avatar: Optional[Asset] = None,
         identity_enforced: bool = False,
+        third_person_enforced: bool = False,
         attachments: Iterable[Attachment] = [],
         reactions: Iterable[Reaction] = []
     ):
@@ -22,5 +23,6 @@ class MessageCopy:
         self.display_name = display_name
         self.avatar = avatar
         self.identity_enforced = identity_enforced
+        self.third_person_enforced = third_person_enforced
         self.attachments = attachments
         self.reactions = reactions

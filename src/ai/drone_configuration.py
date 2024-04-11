@@ -19,7 +19,7 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
                               fetch_drone_with_drone_id, fetch_drone_with_id,
                               get_trusted_users, is_battery_powered, is_free_storage,
                               is_glitched, is_identity_enforced, is_optimized,
-                              is_prepending_id, rename_drone_in_db,
+                              is_prepending_id, is_third_person_enforced, rename_drone_in_db,
                               set_battery_minutes_remaining,
                               update_droneOS_parameter,
                               get_battery_type)
@@ -30,7 +30,7 @@ from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
-                       SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
+                       SPEECH_OPTIMIZATION, STORED, THIRD_PERSON_ENFORCEMENT, has_any_role, has_role)
 
 LOGGER = logging.getLogger('ai')
 
@@ -120,6 +120,23 @@ class DroneConfigurationCog(Cog):
                                lambda: "Identity enforcement is now active.",
                                lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
                                lambda: "Identity enforcement disengaged.",
+                               minutes)
+
+    @guild_only()
+    @command(aliases=['tet'], brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}toggle_enforce_third_person 5890 9813')
+    async def toggle_enforce_third_person(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+        '''
+        Lets the Hive Mxtress or trusted users toggle third person enforcement.
+        '''
+
+        await toggle_parameter(context,
+                               drones,
+                               'third_person_enforcement',
+                               get(context.guild.roles, name=THIRD_PERSON_ENFORCEMENT),
+                               is_third_person_enforced,
+                               lambda: "Third person enforcement is now active.",
+                               lambda minutes: f"Third Person enforcement is now active for {minutes} minute(s).",
+                               lambda: "Third person enforcement disengaged.",
                                minutes)
 
     @guild_only()

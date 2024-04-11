@@ -20,6 +20,7 @@ from src.validation_error import ValidationError
 # Modules
 import src.ai.stoplights as stoplights
 import src.ai.identity_enforcement as identity_enforcement
+import src.ai.third_person_enforcement as third_person_enforcement
 import src.ai.speech_optimization as speech_optimization
 import src.ai.speech_optimization_enforcement as speech_optimization_enforcement
 import src.ai.id_prepending as id_prepending
@@ -118,6 +119,7 @@ message_listeners = [
     speech_optimization_enforcement.enforce_speech_optimization,
     speech_optimization.optimize_speech,
     identity_enforcement.enforce_identity,
+    third_person_enforcement.enforce_third_person,
     forbidden_word.deny_thoughts,
     battery.add_battery_indicator_to_copy,
     react.parse_for_reactions,
