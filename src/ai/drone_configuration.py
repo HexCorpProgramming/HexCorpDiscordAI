@@ -26,9 +26,9 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
-from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
+from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
-                       DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
+                       DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
 
@@ -233,7 +233,7 @@ async def can_toggle_permissions_for(toggling_user: discord.Member,
                                      toggled_user: discord.Member
                                      ) -> bool:
     trusted_users = await get_trusted_users(toggled_user.id)
-    if toggling_user.id == HIVE_MXTRESS_USER_ID:
+    if has_role(toggling_user, HIVE_MXTRESS):
         return True
     if toggling_user.id in trusted_users:
         return True
