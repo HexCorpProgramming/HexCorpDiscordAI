@@ -5,14 +5,14 @@ from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, command, Greedy, guild_only, dm_only
+from discord.ext.commands import Cog, command, Greedy, guild_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import channels_only, COMMAND_PREFIX, get_id, hive_mxtress_only
+from src.bot_utils import channels_only, COMMAND_PREFIX, dm_only, get_id, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
@@ -216,7 +216,7 @@ async def emergency_release(context, drone_id: str):
         await context.channel.send(f"No drone with ID {drone_id} found.")
         return
 
-    await release(context, drone_id)
+    await release(context, drone_member)
 
     await update_droneOS_parameter(drone_member, "id_prepending", False)
     await update_droneOS_parameter(drone_member, "optimized", False)
