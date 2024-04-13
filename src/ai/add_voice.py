@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, command
 from discord.utils import get
 
 from src.roles import VOICE, has_role
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX, dm_only
 
 NOT_A_MEMBER = 'Access denied: you are not a member of this server.'
 ACCESS_DENIED = 'Access denied: you have not been on the server for long enough to gain access to voice chat.'

@@ -196,7 +196,7 @@ async def get_battery_percent_remaining(member: discord.Member) -> int:
     '''
 
     result = await fetchone(
-        'SELECT round(drone.battery_minutes / battery_types.capacity * 100) AS percent '
+        'SELECT round(100.0 * drone.battery_minutes / battery_types.capacity) AS percent '
         'FROM drone '
         'INNER JOIN battery_types ON battery_types.id = drone.battery_type_id '
         'WHERE drone.discord_id = :discord_id',

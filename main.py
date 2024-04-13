@@ -301,7 +301,7 @@ async def on_ready():
     for task in timing_agnostic_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
@@ -315,7 +315,7 @@ async def on_ready():
     for task in minute_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next hour to begin every-hour tasks.")
@@ -330,7 +330,7 @@ async def on_ready():
     for task in hour_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
 
@@ -342,7 +342,7 @@ async def on_command_error(context, error):
         await context.send(f"`{error.param.name}` is a required argument that is missing.")
     elif isinstance(error, PrivateMessageOnly):
         await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-    elif isinstance(error.original, ValidationError):
+    elif isinstance(getattr(error, 'original', None), ValidationError):
         await context.send(str(error.original))
     else:
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
