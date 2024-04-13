@@ -1,10 +1,14 @@
 import re
-from discord.ext.commands import check, Context, CheckFailure
+from discord.ext.commands import check, command as bot_command, Context, CheckFailure
 from src.roles import HIVE_MXTRESS, has_role
-from typing import Callable, Optional, TypeVar
+from typing import Any, Callable, Coroutine, Optional, TypeVar
+from functools import wraps
+from src.log import LogContext
 
 COMMAND_PREFIX = 'hc!'
 T = TypeVar("T")
+CommandFuncType = Callable[..., Coroutine[Any, Any, None]]
+CommandFuncDecoratorType = Callable[[CommandFuncType], CommandFuncType]
 
 
 def channels_only(*channels: str) -> Callable[[T], T]:
@@ -54,3 +58,29 @@ def get_id(username: str) -> Optional[str]:
         return None
     else:
         return found.group()
+
+
+def command(*args, **kwargs):
+    '''
+    Override discord.command to start a logging context for the command.
+    '''
+
+    bot_decorator = bot_command(*args, **kwargs)
+
+    def decorator(func: CommandFuncType) -> CommandFuncType:
+        '''
+        The original command decorator for the command function wrapped in a logging context.
+        '''
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> None:
+            '''
+            Begin a new logging context and call the original function.
+            '''
+
+            with LogContext('Command ' + func.__qualname__ + '()'):
+                await func(*args, **kwargs)
+
+        return bot_decorator(wrapper)
+
+    return decorator

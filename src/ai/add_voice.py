@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, dm_only
 from discord.utils import get
 
 from src.roles import VOICE, has_role
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import command, COMMAND_PREFIX
+from src.log import log
 
 NOT_A_MEMBER = 'Access denied: you are not a member of this server.'
 ACCESS_DENIED = 'Access denied: you have not been on the server for long enough to gain access to voice chat.'
@@ -35,11 +36,15 @@ async def add_voice(context, guild: discord.Guild):
         return
 
     if member.joined_at > datetime.now(timezone.utc) - timedelta(weeks=2):
+        log.info('Denying voice role to ' + member.name + ': 2 week waiting period not satisfied')
         await context.channel.send(ACCESS_DENIED)
         return
+
     if has_role(member, VOICE):
+        log.info('Member ' + member.name + ' already has the voice role')
         await context.channel.send(ACCESS_ALREADY_GRANTED)
         return
 
     await member.add_roles(get(guild.roles, name=VOICE))
     await context.channel.send(ACCESS_GRANTED)
+    log.info('Added voice role to ' + member.name)
