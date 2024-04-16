@@ -303,7 +303,7 @@ async def on_ready():
     for task in timing_agnostic_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     log.info("Awaiting start of next minute to begin every-minute tasks.")
@@ -317,7 +317,7 @@ async def on_ready():
     for task in minute_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     log.info("Awaiting start of next hour to begin every-hour tasks.")
@@ -332,7 +332,7 @@ async def on_ready():
     for task in hour_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
 
@@ -346,7 +346,7 @@ async def on_command_error(context, error):
         elif isinstance(error, PrivateMessageOnly):
             log.info('Command is only available in DM')
             await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-        elif hasattr(error, 'original') and isinstance(error.original, ValidationError):
+        elif isinstance(getattr(error, 'original', None), ValidationError):
             log.info('Validation error: ' + str(error.original))
             await context.send(str(error.original))
         else:

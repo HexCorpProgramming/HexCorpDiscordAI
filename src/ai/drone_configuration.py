@@ -4,14 +4,14 @@ from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, Greedy, guild_only, dm_only
+from discord.ext.commands import Cog, Greedy, guild_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import channels_only, command, COMMAND_PREFIX, get_id, hive_mxtress_only
+from src.bot_utils import channels_only, command, COMMAND_PREFIX, dm_only, get_id, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
@@ -25,9 +25,9 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
-from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR, HIVE_MXTRESS_USER_ID)
+from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR)
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
-                       DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
+                       DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
 from src.log import log
@@ -212,7 +212,7 @@ async def emergency_release(context, drone_id: str):
     if drone_member is None:
         raise ValidationError(f"No drone with ID {drone_id} found.")
 
-    await release(context, drone_id)
+    await release(context, drone_member)
 
     await update_droneOS_parameter(drone_member, "id_prepending", False)
     await update_droneOS_parameter(drone_member, "optimized", False)
@@ -230,7 +230,7 @@ async def can_toggle_permissions_for(toggling_user: discord.Member,
                                      toggled_user: discord.Member
                                      ) -> bool:
     trusted_users = await get_trusted_users(toggled_user.id)
-    if toggling_user.id == HIVE_MXTRESS_USER_ID:
+    if has_role(toggling_user, HIVE_MXTRESS):
         return True
     if toggling_user.id in trusted_users:
         return True
@@ -239,13 +239,18 @@ async def can_toggle_permissions_for(toggling_user: discord.Member,
     return False
 
 
-def is_configured(drone_member: discord.Member) -> bool:
+async def is_configured(drone_member: discord.Member) -> bool:
     toggles = (is_prepending_id,
                is_optimized,
                is_identity_enforced,
                is_glitched,
                )
-    return any(is_toggled(drone_member) for is_toggled in toggles)
+
+    for toggle in toggles:
+        if await toggle(drone_member):
+            return True
+
+    return False
 
 
 async def toggle_parameter(context,
@@ -299,7 +304,7 @@ async def toggle_parameter(context,
 
 
 async def set_can_self_configure(drone: discord.Member):
-    still_configured = is_configured(drone)
+    still_configured = await is_configured(drone)
     if not still_configured:
         await update_droneOS_parameter(drone, "can_self_configure", True)
 
