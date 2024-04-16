@@ -321,7 +321,7 @@ async def toggle_free_storage(target: discord.Member):
         await target.send("You are not a drone. Cannot toggle this parameter.")
         return
 
-    if await is_free_storage(target):
+    if await is_free_storage(drone):
         await update_droneOS_parameter(target, "free_storage", False)
         await target.remove_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
