@@ -1,4 +1,3 @@
-import logging
 import re
 
 import discord
@@ -6,10 +5,9 @@ from discord.ext.commands import Cog, command, guild_only
 from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import channels_only, COMMAND_PREFIX
+from src.log import log
 from src.validation_error import ValidationError
-
-LOGGER = logging.getLogger('ai')
 
 valid_characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
                     'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -20,24 +18,25 @@ exceptional_characters = {' ': 'blank', '/': 'hex_slash', '.': 'hex_dot',
 class EmoteCog(Cog):
 
     @guild_only()
+    @channels_only(*DRONE_HIVE_CHANNELS)
     @command(usage=f'{COMMAND_PREFIX}emote "beep boop"', aliases=['big', 'emote'])
     async def bigtext(self, context, *, sentence: str):
         '''
         Let the AI say things using emotes.
         '''
 
-        if context.channel.name not in DRONE_HIVE_CHANNELS:
-            reply = generate_big_text(context.channel, sentence)
+        reply = generate_big_text(context.channel, sentence)
 
-            message_length = len(reply)
+        message_length = len(reply)
 
-            if message_length > 2000:
-                raise ValidationError('Message is too long.')
+        if message_length > 2000:
+            raise ValidationError('Message is too long.')
 
-            if message_length == 0:
-                raise ValidationError('Message contained no acceptable content.')
+        if message_length == 0:
+            raise ValidationError('Message contained no acceptable content.')
 
-            await context.send('> ' + reply)
+        log.info('Emoting: ' + sentence)
+        await context.send('> ' + reply)
 
 
 def clean_sentence(sentence):

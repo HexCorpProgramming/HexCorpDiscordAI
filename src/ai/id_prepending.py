@@ -1,12 +1,9 @@
-import logging
-
 import discord
 
 from src.bot_utils import COMMAND_PREFIX, get_id
 from src.channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.db.drone_dao import is_prepending_id
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 
 async def check_if_prepending_necessary(message: discord.Message, message_copy=None):
@@ -15,7 +12,7 @@ async def check_if_prepending_necessary(message: discord.Message, message_copy=N
         if message.content.startswith(f"{drone_id} :: ") or message.content.startswith(COMMAND_PREFIX):
             return False
         else:
-            LOGGER.info("Deleting message that did not begin with ID prependment.")
+            log.info("Deleting message that did not begin with ID prependment.")
             await message.delete()
             return True
     else:

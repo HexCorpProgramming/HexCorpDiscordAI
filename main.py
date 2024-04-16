@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import discord
 from discord.ext.commands import Bot, MissingRequiredArgument
-from discord.ext.commands.errors import PrivateMessageOnly
+from discord.ext.commands.errors import CheckFailure, PrivateMessageOnly
 from src.db.database import connect
 
 import logging
@@ -246,7 +246,6 @@ async def on_message(message: discord.Message):
 
         # handle DMs
         if isinstance(message.channel, discord.DMChannel):
-            log.info("Beginning DM listener stack execution.")
             for listener in direct_message_listeners:
                 with LogContext(listener.__name__):
                     if await listener(message, message_copy):
@@ -254,20 +253,16 @@ async def on_message(message: discord.Message):
             await bot.process_commands(message)
             return
 
-        log.info("Beginning message listener stack execution.")
         # use the listeners for bot messages or user messages
         applicable_listeners = bot_message_listeners if message.author.bot else message_listeners
         for listener in applicable_listeners:
-            log.info(f"Executing: {listener}")
+            log.debug(f"Executing: {listener}")
             with LogContext(listener.__name__):
                 if await listener(message, message_copy):  # Return early if any listeners return true.
                     return
-        log.info("End of message listener stack.")
 
-        log.info("Checking for need to webhook.")
         await webhook.webhook_if_message_altered(message, message_copy)
 
-        log.info("Processing additional commands.")
         await bot.process_commands(message)
 
 
@@ -349,6 +344,9 @@ async def on_command_error(context, error):
         elif isinstance(getattr(error, 'original', None), ValidationError):
             log.info('Validation error: ' + str(error.original))
             await context.send(str(error.original))
+        elif isinstance(error, CheckFailure):
+            log.info('Validation error: ' + str(error))
+            await context.send(str(error))
         else:
             log.error(f"!!! Exception caught in {context.command} command !!!")
             log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))

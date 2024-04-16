@@ -50,7 +50,6 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     if any([content_differs, display_name_differs, avatar_differs, attachments_differ, copy.identity_enforced]):
         LOGGER.info("Proxying altered message.")
 
-        LOGGER.info("Converting all attachments")
         # Convert available Attachment objects into File objects.
         attachments_as_files = []
         for attachment in copy.attachments:
@@ -58,7 +57,6 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
                 attachments_as_files.append(attachment)
             else:
                 attachments_as_files.append(discord.File(io.BytesIO(await attachment.read()), filename=attachment.filename))
-        LOGGER.info("Attachments converted.")
 
         # create an embed when responding to another message
         embed = None

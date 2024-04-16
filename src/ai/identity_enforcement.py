@@ -1,13 +1,9 @@
-import logging
-
 import discord
 
 from src.ai.data_objects import MessageCopy
 from src.channels import (DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY,
                           MODERATION_CATEGORY)
 from src.db.drone_dao import is_drone, is_identity_enforced
-
-LOGGER = logging.getLogger('ai')
 
 
 async def enforce_identity(message: discord.Message, message_copy: MessageCopy):
