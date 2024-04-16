@@ -60,7 +60,7 @@ def glitch_text(message: str, glitch_amount=45) -> str:
     log.debug(f"Message list without custom emojis: {message_list}")
 
     if message_list == []:
-        log.info("Not glitching message (message empty).")
+        log.debug("Not glitching message (message empty).")
         return ''.join(emoji for emoji, index in escaped_characters)
 
     # Flip case

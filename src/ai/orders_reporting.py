@@ -1,12 +1,10 @@
-import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 from typing import Union
-from src.validation_error import ValidationError
 
 from discord import Embed, Member
 from discord.ext import tasks
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog, command, UserInputError
 from discord.utils import get
 
 from src.bot_utils import channels_only, COMMAND_PREFIX, get_id
@@ -19,8 +17,7 @@ from src.db.drone_dao import fetch_drone_with_id
 from src.roles import DRONE, has_role
 from src.ai.commands import DroneMemberConverter
 from src.resources import HEXCORP_AVATAR
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 
 class OrderReportingCog(Cog):
@@ -35,34 +32,26 @@ class OrderReportingCog(Cog):
         '''
         Report your orders in the appropriate channel to serve the Hive. The duration can be a maximum of 120 minutes.
         '''
-        try:
-            int(protocol_time)
-        except ValueError:
-            await context.send("Your protocol time must be an integer (whole number) between 1 and 120 minutes.")
-
         await report_order(context, protocol_name, protocol_time)
 
+    @channels_only(ORDERS_REPORTING)
     @command(usage=f'{COMMAND_PREFIX}report_complete "Order Name" 1234 Order description...', rest_is_raw=True)
     async def report_complete(self, context, order_name: str, member: Union[Member | DroneMemberConverter], *, order_description: str):
-        # Check that the command was issued in the correct channel.
-        if context.channel.name != ORDERS_REPORTING:
-            raise ValidationError(f'This command may only be used in #{ORDERS_REPORTING}')
-
         # Check that the correct parameters were supplied.
         if not order_name or not order_description:
-            raise ValidationError('Please supply an order name and description')
+            raise UserInputError('Please supply an order name and description')
 
         # Find the member's drone record.
         drone = await fetch_drone_with_id(member.id)
 
         if drone is None:
-            raise ValidationError('The specified member is not a drone')
+            raise UserInputError('The specified member is not a drone')
 
         # Find the order.
         order = await get_order_by_drone_id(drone.drone_id)
 
         if order is None:
-            raise ValidationError(f'Drone {drone.drone_id} does not have an order in progress')
+            raise UserInputError(f'Drone {drone.drone_id} does not have an order in progress')
 
         # Mark the order as complete.
         await delete_drone_order(order.id)
@@ -83,7 +72,7 @@ class OrderReportingCog(Cog):
 
         await context.channel.send(embed=report)
 
-        LOGGER.info(f'Drone {drone.drone_id} order #{order.id}: {order.protocol}')
+        log.info(f'Drone {drone.drone_id} order #{order.id}: {order.protocol}')
 
     @tasks.loop(minutes=1)
     @connect()
@@ -93,7 +82,7 @@ class OrderReportingCog(Cog):
                 # find drone to deactivate
                 member_to_deactivate = self.bot.guilds[0].get_member(order.discord_id)
                 drone = await fetch_drone_with_id(order.discord_id)
-                LOGGER.info(f'Deactivating drone {drone.drone_id} with completed orders')
+                log.info(f'Deactivating drone {drone.drone_id} with completed orders')
                 await self.orders_reporting_channel.send(f"{member_to_deactivate.mention} Drone {drone.drone_id} Deactivate.\nDrone {drone.drone_id}, good drone.")
                 await delete_drone_order(order.id)
 
@@ -104,7 +93,7 @@ class OrderReportingCog(Cog):
 
 
 async def report_order(context, protocol_name, protocol_time: int):
-    LOGGER.info("Order reported.")
+    log.info("Order reported.")
     drone_id = get_id(context.author.display_name)
     if not has_role(context.author, DRONE):
         return  # No non-drones allowed.
@@ -123,6 +112,6 @@ async def report_order(context, protocol_name, protocol_time: int):
         datetime.now() + timedelta(minutes=protocol_time))
     created_order = DroneOrder(
         str(uuid4()), context.author.id, protocol_name, finish_time)
-    LOGGER.info("ActiveOrder object created. Inserting order.")
+    log.info("ActiveOrder object created. Inserting order.")
     await insert_drone_order(created_order)
-    LOGGER.info("Active order inserted and committed to DB.")
+    log.info("Active order inserted and committed to DB.")

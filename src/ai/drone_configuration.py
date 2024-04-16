@@ -4,7 +4,7 @@ from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, Greedy, guild_only
+from discord.ext.commands import Cog, Greedy, guild_only, UserInputError
 from discord.utils import get
 
 import src.webhook as webhook
@@ -31,7 +31,6 @@ from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
 from src.log import log
-from src.validation_error import ValidationError
 
 MINUTES_PARAMETER = "minutes"
 
@@ -162,10 +161,10 @@ class DroneConfigurationCog(Cog):
 
 async def rename_drone(context, old_id: str, new_id: str):
     if len(old_id) != 4 or len(new_id) != 4:
-        raise ValidationError('Drone IDs must be four digit numbers')
+        raise UserInputError('Drone IDs must be four digit numbers')
 
     if not old_id.isnumeric() or not new_id.isnumeric():
-        raise ValidationError('Drone IDs must be four digit numbers')
+        raise UserInputError('Drone IDs must be four digit numbers')
 
     # check for collisions
     collision = await fetch_drone_with_drone_id(new_id)
@@ -179,7 +178,7 @@ async def rename_drone(context, old_id: str, new_id: str):
         await context.send(f"Successfully renamed drone {old_id} to {new_id}.")
         log.info(f"Renamed drone {old_id} to {new_id}.")
     else:
-        raise ValidationError(f"ID {new_id} already in use.")
+        raise UserInputError(f"ID {new_id} already in use.")
 
 
 async def unassign_drone(target: discord.Member):
@@ -188,7 +187,7 @@ async def unassign_drone(target: discord.Member):
 
     # check for existence
     if drone is None:
-        raise ValidationError("You are not a drone. Can not unassign.")
+        raise UserInputError("You are not a drone. Can not unassign.")
 
     await target.edit(nick=drone.associate_name)
     await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED), get(guild.roles, name=BATTERY_DRAINED))
@@ -210,7 +209,7 @@ async def emergency_release(context, drone_id: str):
     drone_member = await convert_id_to_member(context.guild, drone_id)
 
     if drone_member is None:
-        raise ValidationError(f"No drone with ID {drone_id} found.")
+        raise UserInputError(f"No drone with ID {drone_id} found.")
 
     await release(context, drone_member)
 
@@ -315,7 +314,7 @@ async def toggle_free_storage(target: discord.Member):
 
     # check for existence
     if drone is None:
-        raise ValidationError("You are not a drone. Cannot toggle this parameter.")
+        raise UserInputError("You are not a drone. Cannot toggle this parameter.")
 
     if await is_free_storage(drone):
         await update_droneOS_parameter(target, "free_storage", False)

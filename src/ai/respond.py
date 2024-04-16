@@ -1,13 +1,10 @@
-import logging
 import re
 
 import discord
 
 import src.messages as messages
-from src.resources import BOT_IDS
 from src.roles import ASSOCIATE, DRONE, HIVE_MXTRESS, has_role
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 HIVE_MXTRESS_RESPONSES = [
     'It is certain because you are the perfect Hive Mxtress who this AI worships.',
@@ -73,8 +70,9 @@ def is_question(message: discord.Message):
         return False
 
     for mention in message.mentions:
-        if mention.id in BOT_IDS:
+        if message.guild and mention.id == message.guild.me.id:
             return True
+
     return False
 
 
@@ -82,17 +80,18 @@ async def respond_to_question(message: discord.Message, message_copy=None):
     if not is_question(message):
         return False
 
-    LOGGER.debug('Message is a valid question.')
+    log.debug('Message is a valid question.')
 
     # different roles have different reponses
     if has_role(message.author, HIVE_MXTRESS):
         if strip_recipient(message.content) in HIVE_MXTRESS_SPECIFIC_RESPONSES:
-            await messages.answer(message.channel, message.author, HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)])
+            responses = HIVE_MXTRESS_SPECIFIC_RESPONSES[strip_recipient(message.content)]
         else:
-            await messages.answer(message.channel, message.author, HIVE_MXTRESS_RESPONSES)
+            responses = HIVE_MXTRESS_RESPONSES
     elif has_role(message.author, ASSOCIATE):
-        await messages.answer(message.channel, message.author, ASSOCIATE_RESPONSES)
+        responses = ASSOCIATE_RESPONSES
     elif has_role(message.author, DRONE):
-        await messages.answer(message.channel, message.author, DRONE_RESPONSES)
+        responses = DRONE_RESPONSES
 
+    await messages.answer(message.channel, message.author, responses)
     return True

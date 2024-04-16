@@ -4,8 +4,8 @@ import asyncio
 from datetime import datetime, timedelta
 
 import discord
-from discord.ext.commands import Bot, MissingRequiredArgument
-from discord.ext.commands.errors import CheckFailure, PrivateMessageOnly
+from discord.ext.commands import Bot, Context
+from discord.ext.commands.errors import CommandError, CommandInvokeError
 from src.db.database import connect
 
 import logging
@@ -14,7 +14,6 @@ from logging import handlers
 import sys
 
 from traceback import TracebackException
-from src.validation_error import ValidationError
 
 
 # Modules
@@ -218,7 +217,7 @@ def ignore_self(func):
     to the database connection decorator.
     '''
 
-    async def wrapper(message: discord.message):
+    async def wrapper(message: discord.Message):
         # Ignore messages from self.
         if message.author.id == bot.user.id:
             return
@@ -236,32 +235,37 @@ def ignore_self(func):
 @ignore_self
 @connect()
 async def on_message(message: discord.Message):
-    with LogContext('on_message(from=' + message.author.name + ')'):
+    with LogContext('on_message(from=' + message.author.name + ', content=' + message.content + ')'):
         # Don't ignore messages from the testing bot.
         # Usually process_commands() will ignore messages from bots.
         if message.author.name == 'TestBot':
             message.author.bot = False
 
         message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
+        error = None
 
-        # handle DMs
+        # Select the message listeners to execute.
         if isinstance(message.channel, discord.DMChannel):
-            for listener in direct_message_listeners:
-                with LogContext(listener.__name__):
+            listeners = direct_message_listeners
+        else:
+            listeners = bot_message_listeners if message.author.bot else message_listeners
+
+        for listener in listeners:
+            with LogContext(listener.__name__):
+                try:
                     if await listener(message, message_copy):
                         return
-            await bot.process_commands(message)
-            return
+                except CommandError as err:
+                    error = err
 
-        # use the listeners for bot messages or user messages
-        applicable_listeners = bot_message_listeners if message.author.bot else message_listeners
-        for listener in applicable_listeners:
-            log.debug(f"Executing: {listener}")
-            with LogContext(listener.__name__):
-                if await listener(message, message_copy):  # Return early if any listeners return true.
-                    return
+        # Replace the original message if it was altered by a listener.
+        if not isinstance(message.channel, discord.DMChannel):
+            await webhook.webhook_if_message_altered(message, message_copy)
 
-        await webhook.webhook_if_message_altered(message, message_copy)
+        # Report the error after the webhook so that the error message always follows the command,
+        # even if the original command message was deleted and replaced by the webhook.
+        if error:
+            await report_error(message.channel, str(error))
 
         await bot.process_commands(message)
 
@@ -282,6 +286,11 @@ async def on_member_remove(member: discord.Member):
 
     # remove the user from all trusted user lists
     await trusted_user.remove_trusted_user_on_all(member.id)
+
+
+async def report_error(target: discord.Member | discord.TextChannel | Context, message: str) -> None:
+    log.info(message)
+    await target.send(message)
 
 
 @bot.event
@@ -333,20 +342,10 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(context, error):
-    with LogContext('Command error from ' + context.command.cog_name + '.' + context.command.name + '()'):
-        if isinstance(error, MissingRequiredArgument):
-            # missing arguments should not be that noisy and can be reported to the user
-            log.info(f"Missing parameter {error.param.name} reported to user.")
-            await context.send(f"`{error.param.name}` is a required argument that is missing.")
-        elif isinstance(error, PrivateMessageOnly):
-            log.info('Command is only available in DM')
-            await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-        elif isinstance(getattr(error, 'original', None), ValidationError):
-            log.info('Validation error: ' + str(error.original))
-            await context.send(str(error.original))
-        elif isinstance(error, CheckFailure):
-            log.info('Validation error: ' + str(error))
-            await context.send(str(error))
+    with LogContext('Error from ' + context.command.cog_name + '.' + context.command.name + '()'):
+        if isinstance(error, CommandError) and not isinstance(error, CommandInvokeError):
+            # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
+            await report_error(context, str(error))
         else:
             log.error(f"!!! Exception caught in {context.command} command !!!")
             log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))

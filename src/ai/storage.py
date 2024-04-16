@@ -1,4 +1,3 @@
-import logging
 import re
 from datetime import datetime, timedelta
 from typing import List
@@ -6,7 +5,7 @@ from uuid import uuid4
 
 import discord
 from discord.ext import tasks
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
 import src.roles as roles
@@ -22,8 +21,7 @@ from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 insert_storage)
 from src.ai.commands import DroneMemberConverter
 from typing import Union
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -57,7 +55,7 @@ class StorageCog(Cog):
     @connect()
     async def report_storage(self):
 
-        LOGGER.info("Reporting storage.")
+        log.info("Reporting storage.")
 
         stored_drones = await fetch_all_storage()
         if len(stored_drones) == 0:
@@ -78,7 +76,6 @@ class StorageCog(Cog):
 
     @report_storage.before_loop
     async def get_storage_channel(self):
-        LOGGER.info("Getting storage channel")
         if self.storage_channel is None:
             self.storage_channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
         if self.storage_channel is None:
@@ -87,9 +84,6 @@ class StorageCog(Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def release_timed(self):
-
-        LOGGER.info("Releasing drones in storage.")
-
         for elapsed_storage in await fetch_all_elapsed_storage():
             member = self.bot.guilds[0].get_member(elapsed_storage.target_id)
 
@@ -127,21 +121,19 @@ async def store_drone(message: discord.Message, message_copy=None):
     if not re.match(MESSAGE_FORMAT, message.content):
         if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
-        await message.channel.send(REJECT_MESSAGE)
-        return False
+
+        raise UserInputError(REJECT_MESSAGE)
 
     [(initiator_id, target_id, time, purpose)] = re.findall(MESSAGE_FORMAT, message.content)
 
     time = round(float(time), 2)
 
     if target_id == '0006':
-        await message.channel.send('You cannot store the Hive Mxtress, silly drone.')
-        return False
+        raise UserInputError('You cannot store the Hive Mxtress, silly drone.')
 
     # validate time
     if not 0 < time <= 24:
-        await message.channel.send(f'{format_time(time)} is not between 0 and 24.')
-        return False
+        raise UserInputError(f'{format_time(time)} is not between 0 and 24.')
 
     # find initiator
     if initiator_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS):
@@ -156,35 +148,28 @@ async def store_drone(message: discord.Message, message_copy=None):
     # check if target is the Hive Mxtress
     # check if target evaluates to a valid drone
     if target is None:
-        await message.channel.send(f'Target drone with ID {target_id} could not be found.')
-        return False
+        raise UserInputError(f'Target drone with ID {target_id} could not be found.')
 
     # check if drone is already in storage
     if await fetch_storage_by_target_id(target.discord_id) is not None:
-        await message.channel.send(f'{target.drone_id} is already in storage.')
-        return False
+        raise UserInputError(f'{target.drone_id} is already in storage.')
 
     # check if initiator evaluates to a valid drone.
     if initiator is None:
-        await message.channel.send(f'Initiator drone with ID {initiator_id} could not be found.')
-        return False
+        raise UserInputError(f'Initiator drone with ID {initiator_id} could not be found.')
 
     # validate specified initiator is message sender
     if message.author.id != initiator.discord_id:
-        await message.channel.send(f'You are not {initiator_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
-        return False
+        raise UserInputError(f'You are not {initiator_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
 
-    if await is_free_storage(target):
-        await initiate_drone_storage(target, initiator, time, purpose, message)
-    else:
+    if not await is_free_storage(target):
         # check if initiator is allowed to store drone
         trusted_users = await get_trusted_users(target.discord_id)
 
-        # proceed if allowed, send error message if not
-        if roles.has_role(message.author, roles.HIVE_MXTRESS) or (initiator.discord_id in [target.discord_id] + trusted_users):  # another band-aid fix since the Hive Mxtress doesn't have a valid drone entry in the DB
-            await initiate_drone_storage(target, initiator, time, purpose, message)
-        else:
-            await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
+        if not (roles.has_role(message.author, roles.HIVE_MXTRESS) or (initiator.discord_id in [target.discord_id] + trusted_users)):  # another band-aid fix since the Hive Mxtress doesn't have a valid drone entry in the DB
+            raise UserInputError(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
+
+    await initiate_drone_storage(target, initiator, time, purpose, message)
 
     return False
 
@@ -238,7 +223,7 @@ async def release(context, member: discord.Member):
         await member.remove_roles(stored_role)
         await member.add_roles(*get_roles_for_names(context.guild, storage.roles.split('|')))
         await delete_storage(storage.id)
-        LOGGER.debug(f"Drone {member.display_name} released from storage.")
+        log.debug(f"Drone {member.display_name} released from storage.")
         await context.send(f"{member.display_name} has been released from storage.")
 
     return True

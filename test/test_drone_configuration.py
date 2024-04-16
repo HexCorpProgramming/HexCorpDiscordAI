@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch, Mock, call
 import src.roles as roles
 import src.ai.drone_configuration as drone_configuration
 from src.db.drone_dao import Drone
-from src.validation_error import ValidationError
+from discord.ext.commands import UserInputError
 
 
 hive_mxtress_role = Mock()
@@ -61,7 +61,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_drone_id.side_effect = [colliding_drone, drone]
 
         # run
-        with self.assertRaises(ValidationError, msg=f"ID {new_id} already in use."):
+        with self.assertRaises(UserInputError, msg=f"ID {new_id} already in use."):
             await drone_configuration.rename_drone(context, old_id, new_id)
 
         # assert
@@ -101,7 +101,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_id.return_value = None
 
         # run
-        with self.assertRaises(ValidationError, msg='You are not a drone. Can not unassign.'):
+        with self.assertRaises(UserInputError, msg='You are not a drone. Can not unassign.'):
             await drone_configuration.unassign_drone(member)
 
         # assert
@@ -186,7 +186,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         fetch_drone_with_id.return_value = None
 
         # run
-        with self.assertRaises(ValidationError, msg='You are not a drone. Cannot toggle this parameter.'):
+        with self.assertRaises(UserInputError, msg='You are not a drone. Cannot toggle this parameter.'):
             await drone_configuration.toggle_free_storage(member)
 
         # assert

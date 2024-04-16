@@ -1,8 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-import logging
-
-LOGGER = logging.getLogger("ai")
 
 
 def map_to_objects(rows, constructor):

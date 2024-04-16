@@ -1,4 +1,3 @@
-import logging
 import re
 
 import discord
@@ -13,8 +12,7 @@ from src.db.forbidden_word_dao import (delete_forbidden_word_by_id,
                                        get_all_forbidden_words,
                                        insert_forbidden_word)
 from src.emoji import DRONE_EMOJI
-
-LOGGER = logging.getLogger("ai")
+from src.log import log
 
 
 async def deny_thoughts(message: discord.Message, message_copy):
@@ -23,8 +21,8 @@ async def deny_thoughts(message: discord.Message, message_copy):
         return
 
     emoji_replacement = get(message.guild.emojis, name=DRONE_EMOJI)
+    original_content = message_copy.content
 
-    LOGGER.info("Expunging all thoughts.")
     for banned_word in await get_all_forbidden_words():
         for match in re.findall(banned_word.regex, message_copy.content, flags=re.IGNORECASE):
             message_copy.content = message_copy.content.replace(match, "\_" * len(match), 1)
@@ -33,6 +31,9 @@ async def deny_thoughts(message: discord.Message, message_copy):
 
     # Todo: Escape emoji names.
     # Todo: Don't include the \s if the "think" is inside a `code block`
+
+    if message_copy.content != original_content:
+        log.info("Expunged all thoughts.")
 
 
 class ForbiddenWordCog(Cog):

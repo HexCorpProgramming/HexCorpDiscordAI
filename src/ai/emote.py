@@ -1,13 +1,12 @@
 import re
 
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
 from src.bot_utils import channels_only, COMMAND_PREFIX
 from src.log import log
-from src.validation_error import ValidationError
 
 valid_characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
                     'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -30,10 +29,10 @@ class EmoteCog(Cog):
         message_length = len(reply)
 
         if message_length > 2000:
-            raise ValidationError('Message is too long.')
+            raise UserInputError('Message is too long.')
 
         if message_length == 0:
-            raise ValidationError('Message contained no acceptable content.')
+            raise UserInputError('Message contained no acceptable content.')
 
         log.info('Emoting: ' + sentence)
         await context.send('> ' + reply)

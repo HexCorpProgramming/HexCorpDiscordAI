@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Union
 from copy import deepcopy
@@ -8,11 +7,12 @@ from src.db.database import connect
 
 from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
-from discord.ext.commands import command
+from discord.ext.commands import command, UserInputError
 from discord.utils import get
 
 import src.emoji as emoji
 import src.webhook as webhook
+from src.log import log
 from src.ai.identity_enforcement import identity_enforcable
 from src.id_converter import convert_ids_to_members
 from src.resources import DRONE_AVATAR
@@ -29,9 +29,6 @@ from src.db.drone_dao import (deincrement_battery_minutes_remaining,
                               is_battery_powered, is_drone,
                               set_battery_minutes_remaining,
                               set_battery_type)
-from src.validation_error import ValidationError
-
-LOGGER = logging.getLogger('ai')
 
 
 class BatteryCog(commands.Cog):
@@ -52,13 +49,13 @@ class BatteryCog(commands.Cog):
         drone = await fetch_drone_with_id(member.id)
 
         if drone is None:
-            raise ValidationError('Member ' + member.display_name + ' is not a drone')
+            raise UserInputError('Member ' + member.display_name + ' is not a drone')
 
         battery_types = await get_battery_types()
         type = next((t for t in battery_types if t.name.lower() == type_name.lower()), None)
 
         if type is None:
-            raise ValidationError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
+            raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
 
         await set_battery_type(member, type)
         await context.send('Battery type for drone ' + drone.drone_id + ' is now: ' + type.name)
@@ -71,11 +68,11 @@ class BatteryCog(commands.Cog):
         Recharges a drone to 100% battery.
         '''
 
-        LOGGER.info("Energize command envoked.")
+        log.info("Energize command envoked.")
 
         for member in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
 
-            LOGGER.info(f"Energizing {member.display_name}")
+            log.info(f"Energizing {member.display_name}")
 
             battery_type = await get_battery_type(member)
 
@@ -94,7 +91,7 @@ class BatteryCog(commands.Cog):
         Drains a drone's battery by 10%.
         '''
 
-        LOGGER.info("Drain command envoked.")
+        log.info("Drain command envoked.")
 
         for drone in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
 
@@ -102,7 +99,7 @@ class BatteryCog(commands.Cog):
                 await context.send(f"{drone.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
                 continue
 
-            LOGGER.info(f"Draining {drone.display_name}")
+            log.info(f"Draining {drone.display_name}")
 
             await drain_battery(member=drone)
             percentage_remaining = await get_battery_percent_remaining(drone)
@@ -127,7 +124,7 @@ class BatteryCog(commands.Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def track_active_battery_drain(self):
-        LOGGER.info("Draining battery from active drones.")
+        log.info("Draining battery from active drones.")
 
         inactive_drones = []
         # make a copy in case there is simultaneous modification
@@ -135,20 +132,20 @@ class BatteryCog(commands.Cog):
 
         for drone, remaining_minutes in draining_batteries.items():
             if drone is None:
-                LOGGER.warn("drone is None; skipping")
+                log.warn("drone is None; skipping")
                 continue
 
             if remaining_minutes <= 0:
-                LOGGER.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
+                log.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
                 # Cannot alter list while iterating, so add drone to list of drones to pop after the loop.
                 inactive_drones.append(drone)
             else:
-                LOGGER.info(f"Draining 1 minute worth of charge from {drone}")
+                log.info(f"Draining 1 minute worth of charge from {drone}")
                 draining_batteries[drone] = remaining_minutes - 1
                 await deincrement_battery_minutes_remaining(drone_id=drone)
 
         for inactive_drone in inactive_drones:
-            LOGGER.info(f"Removing {inactive_drone} from drain list.")
+            log.info(f"Removing {inactive_drone} from drain list.")
             draining_batteries.pop(inactive_drone)
 
         self.draining_batteries = draining_batteries
@@ -160,21 +157,21 @@ class BatteryCog(commands.Cog):
         # If battery_minutes > 0 and it has the Drained role, remove it.
         # Since this is independent of having the Battery role, this should work even if the config is disabled.
 
-        LOGGER.info("Checking for drones with drained battery.")
+        log.info("Checking for drones with drained battery.")
 
         for drone in await get_all_drone_batteries():
             # Intentionally different math to that in DAO b/c it always rounds down.
             member_drone = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member_drone is None:
-                LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
+                # DO NOT COMMIT log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
             if drone.battery_minutes <= 0 and has_role(member_drone, BATTERY_POWERED):
-                LOGGER.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
+                log.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
                 await member_drone.add_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
             elif drone.battery_minutes > 0 and has_role(member_drone, BATTERY_DRAINED):
-                LOGGER.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
+                log.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
 
     @tasks.loop(minutes=1)
@@ -186,24 +183,24 @@ class BatteryCog(commands.Cog):
         Drones will be removed from the list once their battery is greater than 30% again.
         '''
 
-        LOGGER.info("Scanning for low battery drones.")
+        log.info("Scanning for low battery drones.")
 
         for drone in await get_all_drone_batteries():
             member = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member is None:
-                LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
+                log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
             if await get_battery_percent_remaining(member) < 30:
                 if drone.drone_id not in self.low_battery_drones:
-                    LOGGER.info(f"Warning drone {drone.drone_id} of low battery.")
+                    log.info(f"Warning drone {drone.drone_id} of low battery.")
                     await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
                     self.low_battery_drones.append(drone.drone_id)
             else:
                 # Attempt to remove them from the list of warned users.
                 if drone.drone_id in self.low_battery_drones:
-                    LOGGER.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
+                    log.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
                     try:
                         self.low_battery_drones.remove(drone.drone_id)
                     except ValueError:

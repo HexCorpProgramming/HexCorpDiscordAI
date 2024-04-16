@@ -1,11 +1,8 @@
-import logging
-
 from typing import List
 from discord import Member
 from src.db.drone_dao import get_all_drones, add_new_drone_members, parse_trusted_users_text, set_trusted_users
 from src.db.database import connect
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 
 @connect()
@@ -30,10 +27,10 @@ async def trusted_user_cleanup(members: List[Member]):
 
         for trusted_user in trusted_users:
             if trusted_user not in members_ids:
-                LOGGER.debug(f'Trusted user with ID {trusted_user} not in the guild anymore; removing')
+                log.debug(f'Trusted user with ID {trusted_user} not in the guild anymore; removing')
                 trimmed_trusted_users.remove(trusted_user)
 
         # only do a DB change if something actually changed
         if not trimmed_trusted_users == trusted_users:
-            LOGGER.debug(f'Trimming {len(trusted_users) - len(trimmed_trusted_users)} trusted users from drone {drone.drone_id}')
+            log.debug(f'Trimming {len(trusted_users) - len(trimmed_trusted_users)} trusted users from drone {drone.drone_id}')
             await set_trusted_users(drone.discord_id, trimmed_trusted_users)

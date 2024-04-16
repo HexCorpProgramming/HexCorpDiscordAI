@@ -1,13 +1,11 @@
 import io
-import logging
 from typing import Any, Coroutine
 
 import discord
 
 from src.ai.data_objects import MessageCopy
+from src.log import log
 from src.resources import DRONE_AVATAR
-
-LOGGER = logging.getLogger("ai")
 
 
 async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, message_attachments=None, webhook=None, channel=None, embed=None) -> Coroutine[Any, Any, discord.WebhookMessage]:
@@ -21,7 +19,7 @@ async def proxy_message_by_webhook(message_content, message_username=None, messa
         webhook = await get_webhook_for_channel(channel)
 
     if webhook is None:
-        LOGGER.warn(f"Failed to retrieve a webhook. Could not proxy message: '{message_content}'")
+        log.warn(f"Failed to retrieve a webhook. Could not proxy message: '{message_content}'")
         return False
 
     return await webhook.send(message_content, avatar_url=message_avatar, username=message_username, files=message_attachments, embed=embed, wait=True)
@@ -48,7 +46,7 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
     avatar_differs = original.author.display_avatar.url != copy.avatar.url
     attachments_differ = original.attachments != copy.attachments
     if any([content_differs, display_name_differs, avatar_differs, attachments_differ, copy.identity_enforced]):
-        LOGGER.info("Proxying altered message.")
+        log.info("Proxying altered message.")
 
         # Convert available Attachment objects into File objects.
         attachments_as_files = []

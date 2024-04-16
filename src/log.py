@@ -55,6 +55,15 @@ class Log:
 
         self.logger.warning(self.prefix() + msg, *args, **kwargs)
 
+    def warn(self, *args, **kwargs) -> None:
+        '''
+        Log a warning message.
+
+        Alias for warning().
+        '''
+
+        self.warning(*args, **kwargs)
+
     def error(self, msg, *args, **kwargs) -> None:
         '''
         Log an error message.

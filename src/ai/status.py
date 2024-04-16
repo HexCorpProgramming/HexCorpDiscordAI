@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from collections.abc import Callable, Coroutine
 from typing import Any, List
@@ -9,8 +8,6 @@ from src.bot_utils import channels_only
 from src.bot_utils import COMMAND_PREFIX
 from src.channels import BOT_DEV_COMMS
 from src.resources import DRONE_AVATAR
-
-LOGGER = logging.getLogger('ai')
 
 ListenerType = Callable[[Message, Any | None], Coroutine[Any, Any, bool]]
 

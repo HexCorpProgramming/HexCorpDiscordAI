@@ -1,17 +1,16 @@
-import logging
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog, command, UserInputError
 from discord.ext import tasks
 from discord.utils import get
 
 from src.bot_utils import COMMAND_PREFIX, dm_only
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
 from src.resources import BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
+from src.log import log
 
-LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(hours=24)
 
 
@@ -66,7 +65,7 @@ class TrustedUserCog(Cog):
         question_message = await trusted_user.send(f"\"{drone_name}\" is requesting to add you as a trusted user. This request will expire in 24 hours. To accept or reject this request, reply to this message. (y/n)")
         question_message_id = int(question_message.id)
         request = TrustedUserRequest(trusted_user, context.author, question_message_id)
-        LOGGER.info(f"Adding a new trusted user addition request: {request}")
+        log.info(f"Adding a new trusted user addition request: {request}")
         self.trusted_user_requests.append(request)
         await context.reply(f"Request sent to \"{trusted_user.display_name}\". They have 24 hours to accept.")
 
@@ -89,7 +88,7 @@ class TrustedUserCog(Cog):
                 break
 
         if matching_request and message.reference and message.reference.message_id and message.reference.resolved.id == matching_request.question_message_id:
-            LOGGER.info(f"Message detected as response to a trusted user addition request {matching_request}")
+            log.info(f"Message detected as response to a trusted user addition request {matching_request}")
 
             # fetch display names of parties involved
             drone_name = request.issuer.display_name
@@ -97,7 +96,7 @@ class TrustedUserCog(Cog):
 
             # if accepted, start addition and notification process
             if message.content.lower() == "y".lower():
-                LOGGER.info("Consent given for trusted user addition. Writing to DB...")
+                log.info("Consent given for trusted user addition. Writing to DB...")
 
                 # get trusted user list and append new trusted user
                 trusted_users = await get_trusted_users(request.issuer.id)
@@ -113,7 +112,7 @@ class TrustedUserCog(Cog):
 
             # if rejected, discard request and notify parties involved
             elif message.content.lower() == "n".lower():
-                LOGGER.info("Consent not given for trusted user addition. Removing the request.")
+                log.info("Consent not given for trusted user addition. Removing the request.")
 
                 # notify user and drone of rejection
                 await message.reply(f"Consent not given. You have not been added as a trusted user of \"{drone_name}\".")
@@ -127,18 +126,15 @@ async def remove_trusted_user(context, trusted_user_name: str):
     trusted_user = await find_user_by_display_name_or_drone_id(trusted_user_name, context.bot.guilds[0])
 
     if trusted_user is None:
-        await context.reply(f"No user with name \"{trusted_user_name}\" found.")
-        return
+        raise UserInputError(f"No user with name \"{trusted_user_name}\" found.")
 
     trusted_users = await get_trusted_users(context.author.id)
 
     if str(trusted_user.id) == HIVE_MXTRESS_USER_ID:
-        await context.reply("Can not remove the Hive Mxtress as a trusted user.")
-        return
+        raise UserInputError("Can not remove the Hive Mxtress as a trusted user.")
 
     if trusted_user.id not in trusted_users:
-        await context.reply(f"User with name \"{trusted_user.display_name}\" was not trusted.")
-        return
+        raise UserInputError(f"User with name \"{trusted_user.display_name}\" was not trusted.")
 
     trusted_users.remove(trusted_user.id)
     await set_trusted_users(context.author.id, trusted_users)

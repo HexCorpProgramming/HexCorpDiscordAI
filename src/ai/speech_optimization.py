@@ -1,4 +1,3 @@
-import logging
 import re
 from enum import Enum
 
@@ -8,6 +7,7 @@ from src.bot_utils import get_id
 from src.channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.db.drone_dao import is_drone
 from src.resources import code_map
+from src.log import log
 
 
 class StatusType(Enum):
@@ -26,8 +26,6 @@ class StatusType(Enum):
     ADDRESS_BY_ID_INFORMATIVE = 5
     # "5890 :: 110 :: 9813 :: You are cute!"
 
-
-LOGGER = logging.getLogger('ai')
 
 status_code_regex = re.compile(r'^((\d{4}) :: (\d{3}))( :: (.*))?$', re.DOTALL)
 '''
@@ -110,12 +108,17 @@ async def optimize_speech(message: discord.Message, message_copy):
         return False
 
     # Confirm the status starts with the drone's ID
-    if code_match.group(2) != get_id(message.author.display_name):
-        LOGGER.info("Status did not match drone ID.")
+    message_id = code_match.group(2)
+    drone_id = get_id(message.author.display_name)
+
+    if message_id != drone_id:
+        log.info("Status {message_id} did not match drone ID {drone_id}.")
         await message.delete()
         return True
 
     # Build message based on status type.
     message_copy.content = build_status_message(status_type, code_match, address_match)
+
+    log.info('Created status message: ' + message_copy.content)
 
     return False

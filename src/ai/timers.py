@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 from discord.ext import commands, tasks
@@ -11,8 +10,7 @@ from src.db.timer_dao import delete_timer, get_timers_elapsed_before
 from src.display_names import update_display_name
 from src.roles import (GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
                        SPEECH_OPTIMIZATION, BATTERY_POWERED)
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 MODE_TO_ROLE = {
     'optimized': SPEECH_OPTIMIZATION,
@@ -35,7 +33,7 @@ class TimersCog(commands.Cog):
         Check for elapsed timers and disable configs if any are found.
         '''
 
-        LOGGER.info("Checking for elapsed timers.")
+        log.debug("Checking for elapsed timers.")
 
         for elapsed_timer in await get_timers_elapsed_before(datetime.now()):
             drone_member = self.bot.guilds[0].get_member(elapsed_timer.discord_id)
@@ -44,4 +42,4 @@ class TimersCog(commands.Cog):
             await drone_member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[elapsed_timer.mode]))
             await update_display_name(drone_member)
             await set_can_self_configure(drone_member)
-            LOGGER.info(f"Elapsed timer for {drone_member.display_name}; toggled off {elapsed_timer.mode}")
+            log.info(f"Elapsed timer for {drone_member.display_name}; toggled off {elapsed_timer.mode}")

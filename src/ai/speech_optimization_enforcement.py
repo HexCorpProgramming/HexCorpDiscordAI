@@ -1,16 +1,13 @@
-import logging
-
 from src.ai.speech_optimization import StatusType, get_status_type
 from src.bot_utils import get_id
 from src.channels import (MODERATION_CATEGORY, MODERATION_CHANNEL, MODERATION_LOG,
                           ORDERS_COMPLETION, ORDERS_REPORTING, REPETITIONS)
 from src.db.drone_dao import is_optimized
 from src.resources import HEXCORP_MANTRA
+from src.log import log
 
 CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
-
-LOGGER = logging.getLogger('ai')
 
 
 async def enforce_speech_optimization(message, message_copy):
@@ -33,7 +30,7 @@ async def enforce_speech_optimization(message, message_copy):
         (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
         (message.channel.category.name == MODERATION_CATEGORY)
     ]):
-        LOGGER.info("Skipping enforced optimization in blacklisted channel.")
+        log.debug("Skipping enforced optimization in blacklisted channel.")
         return False
 
     # Strip message attachments of optimized drone.
@@ -42,7 +39,7 @@ async def enforce_speech_optimization(message, message_copy):
     status_type, _, _ = get_status_type(message_copy.content)
 
     if status_type not in (StatusType.PLAIN, StatusType.ADDRESS_BY_ID_PLAIN) or status_type == StatusType.NONE:
-        LOGGER.info("Optimized drone has posted an informative or otherwise inappropriate status message. Deleting.")
+        log.info(f"Optimized drone {drone_id} has posted an informative or otherwise inappropriate status message. Deleting.")
         # Optimized drone posted an informative status message. Delete.
         await message.delete()
         return True

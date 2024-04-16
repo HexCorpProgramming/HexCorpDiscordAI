@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from typing import List, Optional
 
@@ -9,8 +8,6 @@ from src.db.database import change, fetchall, fetchone, fetchcolumn
 from src.resources import HIVE_MXTRESS_USER_ID
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
-
-LOGGER = logging.getLogger('ai')
 
 
 async def add_new_drone_members(members: List[discord.Member]):
