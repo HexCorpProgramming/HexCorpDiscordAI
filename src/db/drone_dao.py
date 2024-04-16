@@ -133,6 +133,15 @@ async def is_identity_enforced(member: discord.Member) -> bool:
     return enforced_drone is not None and bool(enforced_drone['identity_enforcement'])
 
 
+async def is_third_person_enforced(member: discord.Member) -> bool:
+    '''
+    Determines if the given member is a drone and third-person enforced.
+    '''
+
+    enforced_drone = await fetchone('SELECT third_person_enforcement FROM drone WHERE discord_id = :discord', {'discord': member.id})
+    return enforced_drone is not None and bool(enforced_drone['third_person_enforcement'])
+
+
 async def can_self_configure(member: discord.Member) -> bool:
     '''
     Determines if the given member is a drone and can self-configure its other configs.
