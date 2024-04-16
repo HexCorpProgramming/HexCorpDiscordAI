@@ -3,6 +3,7 @@ from unittest.mock import patch, Mock
 from src.ai.drone_os_status import get_status
 import src.roles as roles
 from src.db.drone_dao import BatteryType, Drone
+from src.validation_error import ValidationError
 
 
 class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
@@ -48,11 +49,10 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         member = Mock(id='9813snowflake')
 
         # run
-        status = await get_status(member, 782638723, context)
+        with self.assertRaises(ValidationError, msg='You are not registered as a trusted user of this drone.'):
+            await get_status(member, 782638723, context)
 
         # assert
-        self.assertIsNotNone(status)
-        self.assertEqual("You are not registered as a trusted user of this drone.", status.description)
         fetch_drone_with_id.assert_called_once_with('9813snowflake')
         get_trusted_users.assert_called_once_with(drone.discord_id)
 

@@ -1,4 +1,3 @@
-import logging
 from typing import Union
 
 import discord
@@ -9,8 +8,8 @@ from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.bot_utils import COMMAND_PREFIX
 from src.roles import MODERATION_ROLES, has_any_role
 from src.ai.commands import DroneMemberConverter
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
+from src.validation_error import ValidationError
 
 
 class DroneOsStatusCog(Cog):
@@ -21,10 +20,12 @@ class DroneOsStatusCog(Cog):
         Displays all the DroneOS information you have access to about a drone.
         '''
         response = await get_status(member, context.author.id, context)
+
         if response is None:
-            await context.author.send('The specified member is not a drone')
-        if response is not None:
-            await context.author.send(embed=response)
+            raise ValidationError('The specified member is not a drone')
+
+        log.info('Sending DroneOS status')
+        await context.author.send(embed=response)
 
 
 async def get_status(member: discord.Member, requesting_user: int, context) -> discord.Embed:
@@ -46,8 +47,7 @@ async def get_status(member: discord.Member, requesting_user: int, context) -> d
 
     # return early when this request is not authorized
     if not is_trusted_user and not is_drone_self and not is_moderation:
-        embed.description = "You are not registered as a trusted user of this drone."
-        return embed
+        raise ValidationError("You are not registered as a trusted user of this drone.")
 
     battery_type = await get_battery_type(member)
 
