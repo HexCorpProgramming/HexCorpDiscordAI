@@ -164,7 +164,7 @@ class BatteryCog(commands.Cog):
             member_drone = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member_drone is None:
-                # DO NOT COMMIT log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
+                log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
             if drone.battery_minutes <= 0 and has_role(member_drone, BATTERY_POWERED):

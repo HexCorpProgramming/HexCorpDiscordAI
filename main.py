@@ -289,6 +289,10 @@ async def on_member_remove(member: discord.Member):
 
 
 async def report_error(target: discord.Member | discord.TextChannel | Context, message: str) -> None:
+    '''
+    Send an error message to the user.
+    '''
+
     log.info(message)
     await target.send(message)
 
