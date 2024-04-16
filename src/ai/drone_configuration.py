@@ -1,18 +1,17 @@
-import logging
 import random
 from datetime import datetime, timedelta
 from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
 import discord
-from discord.ext.commands import Cog, command, Greedy, guild_only, dm_only
+from discord.ext.commands import Cog, Greedy, guild_only, dm_only
 from discord.utils import get
 
 import src.webhook as webhook
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.identity_enforcement import identity_enforcable
 from src.ai.storage import release
-from src.bot_utils import channels_only, COMMAND_PREFIX, get_id, hive_mxtress_only
+from src.bot_utils import channels_only, command, COMMAND_PREFIX, get_id, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
@@ -31,8 +30,8 @@ from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
                        SPEECH_OPTIMIZATION, STORED, has_any_role, has_role)
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
+from src.validation_error import ValidationError
 
 MINUTES_PARAMETER = "minutes"
 
@@ -163,14 +162,14 @@ class DroneConfigurationCog(Cog):
 
 async def rename_drone(context, old_id: str, new_id: str):
     if len(old_id) != 4 or len(new_id) != 4:
-        return
-    if not old_id.isnumeric() or not new_id.isnumeric():
-        return
+        raise ValidationError('Drone IDs must be four digit numbers')
 
-    LOGGER.info("IDs to rename drone to and from are both valid.")
+    if not old_id.isnumeric() or not new_id.isnumeric():
+        raise ValidationError('Drone IDs must be four digit numbers')
 
     # check for collisions
     collision = await fetch_drone_with_drone_id(new_id)
+
     if collision is None:
         drone = await fetch_drone_with_drone_id(old_id)
         member = context.guild.get_member(drone.discord_id)
@@ -178,8 +177,9 @@ async def rename_drone(context, old_id: str, new_id: str):
         await member.edit(nick=f'⬡-Drone #{new_id}')
         await update_display_name(member)
         await context.send(f"Successfully renamed drone {old_id} to {new_id}.")
+        log.info(f"Renamed drone {old_id} to {new_id}.")
     else:
-        await context.send(f"ID {new_id} already in use.")
+        raise ValidationError(f"ID {new_id} already in use.")
 
 
 async def unassign_drone(target: discord.Member):
@@ -188,12 +188,7 @@ async def unassign_drone(target: discord.Member):
 
     # check for existence
     if drone is None:
-        try:
-            await target.send("You are not a drone. Can not unassign.")
-        except Exception:
-            # Sending will fail if target is a Discord bot.
-            pass
-        return
+        raise ValidationError("You are not a drone. Can not unassign.")
 
     await target.edit(nick=drone.associate_name)
     await target.remove_roles(get(guild.roles, name=DRONE), get(guild.roles, name=STORED), get(guild.roles, name=SPEECH_OPTIMIZATION), get(guild.roles, name=GLITCHED), get(guild.roles, name=ID_PREPENDING), get(guild.roles, name=IDENTITY_ENFORCEMENT), get(guild.roles, name=BATTERY_POWERED), get(guild.roles, name=BATTERY_DRAINED))
@@ -201,6 +196,8 @@ async def unassign_drone(target: discord.Member):
 
     # remove from DB
     await delete_drone_by_drone_id(drone.drone_id)
+
+    log.info(f'Unassigned drone {drone.drone_id}')
 
     try:
         await target.send(f"Drone with ID {drone.drone_id} unassigned.")
@@ -213,8 +210,7 @@ async def emergency_release(context, drone_id: str):
     drone_member = await convert_id_to_member(context.guild, drone_id)
 
     if drone_member is None:
-        await context.channel.send(f"No drone with ID {drone_id} found.")
-        return
+        raise ValidationError(f"No drone with ID {drone_id} found.")
 
     await release(context, drone_id)
 
@@ -227,6 +223,7 @@ async def emergency_release(context, drone_id: str):
     await update_display_name(drone_member)
 
     await context.channel.send(f"Restrictions disabled for drone {drone_id}.")
+    log.info(f'Emergency released drone {drone_id}')
 
 
 async def can_toggle_permissions_for(toggling_user: discord.Member,
@@ -289,7 +286,7 @@ async def toggle_parameter(context,
                     timer = Timer(str(uuid4()), drone.id, toggle_column, end_time)
                     await insert_timer(timer)
                     message = toggle_on_timed_message(minutes)
-                    LOGGER.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
+                    log.info(f"Created a new config timer for {drone.display_name} toggling on {toggle_column} elapsing at {end_time}")
 
             is_admin = has_role(drone, ADMIN)
             if await update_display_name(drone) and not is_admin:
@@ -313,14 +310,15 @@ async def toggle_free_storage(target: discord.Member):
 
     # check for existence
     if drone is None:
-        await target.send("You are not a drone. Cannot toggle this parameter.")
-        return
+        raise ValidationError("You are not a drone. Cannot toggle this parameter.")
 
-    if await is_free_storage(target):
+    if await is_free_storage(drone):
         await update_droneOS_parameter(target, "free_storage", False)
         await target.remove_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")
+        log.info('Free storage disabled')
     else:
         await update_droneOS_parameter(target, "free_storage", True)
         await target.add_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage enabled. You can now be stored by anyone.")
+        log.info('Free storage enabled')

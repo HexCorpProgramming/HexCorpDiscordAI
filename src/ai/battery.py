@@ -29,6 +29,7 @@ from src.db.drone_dao import (deincrement_battery_minutes_remaining,
                               is_battery_powered, is_drone,
                               set_battery_minutes_remaining,
                               set_battery_type)
+from src.validation_error import ValidationError
 
 LOGGER = logging.getLogger('ai')
 
@@ -51,17 +52,13 @@ class BatteryCog(commands.Cog):
         drone = await fetch_drone_with_id(member.id)
 
         if drone is None:
-            # TODO: Throw a ValidationError once that PR is merged.
-            await context.send('Member ' + member.display_name + ' is not a drone')
-            return
+            raise ValidationError('Member ' + member.display_name + ' is not a drone')
 
         battery_types = await get_battery_types()
         type = next((t for t in battery_types if t.name.lower() == type_name.lower()), None)
 
         if type is None:
-            # TODO: Throw a ValidationError once that PR is merged.
-            await context.send('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
-            return
+            raise ValidationError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
 
         await set_battery_type(member, type)
         await context.send('Battery type for drone ' + drone.drone_id + ' is now: ' + type.name)

@@ -12,6 +12,7 @@ from src.db.drone_dao import insert_drone, get_used_drone_ids
 from src.db.data_objects import Drone
 from src.bot_utils import get_id
 from src.resources import HIVE_MXTRESS_USER_ID
+from src.log import log
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -30,13 +31,14 @@ async def check_for_assignment_message(message: discord.Message, message_copy=No
     if message.channel.name != ASSIGNMENT_CHANNEL:
         return False
 
-    # member has not been on the server for the required period
-    if message.author.joined_at > datetime.now(timezone.utc) - timedelta(hours=24):
-        await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
-        return False
-
     # if the message is correct for being added, yay! if not, delete the message and let them know its bad
     if message.content == ASSIGNMENT_MESSAGE:
+        # member has not been on the server for the required period
+        if message.author.joined_at > datetime.now(timezone.utc) - timedelta(hours=24):
+            log.info('Denying drone assignment. User has not existed for 24 hours.')
+            await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
+            return False
+
         await create_drone(message.guild, message.author, message.channel)
     else:
         await messages.delete_request(message, ASSIGNMENT_REJECT)
@@ -59,6 +61,7 @@ async def create_drone(guild: discord.Guild,
     assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
     if assigned_id is not None:
         if assigned_id in used_ids:  # make sure display name number doesnt conflict
+            log.info('Drone creation failed: ID {assigned_id} is already assigned.')
             await feedback_channel.send(f'{target.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
             return True
     elif is_hive_mxtress:
@@ -86,3 +89,5 @@ async def create_drone(guild: discord.Guild,
     new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until, can_self_configure=True, associate_name=associate_name)
     await insert_drone(new_drone)
     await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')
+
+    log.info(f'Created drone {assigned_id}')

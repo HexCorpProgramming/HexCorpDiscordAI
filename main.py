@@ -338,17 +338,20 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(context, error):
-    if isinstance(error, MissingRequiredArgument):
-        # missing arguments should not be that noisy and can be reported to the user
-        log.info(f"Missing parameter {error.param.name} reported to user.")
-        await context.send(f"`{error.param.name}` is a required argument that is missing.")
-    elif isinstance(error, PrivateMessageOnly):
-        await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-    elif hasattr(error, 'original') and isinstance(error.original, ValidationError):
-        await context.send(str(error.original))
-    else:
-        log.error(f"!!! Exception caught in {context.command} command !!!")
-        log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
+    with LogContext('Command error from ' + context.command.cog_name + '.' + context.command.name + '()'):
+        if isinstance(error, MissingRequiredArgument):
+            # missing arguments should not be that noisy and can be reported to the user
+            log.info(f"Missing parameter {error.param.name} reported to user.")
+            await context.send(f"`{error.param.name}` is a required argument that is missing.")
+        elif isinstance(error, PrivateMessageOnly):
+            log.info('Command is only available in DM')
+            await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
+        elif hasattr(error, 'original') and isinstance(error.original, ValidationError):
+            log.info('Validation error: ' + str(error.original))
+            await context.send(str(error.original))
+        else:
+            log.error(f"!!! Exception caught in {context.command} command !!!")
+            log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 
 
 @bot.event

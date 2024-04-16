@@ -13,9 +13,7 @@ from src.resources import DRONE_AVATAR
 from src.db.drone_dao import fetch_drone_with_id
 from src.roles import has_role, HIVE_VOICE
 from random import sample
-import logging
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 
 class AmplificationCog(Cog):
@@ -34,7 +32,7 @@ class AmplificationCog(Cog):
             members = [m for m in target_channel.members if has_role(m, HIVE_VOICE)]
             members = sample(members, min(len(members), count))
 
-        LOGGER.info('Amplifying message "' + message + '" via ' + str(len(members)) + ' drones in #' + target_channel.name)
+        log.info('Amplifying message "' + message + '" via ' + str(len(members)) + ' drones in #' + target_channel.name)
 
         channel_webhook = await webhook.get_webhook_for_channel(target_channel)
 
