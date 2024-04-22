@@ -15,13 +15,12 @@ from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.database import connect
 from src.db.data_objects import Drone
 from src.db.data_objects import Storage as Storage
-from src.db.drone_dao import (fetch_drone_with_drone_id, fetch_drone_with_id, get_trusted_users, is_free_storage)
+from src.db.drone_dao import fetch_drone_with_drone_id, get_trusted_users, is_free_storage
 from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
                                 fetch_all_storage, fetch_storage_by_target_id,
                                 insert_storage)
-from src.ai.commands import DroneMemberConverter
-from typing import Union
 from src.log import log
+from src.drone_member import DroneMember
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -45,7 +44,7 @@ class StorageCog(Cog):
     @guild_only()
     @hive_mxtress_only()
     @command(usage=f'{COMMAND_PREFIX}release 9813')
-    async def release(self, context, member: Union[discord.Member, DroneMemberConverter]):
+    async def release(self, context, member: DroneMember):
         '''
         Allows the Hive Mxtress to release a drone from storage.
         '''
@@ -57,22 +56,22 @@ class StorageCog(Cog):
 
         log.info("Reporting storage.")
 
-        stored_drones = await fetch_all_storage()
-        if len(stored_drones) == 0:
+        storages = await fetch_all_storage()
+        if len(storages) == 0:
             await self.storage_channel.send('No drones in storage.')
         else:
-            for stored in stored_drones:
+            for storage in storages:
                 # calculate remaining hours
-                remaining_hours = hours_from_now(datetime.fromisoformat(stored.release_time))
-                initiator_drone = await fetch_drone_with_id(stored.stored_by)
-                stored_drone = await fetch_drone_with_id(stored.target_id)
+                remaining_hours = hours_from_now(datetime.fromisoformat(storage.release_time))
+                stored_drone = await Drone.load(discord_id=storage.target_id)
 
-                if stored.stored_by is None:
+                if storage.stored_by is None:
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
                 else:
+                    initiator_drone = await Drone.load(discord_id=storage.stored_by)
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by `Drone #{initiator_drone.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
-                await recharge_battery(stored)
+                await recharge_battery(stored_drone)
 
     @report_storage.before_loop
     async def get_storage_channel(self):
@@ -208,10 +207,13 @@ async def initiate_drone_storage(drone_to_store: Drone, initiator: Drone, time: 
     return False
 
 
-async def release(context, member: discord.Member):
+async def release(context, member: DroneMember):
     '''
     Relase a drone from storage on command.
     '''
+
+    # TODO: Add storage record to Drone and refactor this.
+
     if not roles.has_any_role(context.author, roles.MODERATION_ROLES):
         return False
 

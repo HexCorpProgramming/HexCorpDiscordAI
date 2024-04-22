@@ -4,7 +4,7 @@ from typing import Any, List
 from functools import wraps
 from inspect import iscoroutine
 
-log_contexts: List[str] = ContextVar('log_contexts', default=[])
+log_contexts: ContextVar[List[str]] = ContextVar('log_contexts', default=[])
 
 
 class Log:

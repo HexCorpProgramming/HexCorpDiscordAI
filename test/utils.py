@@ -4,7 +4,7 @@ from discord.utils import get
 from functools import wraps
 from typing import Any, Callable, Type
 from src.bot_utils import COMMAND_PREFIX
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
@@ -54,6 +54,13 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         # Create the author's Member record.
         author = AsyncMock(bot=False, id=1)
 
+        # Set up the mocks required to return the given members from the DroneMember converter.
+        @patch('src.drone_member.MemberConverter')
+        @patch('src.drone_member.Drone')
+        def set_drone_members(self, Drone, MemberConverter, *drone_members) -> None:
+            MemberConverter.convert.side_effects = [*drone_members]
+            Drone.side_effects = [dm.drone for dm in drone_members]
+
         # Create a message.
         def create_message(channel_name='', content='', **kwargs) -> Message:
             '''
@@ -61,6 +68,8 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
 
             Channel: The channel name, e.g. general.
             Content: The message's text.
+
+            Any additional keyword parameters are set as properties on the message.
             '''
 
             guild = MagicMock()
@@ -70,6 +79,7 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             guild.query_members = AsyncMock(return_value=[])
 
             message = AsyncMock(mentions=[], author=author)
+            message.set_drone_members = set_drone_members
             channel = get(channels, name=channel_name)
 
             if channel is not None:
@@ -92,7 +102,31 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
 
             return message
 
+        # Create a DM.
+        def create_direct_message(content='', **kwargs) -> Message:
+            '''
+            Create a new mock Message object.
+
+            Content: The message's text.
+
+            Any additional keyword parameters are set as properties on the message.
+            '''
+
+            message = AsyncMock(mentions=[], author=author)
+            message.set_drone_members = set_drone_members
+            message.guild = None
+            message.content = content
+
+            message.state = AsyncMock()
+            message.state.create_message = MagicMock()
+
+            for n, v in kwargs.items():
+                setattr(message, n, v)
+
+            return message
+
         bot.create_message = create_message
+        bot.create_direct_message = create_direct_message
 
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:

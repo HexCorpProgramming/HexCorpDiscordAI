@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from uuid import uuid4
-from typing import Union
-
-from discord import Embed, Member
+from discord import Embed
 from discord.ext import tasks
 from discord.ext.commands import Cog, command, UserInputError
 from discord.utils import get
@@ -15,7 +13,7 @@ from src.db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
                                     get_order_by_drone_id, insert_drone_order)
 from src.db.drone_dao import fetch_drone_with_id
 from src.roles import DRONE, has_role
-from src.ai.commands import DroneMemberConverter
+from src.drone_member import DroneMember
 from src.resources import HEXCORP_AVATAR
 from src.log import log
 
@@ -36,7 +34,7 @@ class OrderReportingCog(Cog):
 
     @channels_only(ORDERS_REPORTING)
     @command(usage=f'{COMMAND_PREFIX}report_complete "Order Name" 1234 Order description...', rest_is_raw=True)
-    async def report_complete(self, context, order_name: str, member: Union[Member | DroneMemberConverter], *, order_description: str):
+    async def report_complete(self, context, order_name: str, member: DroneMember, *, order_description: str):
         # Check that the correct parameters were supplied.
         if not order_name or not order_description:
             raise UserInputError('Please supply an order name and description')

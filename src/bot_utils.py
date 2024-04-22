@@ -1,14 +1,36 @@
 import re
 from discord.ext.commands import check, command as bot_command, Context, CheckFailure, PrivateMessageOnly
 from src.roles import HIVE_MXTRESS, has_role
-from typing import Any, Callable, Coroutine, Optional, TypeVar
+from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar
 from functools import wraps
 from src.log import LogContext
 
 COMMAND_PREFIX = 'hc!'
-T = TypeVar("T")
+T = TypeVar('T')
 CommandFuncType = Callable[..., Coroutine[Any, Any, None]]
 CommandFuncDecoratorType = Callable[[CommandFuncType], CommandFuncType]
+
+
+def fetch(collection: Iterable[T], **kwargs: Any) -> T:
+    '''
+    Find an item in a collection with the given property.
+
+    Example:
+
+    member = fetch(guild.members, id=12345)
+
+    Returns an item from the collection.
+
+    Raise an Exception if no item was found.
+    '''
+
+    key, value = kwargs.items()[0]
+
+    for item in collection:
+        if getattr(item, key) == value:
+            return item
+
+    raise Exception('Item not found')
 
 
 def channels_only(*channels: str) -> Callable[[T], T]:

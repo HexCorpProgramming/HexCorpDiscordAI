@@ -11,6 +11,7 @@ from src.display_names import update_display_name
 from src.roles import (GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
                        SPEECH_OPTIMIZATION, BATTERY_POWERED)
 from src.log import log
+from src.drone_member import DroneMember
 
 MODE_TO_ROLE = {
     'optimized': SPEECH_OPTIMIZATION,
@@ -36,7 +37,7 @@ class TimersCog(commands.Cog):
         log.debug("Checking for elapsed timers.")
 
         for elapsed_timer in await get_timers_elapsed_before(datetime.now()):
-            drone_member = self.bot.guilds[0].get_member(elapsed_timer.discord_id)
+            drone_member = DroneMember(self.bot.guilds[0].get_member(elapsed_timer.discord_id))
             await update_droneOS_parameter(drone_member, elapsed_timer.mode, False)
             await delete_timer(elapsed_timer.id)
             await drone_member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[elapsed_timer.mode]))

@@ -1,5 +1,4 @@
 import re
-from typing import Union
 from copy import deepcopy
 from typing import Dict, List
 from src.ai.data_objects import MessageCopy
@@ -7,28 +6,21 @@ from src.db.database import connect
 
 from discord import Emoji, Guild, Member, Message
 from discord.ext import commands, tasks
-from discord.ext.commands import command, UserInputError
+from discord.ext.commands import command, Greedy, UserInputError
 from discord.utils import get
 
 import src.emoji as emoji
 import src.webhook as webhook
 from src.log import log
-from src.ai.identity_enforcement import identity_enforcable
-from src.id_converter import convert_ids_to_members
-from src.resources import DRONE_AVATAR
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, has_role
 from src.bot_utils import COMMAND_PREFIX, get_id, hive_mxtress_only
-from src.ai.commands import DroneMemberConverter
+from src.drone_member import DroneMember
 from src.db.drone_dao import (deincrement_battery_minutes_remaining,
-                              fetch_drone_with_id,
                               get_all_drone_batteries,
-                              get_battery_minutes_remaining,
                               get_battery_percent_remaining,
-                              get_battery_type,
                               get_battery_types,
-                              is_battery_powered, is_drone,
-                              set_battery_minutes_remaining,
-                              set_battery_type)
+                              is_battery_powered, is_drone)
+from src.db.data_objects import Drone
 
 
 class BatteryCog(commands.Cog):
@@ -40,13 +32,13 @@ class BatteryCog(commands.Cog):
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
-    async def set_battery_type(self, context, member: Union[Member, DroneMemberConverter], type_name: str):
+    async def set_battery_type(self, context, member: DroneMember, type_name: str):
         '''
         Hive Mxtress only command.
         Changes the drone's battery capacity and recharge rate.
         '''
 
-        drone = await fetch_drone_with_id(member.id)
+        drone = member.drone
 
         if drone is None:
             raise UserInputError('Member ' + member.display_name + ' is not a drone')
@@ -57,12 +49,13 @@ class BatteryCog(commands.Cog):
         if type is None:
             raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
 
-        await set_battery_type(member, type)
+        member.drone.battery_type_id = type.id
+        await member.drone.save()
         await context.send('Battery type for drone ' + drone.drone_id + ' is now: ' + type.name)
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}energize 3287")
-    async def energize(self, context, *drone_ids):
+    async def energize(self, context, members: Greedy[DroneMember]):
         '''
         Hive Mxtress only command.
         Recharges a drone to 100% battery.
@@ -70,22 +63,25 @@ class BatteryCog(commands.Cog):
 
         log.info("Energize command envoked.")
 
-        for member in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
+        for member in members:
 
             log.info(f"Energizing {member.display_name}")
 
-            battery_type = await get_battery_type(member)
+            if member.drone is None:
+                continue
 
-            await set_battery_minutes_remaining(member, battery_type.capacity)
+            member.drone.battery_minutes = member.drone.battery_type.capacity
+            await member.drone.save()
+
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(member.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
+            await webhook.proxy_message_by_webhook(message_content=f'{member.drone.drone_id} :: This unit is fully recharged. Thank you Hive Mxtress.',
                                                    message_username=member.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(member, channel=context.message.channel) else (member.avatar.url if member.avatar else None),
+                                                   message_avatar=member.avatar_url(context.message.channel),
                                                    webhook=channel_webhook)
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}drain 3287")
-    async def drain(self, context, *drone_ids):
+    async def drain(self, context, members: Greedy[DroneMember]):
         '''
         Hive Mxtress only command.
         Drains a drone's battery by 10%.
@@ -93,20 +89,27 @@ class BatteryCog(commands.Cog):
 
         log.info("Drain command envoked.")
 
-        for drone in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
+        for member in members:
+            drone = member.drone
 
-            if not await is_battery_powered(drone):
-                await context.send(f"{drone.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
+            if drone is None:
                 continue
 
-            log.info(f"Draining {drone.display_name}")
+            if not drone.is_battery_powered:
+                await context.send(f"{member.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
+                continue
 
-            await drain_battery(member=drone)
-            percentage_remaining = await get_battery_percent_remaining(drone)
+            log.info(f"Draining {member.display_name}")
+
+            # Reduces the battery charge of a drone by 10%.
+            drone.battery_minutes = max(0, drone.battery_minutes - drone.battery_type.capacity / 10)
+            await drone.save()
+
+            percentage_remaining = drone.get_battery_percent_remaining()
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
+            await webhook.proxy_message_by_webhook(message_content=f'{drone.drone_id} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
                                                    message_username=drone.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) or drone.avatar is None else drone.avatar.url,
+                                                   message_avatar=member.avatar_url(),
                                                    webhook=channel_webhook)
 
     async def start_battery_drain(self, message, message_copy=None):
@@ -257,22 +260,10 @@ def determine_battery_emoji(battery_percentage: int, guild: Guild) -> Emoji | st
         return "[BATTERY ERROR]"
 
 
-async def recharge_battery(member: Member) -> None:
+async def recharge_battery(drone: Drone) -> None:
     '''
-    Fills the battery of a drone in storage up to max.
-    '''
-
-    current_minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
-    await set_battery_minutes_remaining(member, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
-
-
-async def drain_battery(member: Member):
-    '''
-    Reduces the battery charge of a drone by 10%.
+    Adds one hour of charge to the drone's battery.
     '''
 
-    minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
-
-    await set_battery_minutes_remaining(member, minutes_remaining - battery_type.capacity / 10)
+    drone.battery_minutes = min(drone.battery_type.capacity, drone.battery_minutes + drone.battery_type.recharge_rate)
+    await drone.save()

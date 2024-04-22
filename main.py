@@ -287,7 +287,7 @@ async def on_member_remove(member: discord.Member):
         await drone_dao.delete_drone_by_drone_id(drone.drone_id)
 
     # remove the user from all trusted user lists
-    await trusted_user.remove_trusted_user_on_all(member.id)
+    await drone_dao.remove_trusted_user_on_all(member.id)
 
 
 async def report_error(target: discord.Member | discord.TextChannel | Context, message: str) -> None:

@@ -195,66 +195,11 @@ async def get_battery_minutes_remaining(member: discord.Member) -> int:
     return drone['battery_minutes']
 
 
-async def get_battery_percent_remaining(member: discord.Member) -> int:
-    '''
-    Gets value of battery_minutes as a percentage.
-    Raises an Exception if drone is not found.
-    '''
-
-    result = await fetchone(
-        'SELECT round(100.0 * drone.battery_minutes / battery_types.capacity) AS percent '
-        'FROM drone '
-        'INNER JOIN battery_types ON battery_types.id = drone.battery_type_id '
-        'WHERE drone.discord_id = :discord_id',
-        {'discord_id': member.id}
-    )
-
-    if result is None:
-        raise Exception('No drone record for member ' + str(member.id))
-
-    return int(result['percent'])
-
-
-async def get_trusted_users(discord_id: int) -> List[int]:
-    '''
-    Finds the list of trusted users for the drone with the given discord ID.
-    '''
-
-    row = await fetchone('SELECT trusted_users FROM drone WHERE discord_id = :discord', {'discord': discord_id})
-
-    return parse_trusted_users_text(row['trusted_users']) if row is not None else []
-
-
-def parse_trusted_users_text(trusted_users_text: str) -> List[int]:
-    '''
-    Parses the given list of trusted_users of a drone into a list of discord IDs corresponding to the users.
-    '''
-    if not trusted_users_text:
-        return []
-    else:
-        return [int(user) for user in trusted_users_text.split("|")]
-
-
-async def set_trusted_users(discord_id: int, trusted_users: List[int]):
-    '''
-    Sets the trusted_users list of the drone with the given discord ID to the given list.
-    '''
-    trusted_users_text = "|".join([str(trusted_user) for trusted_user in trusted_users])
-    await change("UPDATE drone SET trusted_users = :trusted_users_text WHERE discord_id = :discord", {'trusted_users_text': trusted_users_text, 'discord': discord_id})
-
-
 async def fetch_all_elapsed_temporary_dronification() -> List[Drone]:
     '''
     Finds all drones, whose temporary dronification timer is up.
     '''
     return map_to_objects(await fetchall('SELECT * FROM drone WHERE temporary_until < :now', {'now': datetime.now()}), Drone)
-
-
-async def fetch_all_drones_with_trusted_user(trusted_user_id: int) -> List[Drone]:
-    '''
-    Finds all drones, that have the user with the given ID as a trusted user.
-    '''
-    return map_to_objects(await fetchall("SELECT drone.* FROM drone WHERE drone.trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"}), Drone)
 
 
 async def is_free_storage(drone: Drone) -> bool:
@@ -263,28 +208,6 @@ async def is_free_storage(drone: Drone) -> bool:
     '''
     free_storage_drone = await fetchone('SELECT free_storage FROM drone WHERE discord_id = :discord', {'discord': drone.discord_id})
     return free_storage_drone is not None and bool(free_storage_drone['free_storage'])
-
-
-async def get_battery_type(member: discord.Member) -> BatteryType:
-    '''
-    Fetch the battery type information for the given member.
-
-    Raises an exception if the member is not a drone.
-    '''
-
-    query = (
-        'SELECT battery_types.* '
-        'FROM battery_types '
-        'INNER JOIN drone ON drone.battery_type_id = battery_types.id '
-        'WHERE drone.discord_id = :discord_id'
-    )
-
-    result = map_to_object(await fetchone(query, {'discord_id': member.id}), BatteryType)
-
-    if result is None:
-        raise Exception('Failed to get battery type for member ' + str(member.id))
-
-    return result
 
 
 async def get_battery_types() -> List[BatteryType]:
@@ -301,3 +224,16 @@ async def set_battery_type(member: discord.Member, type: BatteryType) -> None:
     '''
 
     await change('UPDATE drone SET battery_type_id = :type_id WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})
+
+
+async def remove_trusted_user_on_all(trusted_user_id: int):
+    '''
+    Removes the trusted user with the given discord ID from all trusted_users lists of all drones.
+    '''
+
+    ids = await fetchcolumn("SELECT discord_id FROM drone WHERE trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"})
+
+    for id in ids:
+        drone = Drone.load(discord_id=id)
+        drone.trusted_users.remove(trusted_user_id)
+        await drone.save()

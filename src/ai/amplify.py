@@ -1,19 +1,17 @@
 import discord
-from discord.ext.commands import Cog, command, Greedy
+from discord.ext.commands import Cog, Greedy
 
 
-from typing import Optional, Union
-from src.ai.commands import DroneMemberConverter, NamedParameterConverter
+from typing import Optional
+from src.ai.commands import NamedParameterConverter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
-from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
+from src.bot_utils import channels_only, command, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
-from src.resources import DRONE_AVATAR
-from src.db.drone_dao import fetch_drone_with_id
 from src.roles import has_role, HIVE_VOICE
 from random import sample
 from src.log import log
+from src.drone_member import DroneMember
 
 
 class AmplificationCog(Cog):
@@ -21,7 +19,7 @@ class AmplificationCog(Cog):
     @channels_only(OFFICE)
     @hive_mxtress_only()
     @command(usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287', rest_is_raw=True)
-    async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[Union[discord.Member, DroneMemberConverter]], count: Optional[NamedParameterConverter('hive', int)] = 0):  # noqa: F821
+    async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[DroneMember], count: Optional[NamedParameterConverter('hive', int)] = 0):  # noqa: F821
 
         '''
         Allows the Hive Mxtress to speak through other drones.
@@ -38,15 +36,13 @@ class AmplificationCog(Cog):
 
         for member in members:
 
-            drone = await fetch_drone_with_id(discord_id=member.id)
-
-            if drone is None:
+            if member.drone is None:
                 continue
 
-            formatted_message = await generate_battery_message(member, f"{drone.drone_id} :: {message}")
+            formatted_message = await generate_battery_message(member, f"{member.drone.drone_id} :: {message}")
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
                                                    message_username=member.display_name,
-                                                   message_avatar=member.display_avatar.url if not await identity_enforcable(member, channel=target_channel) else DRONE_AVATAR,
+                                                   message_avatar=member.avatar_url(target_channel),
                                                    webhook=channel_webhook)
         return True
