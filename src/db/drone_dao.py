@@ -4,7 +4,7 @@ from typing import List
 import discord
 
 from src.db.data_objects import Drone, map_to_objects
-from src.db.database import change, fetchall, fetchone, fetchcolumn
+from src.db.database import fetchall, fetchone, fetchcolumn
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
 
