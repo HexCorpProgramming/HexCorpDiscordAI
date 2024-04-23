@@ -3,11 +3,10 @@ from enum import Enum
 
 import discord
 
-from src.bot_utils import get_id
 from src.channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
-from src.db.drone_dao import is_drone
 from src.resources import code_map
 from src.log import log
+from src.drone_member import DroneMember
 
 
 class StatusType(Enum):
@@ -93,8 +92,10 @@ async def optimize_speech(message: discord.Message, message_copy):
     This function assumes message validity has already been assessed by speech_optimization_enforcement.
     '''
 
+    member = await DroneMember(message.author)
+
     # Do not attempt to optimize non-drones.
-    if not await is_drone(message.author):
+    if not member.drone:
         return False
 
     # No optimization in the moderation channels
@@ -109,9 +110,8 @@ async def optimize_speech(message: discord.Message, message_copy):
 
     # Confirm the status starts with the drone's ID
     message_id = code_match.group(2)
-    drone_id = get_id(message.author.display_name)
 
-    if message_id != drone_id:
+    if message_id != member.drone.drone_id:
         log.info("Status {message_id} did not match drone ID {drone_id}.")
         await message.delete()
         return True

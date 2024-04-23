@@ -7,17 +7,19 @@ from discord.utils import get
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import ForbiddenWord
-from src.db.drone_dao import is_drone
 from src.db.forbidden_word_dao import (delete_forbidden_word_by_id,
                                        get_all_forbidden_words,
                                        insert_forbidden_word)
 from src.emoji import DRONE_EMOJI
 from src.log import log
+from drone_member import DroneMember
 
 
 async def deny_thoughts(message: discord.Message, message_copy):
 
-    if not await is_drone(message.author):  # Associates are allowed to think.
+    member = await DroneMember(message.author)
+
+    if not member.drone:  # Associates are allowed to think.
         return
 
     emoji_replacement = get(message.guild.emojis, name=DRONE_EMOJI)

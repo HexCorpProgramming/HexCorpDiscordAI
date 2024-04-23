@@ -5,14 +5,10 @@ from discord.ext import tasks
 from discord.ext.commands import Cog, command, UserInputError
 from discord.utils import get
 
-from src.bot_utils import channels_only, COMMAND_PREFIX, get_id
+from src.bot_utils import channels_only, COMMAND_PREFIX
 from src.channels import ORDERS_REPORTING
 from src.db.data_objects import DroneOrder
 from src.db.database import connect
-from src.db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
-                                    get_order_by_drone_id, insert_drone_order)
-from src.db.drone_dao import fetch_drone_with_id
-from src.roles import DRONE, has_role
 from src.drone_member import DroneMember
 from src.resources import HEXCORP_AVATAR
 from src.log import log
@@ -40,19 +36,19 @@ class OrderReportingCog(Cog):
             raise UserInputError('Please supply an order name and description')
 
         # Find the member's drone record.
-        drone = await fetch_drone_with_id(member.id)
+        drone = member.drone
 
         if drone is None:
             raise UserInputError('The specified member is not a drone')
 
         # Find the order.
-        order = await get_order_by_drone_id(drone.drone_id)
+        order = drone.order
 
         if order is None:
             raise UserInputError(f'Drone {drone.drone_id} does not have an order in progress')
 
         # Mark the order as complete.
-        await delete_drone_order(order.id)
+        await order.delete()
 
         # Delete the original message.  Use the delay parameter to ignore failures.
         # The call will fail if the message has already been deleted, which will happen if
@@ -75,14 +71,14 @@ class OrderReportingCog(Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def deactivate_drones_with_completed_orders(self):
-        for order in await fetch_all_drone_orders():
+        for member in await DroneOrder.all_drones(self.bot.guilds[0]):
+            order = member.drone.order
+
             if datetime.now() > datetime.fromisoformat(order.finish_time):
                 # find drone to deactivate
-                member_to_deactivate = self.bot.guilds[0].get_member(order.discord_id)
-                drone = await fetch_drone_with_id(order.discord_id)
-                log.info(f'Deactivating drone {drone.drone_id} with completed orders')
-                await self.orders_reporting_channel.send(f"{member_to_deactivate.mention} Drone {drone.drone_id} Deactivate.\nDrone {drone.drone_id}, good drone.")
-                await delete_drone_order(order.id)
+                log.info(f'Deactivating drone {member.drone.drone_id} with completed orders')
+                await self.orders_reporting_channel.send(f"{member.mention} Drone {member.drone.drone_id} Deactivate.\nDrone {member.drone.drone_id}, good drone.")
+                await order.delete()
 
     @deactivate_drones_with_completed_orders.before_loop
     async def get_orders_reporting_channel(self):
@@ -92,24 +88,23 @@ class OrderReportingCog(Cog):
 
 async def report_order(context, protocol_name, protocol_time: int):
     log.info("Order reported.")
-    drone_id = get_id(context.author.display_name)
-    if not has_role(context.author, DRONE):
-        return  # No non-drones allowed.
-    current_order = await get_order_by_drone_id(drone_id)
+    member = DroneMember.load(context.message.guild, discord_id=context.author.id)
 
-    if current_order is not None:
-        await context.send(f"HexDrone #{drone_id} is already undertaking the {current_order.protocol} protocol.")
+    # No non-drones allowed.
+    if member.drone is None:
+        return
+
+    if member.drone.order is not None:
+        await context.send(f"HexDrone #{member.drone.drone_id} is already undertaking the {member.drone.order.protocol} protocol.")
         return
 
     if protocol_time > 120 or protocol_time < 1:
         await context.send("Drones are not authorized to activate a specific protocol for that length of time. The maximum is 120 minutes.")
         return
 
-    await context.send(f"If safe and willing to do so, Drone {drone_id} Activate.\nDrone {drone_id} will elaborate on its exact tasks before proceeding with them.")
-    finish_time = str(
-        datetime.now() + timedelta(minutes=protocol_time))
-    created_order = DroneOrder(
-        str(uuid4()), context.author.id, protocol_name, finish_time)
+    await context.send(f"If safe and willing to do so, Drone {member.drone.drone_id} Activate.\nDrone {member.drone.drone_id} will elaborate on its exact tasks before proceeding with them.")
+    finish_time = str(datetime.now() + timedelta(minutes=protocol_time))
+    created_order = DroneOrder(str(uuid4()), context.author.id, protocol_name, finish_time)
     log.info("ActiveOrder object created. Inserting order.")
-    await insert_drone_order(created_order)
+    await created_order.insert()
     log.info("Active order inserted and committed to DB.")

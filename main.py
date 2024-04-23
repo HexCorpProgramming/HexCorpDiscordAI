@@ -57,6 +57,7 @@ from src.db import maintenance
 from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 # Data objects
 from src.ai.data_objects import MessageCopy
+from src.drone_member import DroneMember
 
 
 def set_up_logger():
@@ -282,9 +283,10 @@ async def on_member_join(member: discord.Member):
 @connect()
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    drone = await drone_dao.fetch_drone_with_id(member.id)
-    if drone:
-        await drone_dao.delete_drone_by_drone_id(drone.drone_id)
+    drone_member = await DroneMember(member)
+
+    if drone_member.drone:
+        await drone_member.drone.delete()
 
     # remove the user from all trusted user lists
     await drone_dao.remove_trusted_user_on_all(member.id)

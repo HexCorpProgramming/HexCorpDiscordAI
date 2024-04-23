@@ -10,9 +10,8 @@ from PIL import Image
 
 from src.ai.data_objects import MessageCopy
 from src.channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
-from src.db.drone_dao import (get_battery_percent_remaining, is_battery_powered,
-                              is_glitched)
 from src.log import log
+from src.drone_member import DroneMember
 
 diacritics = list(range(0x0300, 0x036F))
 DISCORD_CHAR_LIMIT = 2000
@@ -124,10 +123,15 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
     if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         return False
 
-    if await is_glitched(message.author):
+    member = await DroneMember(message.author)
+
+    if not member.drone:
+        return False
+
+    if member.drone.glitched:
         glitch_amount = MAX_GLITCH_AMOUNT * 2
-    elif await is_battery_powered(message.author) and await get_battery_percent_remaining(message.author) < 30:
-        glitch_amount = (MAX_GLITCH_AMOUNT - await get_battery_percent_remaining(message.author)) * 2
+    elif member.drone.is_battery_powered and member.drone.get_battery_percent_remaining() < 30:
+        glitch_amount = (MAX_GLITCH_AMOUNT - member.drone.get_battery_percent_remaining()) * 2
     else:
         log.info("Not glitching message (drone is neither glitched nor low battery).")
         return False

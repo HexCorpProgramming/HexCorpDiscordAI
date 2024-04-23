@@ -4,7 +4,7 @@ from typing import Dict, List
 from src.ai.data_objects import MessageCopy
 from src.db.database import connect
 
-from discord import Emoji, Guild, Member, Message
+from discord import Emoji, Guild, Message
 from discord.ext import commands, tasks
 from discord.ext.commands import command, Greedy, UserInputError
 from discord.utils import get
@@ -13,14 +13,9 @@ import src.emoji as emoji
 import src.webhook as webhook
 from src.log import log
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, has_role
-from src.bot_utils import COMMAND_PREFIX, get_id, hive_mxtress_only
+from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
 from src.drone_member import DroneMember
-from src.db.drone_dao import (deincrement_battery_minutes_remaining,
-                              get_all_drone_batteries,
-                              get_battery_percent_remaining,
-                              get_battery_types,
-                              is_battery_powered, is_drone)
-from src.db.data_objects import Drone
+from src.db.data_objects import BatteryType, Drone
 
 
 class BatteryCog(commands.Cog):
@@ -43,11 +38,11 @@ class BatteryCog(commands.Cog):
         if drone is None:
             raise UserInputError('Member ' + member.display_name + ' is not a drone')
 
-        battery_types = await get_battery_types()
-        type = next((t for t in battery_types if t.name.lower() == type_name.lower()), None)
+        type = BatteryType.find(name=type_name)
 
         if type is None:
-            raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
+            all = BatteryType.all()
+            raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in all]))
 
         member.drone.battery_type_id = type.id
         await member.drone.save()
@@ -118,11 +113,12 @@ class BatteryCog(commands.Cog):
         tracking them for 15 minutes worth of battery drain per message sent.
         '''
 
-        if not await is_drone(message.author) or not await is_battery_powered(message.author):
+        member = DroneMember(message.author)
+
+        if not member.drone or not member.drone.is_battery_powered:
             return False
 
-        drone_id = get_id(message.author.display_name)
-        self.draining_batteries[drone_id] = 15
+        self.draining_batteries[member.drone.drone_id] = 15
 
     @tasks.loop(minutes=1)
     @connect()
@@ -145,7 +141,9 @@ class BatteryCog(commands.Cog):
             else:
                 log.info(f"Draining 1 minute worth of charge from {drone}")
                 draining_batteries[drone] = remaining_minutes - 1
-                await deincrement_battery_minutes_remaining(drone_id=drone)
+                drone = Drone.load(drone_id=drone)
+                drone.battery_minutes = max(0, drone.battery_minutes - 1)
+                await drone.save()
 
         for inactive_drone in inactive_drones:
             log.info(f"Removing {inactive_drone} from drain list.")
@@ -162,7 +160,7 @@ class BatteryCog(commands.Cog):
 
         log.info("Checking for drones with drained battery.")
 
-        for drone in await get_all_drone_batteries():
+        for drone in await Drone.all():
             # Intentionally different math to that in DAO b/c it always rounds down.
             member_drone = self.bot.guilds[0].get_member(drone.discord_id)
 
@@ -188,14 +186,14 @@ class BatteryCog(commands.Cog):
 
         log.info("Scanning for low battery drones.")
 
-        for drone in await get_all_drone_batteries():
+        for drone in await Drone.all():
             member = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member is None:
                 log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
-            if await get_battery_percent_remaining(member) < 30:
+            if await drone.get_battery_percent_remaining() < 30:
                 if drone.drone_id not in self.low_battery_drones:
                     log.info(f"Warning drone {drone.drone_id} of low battery.")
                     await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
@@ -216,21 +214,21 @@ async def add_battery_indicator_to_copy(message: Message, message_copy: MessageC
     which sent the original message is battery powered.
     The indicator is placed after the ID prepend if the message includes it.
     '''
-    message_copy.content = await generate_battery_message(message.author, message_copy.content)
+    message_copy.content = await generate_battery_message(await DroneMember(message.author), message_copy.content)
 
     return False
 
 
-async def generate_battery_message(member: Member, original_content: str) -> str:
+async def generate_battery_message(member: DroneMember, original_content: str) -> str:
     '''
     Assembles a message content with a battery emoji for a given Guild Member.
     Returns the original content if the drone is not battery powered.
     '''
 
-    if not await is_battery_powered(member):
+    if not member.drone or not member.drone.is_battery_powered:
         return original_content
 
-    battery_percentage = await get_battery_percent_remaining(member)
+    battery_percentage = member.drone.get_battery_percent_remaining()
     battery_emoji = determine_battery_emoji(battery_percentage, member.guild)
 
     id_prepending_regex = re.compile(r'(\d{4} ::)(.+)', re.DOTALL)

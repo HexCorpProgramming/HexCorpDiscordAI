@@ -7,11 +7,12 @@ from discord.ext import tasks
 
 from src.bot_utils import COMMAND_PREFIX
 from src.db.database import connect
-from src.db.drone_dao import is_drone, fetch_all_elapsed_temporary_dronification
+from src.db.drone_dao import fetch_all_elapsed_temporary_dronification
 from src.ai.assign import create_drone
 from src.ai.drone_configuration import unassign_drone
 from src.roles import HIVE_MXTRESS, has_role
 from src.log import log
+from src.drone_member import DroneMember
 
 REQUEST_TIMEOUT = timedelta(minutes=5)
 
@@ -49,7 +50,7 @@ class TemporaryDronificationCog(Cog):
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @AssociateName 6')
-    async def temporarily_dronify(self, context, target: discord.Member, hours: int):
+    async def temporarily_dronify(self, context, target: DroneMember, hours: int):
         '''
         Temporarily dronifies an associate for a certain amount of time.
         Associate must have been on the server for more than 24 hours.
@@ -59,7 +60,7 @@ class TemporaryDronificationCog(Cog):
             raise UserInputError("Hours must be greater than 0.")
 
         # exclude drones
-        if await is_drone(target):
+        if target.drone:
             raise UserInputError(f"{target.display_name} is already a drone.")
 
         # exclude the Hive Mxtress

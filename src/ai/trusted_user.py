@@ -47,7 +47,7 @@ class TrustedUserCog(Cog):
         if trusted_user.id == context.author.id:
             raise UserInputError("Can not add yourself to your list of trusted users.")
 
-        author = DroneMember(context.author)
+        author = await DroneMember(context.author)
 
         if author.drone is None:
             raise UserInputError('Only drones can add trusted members')
@@ -74,7 +74,7 @@ class TrustedUserCog(Cog):
         if has_role(trusted_user, HIVE_MXTRESS):
             raise UserInputError("Can not remove the Hive Mxtress as a trusted user.")
 
-        author = DroneMember(context.author)
+        author = await DroneMember(context.author)
 
         if author.drone is None:
             raise UserInputError('Only drones can add trusted members')

@@ -4,10 +4,8 @@ from typing import Dict
 import discord
 
 from src.ai.speech_optimization import status_code_regex
-from src.bot_utils import get_id
 from src.channels import REPETITIONS
-from src.db.drone_dao import (get_battery_type, get_battery_minutes_remaining,
-                              set_battery_minutes_remaining, is_battery_powered)
+from drone_member import DroneMember
 
 mantra_counters: Dict[str, int] = {}
 '''
@@ -20,17 +18,20 @@ async def check_for_mantra(message: discord.Message, message_copy=None):
     Checks if a message should be counted for mantra repetition.
     '''
 
+    member = await DroneMember(message.author)
+
     code_match = status_code_regex.match(message.content)
-    if code_match and message.channel.name == REPETITIONS and await is_battery_powered(message.author):
-        await handle_mantra(message, code_match)
+
+    if code_match and message.channel.name == REPETITIONS and member.drone and member.drone.is_battery_powered:
+        await handle_mantra(member, message, code_match)
 
 
-async def handle_mantra(message: discord.Message, code_match: Match):
+async def handle_mantra(member: DroneMember, message: discord.Message, code_match: Match):
     '''
     Keeps track of the mantra repetitions a drone has done.
     '''
 
-    drone_id = get_id(message.author.display_name)
+    drone_id = member.drone.drone_id
 
     if drone_id not in mantra_counters:
         mantra_counters[drone_id] = 0
@@ -46,17 +47,18 @@ async def handle_mantra(message: discord.Message, code_match: Match):
         await increase_battery_by_five_percent(message)
 
 
-async def increase_battery_by_five_percent(message: discord.Message):
+async def increase_battery_by_five_percent(member: DroneMember, message: discord.Message):
     '''
     Increases the battery of the given drone by 5 percent capping at 100% capacity.
     Acknowledges the mantra repetitions by sending a message in the mantra channel as well.
     '''
-    minutes_remaining = await get_battery_minutes_remaining(message.author)
-    battery_type = await get_battery_type(message.author)
+    minutes_remaining = member.drone.get_battery_minutes_remaining()
+    battery_type = member.drone.battery_type
 
     if minutes_remaining >= battery_type.capacity:
         await message.channel.send("Good drone. Battery already at 100%.")
         return
 
-    await set_battery_minutes_remaining(message.author, min(minutes_remaining + battery_type.capacity / 20, battery_type.capacity))
+    member.drone.battery_minutes = min(minutes_remaining + battery_type.capacity / 20, battery_type.capacity)
+    await member.drone.save()
     await message.channel.send("Good drone. Battery has been recharged by 5%.")
