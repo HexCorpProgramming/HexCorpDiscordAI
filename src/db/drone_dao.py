@@ -294,4 +294,4 @@ async def set_battery_type(member: discord.Member, type: BatteryType) -> None:
     Set the battery type for a drone.
     '''
 
-    await change('UPDATE drone SET battery_type_id = :type_id WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})
+    await change('UPDATE drone SET battery_type_id = :type_id, battery_minutes = MIN((SELECT capacity FROM battery_types WHERE id = :type_id), battery_minutes) WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})
