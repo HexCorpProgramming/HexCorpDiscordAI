@@ -3,13 +3,13 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
-from discord.ext.commands import Cog, dm_only
+from discord.ext.commands import Cog, command
 from discord.ext import tasks
 from discord.utils import get
 
-from src.bot_utils import command, COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX, dm_only
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
-from src.resources import BRIEF_DM_ONLY, BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
+from src.resources import BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(hours=24)
@@ -37,7 +37,7 @@ class TrustedUserCog(Cog):
         self.trusted_user_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.trusted_user_requests))
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
+    @command(usage=f"{COMMAND_PREFIX}add_trusted_user \"A trusted user\"", brief=[BRIEF_DRONE_OS])
     async def add_trusted_user(self, context, trusted_user_name: str):
         '''
         Add user with the given nickname as a trusted user.
@@ -71,7 +71,7 @@ class TrustedUserCog(Cog):
         await context.reply(f"Request sent to \"{trusted_user.display_name}\". They have 24 hours to accept.")
 
     @dm_only()
-    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=[BRIEF_DRONE_OS, BRIEF_DM_ONLY])
+    @command(usage=f"{COMMAND_PREFIX}remove_trusted_user \"The untrusted user\"", brief=[BRIEF_DRONE_OS])
     async def remove_trusted_user(self, context, user_name: str):
         '''
         Remove a given user from the list of trusted users.
@@ -88,7 +88,7 @@ class TrustedUserCog(Cog):
                 matching_request = request
                 break
 
-        if matching_request and message.reference.message_id and message.reference.resolved.id == matching_request.question_message_id:
+        if matching_request and message.reference and message.reference.message_id and message.reference.resolved.id == matching_request.question_message_id:
             LOGGER.info(f"Message detected as response to a trusted user addition request {matching_request}")
 
             # fetch display names of parties involved
@@ -168,4 +168,4 @@ async def remove_trusted_user_on_all(trusted_user_id: int):
     for drone in await fetch_all_drones_with_trusted_user(trusted_user_id):
         trusted_users = parse_trusted_users_text(drone.trusted_users)
         trusted_users.remove(trusted_user_id)
-        await set_trusted_users(drone.id, trusted_users)
+        await set_trusted_users(drone.discord_id, trusted_users)

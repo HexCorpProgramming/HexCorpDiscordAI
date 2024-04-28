@@ -18,7 +18,7 @@ def map_to_object(row, constructor):
 
 @dataclass
 class Drone:
-    id: str = None
+    discord_id: str = None
     drone_id: str = None
     optimized: bool = None
     glitched: bool = None
@@ -26,12 +26,13 @@ class Drone:
     last_activity: datetime = None
     id_prepending: bool = None
     identity_enforcement: bool = None
-    temporary_until: datetime = None
-    battery_minutes: int = None
-    is_battery_powered: bool = None
     can_self_configure: bool = None
-    associate_name: str = None
+    temporary_until: datetime = None
+    is_battery_powered: bool = None
+    battery_type_id: int = None
+    battery_minutes: int = None
     free_storage: bool = None
+    associate_name: str = None
 
 
 @dataclass
@@ -47,7 +48,7 @@ class Storage:
 @dataclass
 class DroneOrder:
     id: str = None
-    drone_id: str = None
+    discord_id: str = None
     protocol: str = None
     finish_time: datetime = None
 
@@ -55,7 +56,7 @@ class DroneOrder:
 @dataclass
 class Timer:
     id: str = None
-    drone_id: str = None
+    discord_id: str = None
     mode: str = None
     end_time: datetime = None
 
@@ -64,3 +65,15 @@ class Timer:
 class ForbiddenWord:
     id: str = None
     regex: str = None
+
+
+@dataclass(frozen=True)
+class BatteryType:
+    # The primary key.
+    id: int = None
+    # The type name, e.g. "Medium"
+    name: str = None
+    # The battery's duration, in minutes.
+    capacity: int = None
+    # The battery's recharge rate, in minutes of capacity gained per hour of recharge.
+    recharge_rate: int = None

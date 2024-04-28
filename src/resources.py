@@ -11,11 +11,6 @@ BOT_IDS = [673470104519835659, 665846816121815071]
 
 HIVE_MXTRESS_USER_ID = "194126224828661760"
 
-# Battery capacity
-MAX_BATTERY_CAPACITY_HOURS = 8
-MAX_BATTERY_CAPACITY_MINS = MAX_BATTERY_CAPACITY_HOURS * 60
-HOURS_OF_RECHARGE_PER_HOUR = 4
-
 HEXCORP_MANTRA = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
 
 # Speech optimization status codes (V2).
@@ -103,6 +98,4 @@ code_map = {
     '500': 'Response :: Negative.',
 }
 
-BRIEF_HIVE_MXTRESS = "Hive Mxtress"
-BRIEF_DM_ONLY = "DM-Only"
 BRIEF_DRONE_OS = "DroneOS"

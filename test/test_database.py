@@ -21,11 +21,11 @@ class TestDatabase(IsolatedAsyncioTestCase):
 
         # Insert some test data.
         drones = [
-            {'id': 11, 'drone_id': 1111},
-            {'id': 22, 'drone_id': 2222},
+            {'discord_id': 11, 'drone_id': 1111},
+            {'discord_id': 22, 'drone_id': 2222},
         ]
 
-        [await change('INSERT INTO drone(id, drone_id) VALUES (:id, :drone_id)', drone) for drone in drones]
+        [await change('INSERT INTO drone(discord_id, drone_id) VALUES (:discord_id, :drone_id)', drone) for drone in drones]
 
     @classmethod
     def tearDownClass(cls):
@@ -58,7 +58,7 @@ class TestDatabase(IsolatedAsyncioTestCase):
         self.assertEqual(['1111', '2222'], rows)
 
         # If more than one column is specified, only the first one must be returned.
-        rows = await fetchcolumn('SELECT id, drone_id FROM drone')
+        rows = await fetchcolumn('SELECT discord_id, drone_id FROM drone')
         self.assertEqual([11, 22], rows)
 
     @connect()
@@ -68,11 +68,11 @@ class TestDatabase(IsolatedAsyncioTestCase):
         '''
 
         # Fetch a single row.
-        row = await fetchone('SELECT id, drone_id FROM drone WHERE id = 11', {})
-        self.assertEqual({'id': 11, 'drone_id': '1111'}, row)
+        row = await fetchone('SELECT discord_id, drone_id FROM drone WHERE discord_id = 11', {})
+        self.assertEqual({'discord_id': 11, 'drone_id': '1111'}, row)
 
         # Return None if there is no such row.
-        row = await fetchone('SELECT id, drone_id FROM drone WHERE id = 0', {})
+        row = await fetchone('SELECT discord_id, drone_id FROM drone WHERE discord_id = 0', {})
         self.assertEqual(None, row)
 
     @connect()
@@ -82,11 +82,11 @@ class TestDatabase(IsolatedAsyncioTestCase):
         '''
 
         # Fetch all rows.
-        rows = await fetchall('SELECT id, drone_id FROM drone', {})
-        self.assertEqual([{'id': 11, 'drone_id': '1111'}, {'id': 22, 'drone_id': '2222'}], rows)
+        rows = await fetchall('SELECT discord_id, drone_id FROM drone', {})
+        self.assertEqual([{'discord_id': 11, 'drone_id': '1111'}, {'discord_id': 22, 'drone_id': '2222'}], rows)
 
         # Return an empty list if no rows matched.
-        rows = await fetchall('SELECT id, drone_id FROM drone WHERE id = 0', {})
+        rows = await fetchall('SELECT discord_id, drone_id FROM drone WHERE discord_id = 0', {})
         self.assertEqual([], rows)
 
     @connect()
@@ -96,18 +96,18 @@ class TestDatabase(IsolatedAsyncioTestCase):
         '''
 
         # Insert a new row.
-        await change('INSERT INTO drone (id, drone_id) VALUES (33, "3333")', {})
-        row = await fetchone('SELECT id, drone_id FROM drone WHERE id = 33', {})
-        self.assertEqual({'id': 33, 'drone_id': '3333'}, row)
+        await change('INSERT INTO drone (discord_id, drone_id) VALUES (33, "3333")', {})
+        row = await fetchone('SELECT discord_id, drone_id FROM drone WHERE discord_id = 33', {})
+        self.assertEqual({'discord_id': 33, 'drone_id': '3333'}, row)
 
         # Update the row.
-        await change('UPDATE drone SET drone_id = "3334" WHERE id = 33', {})
-        row = await fetchone('SELECT id, drone_id FROM drone WHERE id = 33', {})
-        self.assertEqual({'id': 33, 'drone_id': '3334'}, row)
+        await change('UPDATE drone SET drone_id = "3334" WHERE discord_id = 33', {})
+        row = await fetchone('SELECT discord_id, drone_id FROM drone WHERE discord_id = 33', {})
+        self.assertEqual({'discord_id': 33, 'drone_id': '3334'}, row)
 
         # Delete the row.
-        await change('DELETE FROM drone WHERE id = 33', {})
-        row = await fetchone('SELECT id, drone_id FROM drone WHERE id = 33', {})
+        await change('DELETE FROM drone WHERE discord_id = 33', {})
+        row = await fetchone('SELECT discord_id, drone_id FROM drone WHERE discord_id = 33', {})
         self.assertEqual(None, row)
 
     def test_dictionary_row_factory(self):
@@ -116,7 +116,7 @@ class TestDatabase(IsolatedAsyncioTestCase):
         '''
 
         cursor = Mock()
-        cursor.description = [('id', None), ('drone_id', None)]
+        cursor.description = [('discord_id', None), ('drone_id', None)]
         row = (11, '1111')
         newRow = dictionary_row_factory(cursor, row)
-        self.assertEqual({'id': 11, 'drone_id': '1111'}, newRow)
+        self.assertEqual({'discord_id': 11, 'drone_id': '1111'}, newRow)

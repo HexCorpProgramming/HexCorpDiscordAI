@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch, Mock
 from src.ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
 from src.roles import HIVE_MXTRESS
+import test.test_utils as test_utils
+from src.db.drone_dao import Drone
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -168,3 +170,20 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         self.assertAlmostEqual((datetime.now() + timedelta(hours=hours)).timestamp(), create_drone.call_args.args[4].timestamp(), delta=1)
         self.assertEqual(0, len(self.cog.dronfication_requests))
         message.reply.assert_called_once_with(f"Consent noted. HexCorp dronification suite engaged for the next {hours} hours.")
+
+    @patch('src.ai.temporary_dronification.fetch_all_elapsed_temporary_dronification')
+    @patch('src.ai.drone_configuration.fetch_drone_with_id', return_value=Drone('1234snowflake', '1234'))
+    @patch('src.ai.drone_configuration.delete_drone_by_drone_id')
+    async def test_release_temporary_drones(self, delete_drone_by_drone_id, fetch_drone_with_id, fetch_all_elapsed_temporary_dronification):
+        fetch_all_elapsed_temporary_dronification.return_value = [Drone('1234snowflake', 1234)]
+
+        member = AsyncMock()
+        member.id = '1234snowflake'
+        member.guild = self.bot.guilds[0]
+        self.bot.guilds[0].get_member.return_value = member
+
+        cog = TemporaryDronificationCog(self.bot)
+
+        await test_utils.start_and_await_loop(cog.release_temporary_drones)
+
+        member.send.assert_called_once_with('Drone with ID 1234 unassigned.')

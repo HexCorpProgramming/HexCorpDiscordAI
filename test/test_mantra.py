@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 import src.ai.mantra as mantra
-from src.resources import MAX_BATTERY_CAPACITY_MINS
+from src.db.drone_dao import BatteryType
 
 
 class TestMantra(unittest.IsolatedAsyncioTestCase):
@@ -16,7 +16,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: 301"
         message.channel.name = 'hive-repetitions'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
@@ -50,7 +50,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: beep"
         message.channel.name = 'hive-repetitions'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
@@ -67,7 +67,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         message.content = "9813 :: 301"
         message.channel.name = 'drone-configuration'
 
-        is_battery_powered.return_value(True)
+        is_battery_powered.return_value = True
 
         # run
         await mantra.check_for_mantra(message)
@@ -158,7 +158,8 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.mantra.get_battery_minutes_remaining")
     @patch("src.ai.mantra.set_battery_minutes_remaining")
-    async def test_increase_battery_by_five_percent(self, set_battery_minutes_remaining, get_battery_minutes_remaining):
+    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_increase_battery_by_five_percent(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
         # init
         message = AsyncMock()
 
@@ -171,12 +172,13 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         await mantra.increase_battery_by_five_percent(message)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, minutes=264.0)
+        set_battery_minutes_remaining.assert_called_once_with(message.author, 264.0)
         message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
 
     @patch("src.ai.mantra.get_battery_minutes_remaining")
     @patch("src.ai.mantra.set_battery_minutes_remaining")
-    async def test_increase_battery_by_five_percent_capped(self, set_battery_minutes_remaining, get_battery_minutes_remaining):
+    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_increase_battery_by_five_percent_capped(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
         # init
         message = AsyncMock()
 
@@ -189,19 +191,20 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         await mantra.increase_battery_by_five_percent(message)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, minutes=480)
+        set_battery_minutes_remaining.assert_called_once_with(message.author, 480)
         message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
 
     @patch("src.ai.mantra.get_battery_minutes_remaining")
     @patch("src.ai.mantra.set_battery_minutes_remaining")
-    async def test_increase_battery_by_five_percent_full(self, set_battery_minutes_remaining, get_battery_minutes_remaining):
+    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    async def test_increase_battery_by_five_percent_full(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
         # init
         message = AsyncMock()
 
         code_match = Mock()
         code_match.group.return_value = "301"
 
-        get_battery_minutes_remaining.return_value = MAX_BATTERY_CAPACITY_MINS
+        get_battery_minutes_remaining.return_value = 480
 
         # run
         await mantra.increase_battery_by_five_percent(message)

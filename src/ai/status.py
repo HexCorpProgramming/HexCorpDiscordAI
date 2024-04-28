@@ -3,8 +3,8 @@ from pathlib import Path
 from collections.abc import Callable, Coroutine
 from typing import Any, List
 from discord import Embed, Message
-from discord.ext.commands import Cog, guild_only, Context
-from src.bot_utils import command
+from discord.ext.commands import Cog, command, Context
+from src.bot_utils import channels_only
 
 from src.bot_utils import COMMAND_PREFIX
 from src.channels import BOT_DEV_COMMS
@@ -23,14 +23,14 @@ class StatusCog(Cog):
     def __init__(self, message_listeners: List[ListenerType]):
         self.message_listeners = message_listeners
 
-    @guild_only()
+    @channels_only(BOT_DEV_COMMS)
     @command(usage=f'{COMMAND_PREFIX}ai_status')
     async def ai_status(self, context: Context):
         '''
         A debug command, that displays information about the AI.
         '''
-        if context.channel.name == BOT_DEV_COMMS:
-            await report_status(context, self.message_listeners)
+
+        await report_status(context, self.message_listeners)
 
 
 def read_version() -> str:

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext.commands import Bot, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
-from src.bot_utils import command as bot_command, connect
+from src.db.database import connect
 
 import logging
 from logging import handlers
@@ -14,6 +14,7 @@ from logging import handlers
 import sys
 
 from traceback import TracebackException
+from src.validation_error import ValidationError
 
 
 # Modules
@@ -52,7 +53,7 @@ from src.db import drone_dao
 from src.db import maintenance
 
 # Constants
-from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR, BRIEF_DM_ONLY, BRIEF_HIVE_MXTRESS, BRIEF_DRONE_OS
+from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 # Data objects
 from src.ai.data_objects import MessageCopy
 
@@ -157,7 +158,7 @@ hour_tasks = [
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
-@bot_command(usage=f'{bot.command_prefix}help', parent=bot)
+@bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
     '''
     Displays this help.
@@ -185,16 +186,22 @@ async def help(context):
         command_description = command.help if command.help is not None else "A naughty dev drone forgot to add a command description."
         command_description += f"\n`{command.usage}`" if command.usage is not None else "\n`No usage string available.`"
 
-        if command.brief is not None:
-            if BRIEF_DM_ONLY in command.brief:
-                command_description += "\n This command can only be used in DMs with the AI."
+        # Get a list of the names of check function decorators, eg 'dm_only'.
+        checks = [check.__qualname__.split('.')[0] for check in command.checks]
 
-            if BRIEF_HIVE_MXTRESS in command.brief:
-                Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
-            elif BRIEF_DRONE_OS in command.brief:
-                droneOS_card.add_field(name=command_name, value=command_description, inline=False)
-            else:
-                commands_card.add_field(name=command_name, value=command_description, inline=False)
+        # Find the @channels_only() check, if there is one.
+        channels_check = next(filter(lambda check: hasattr(check, 'channels'), command.checks), None)
+
+        if 'dm_only' in checks:
+            command_description += "\n This command can only be used in DMs with the AI."
+
+        if 'channels_only' in checks:
+            command_description += "\n This command can only be used in " + channels_check.channels
+
+        if 'hive_mxtress_only' in checks:
+            Hive_Mxtress_card.add_field(name=command_name, value=command_description, inline=False)
+        elif 'drone_os' in checks:
+            droneOS_card.add_field(name=command_name, value=command_description, inline=False)
         else:
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
@@ -204,9 +211,37 @@ async def help(context):
     await context.author.send(embed=manual_card)
 
 
+def ignore_self(func):
+    '''
+    A decorator to have the bot ignore messages from itself.
+
+    This is implemented as a decorator so that it can be run prior
+    to the database connection decorator.
+    '''
+
+    async def wrapper(message: discord.message):
+        # Ignore messages from self.
+        if message.author.id == bot.user.id:
+            return
+
+        await func(message)
+
+    # Ensure that the bot.event decorator gets the right event name.
+    wrapper.__name__ = func.__name__
+    wrapper.__wrapped__ = func
+
+    return wrapper
+
+
 @bot.event
+@ignore_self
 @connect()
 async def on_message(message: discord.Message):
+    # Don't ignore messages from the testing bot.
+    # Usually process_commands() will ignore messages from bots.
+    if message.author.name == 'TestBot':
+        message.author.bot = False
+
     message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
 
     # handle DMs
@@ -246,7 +281,7 @@ async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
     drone = await drone_dao.fetch_drone_with_id(member.id)
     if drone:
-        await drone_configuration.remove_drone_from_db(drone.drone_id)
+        await drone_dao.delete_drone_by_drone_id(drone.drone_id)
 
     # remove the user from all trusted user lists
     await trusted_user.remove_trusted_user_on_all(member.id)
@@ -266,7 +301,7 @@ async def on_ready():
     for task in timing_agnostic_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
@@ -280,7 +315,7 @@ async def on_ready():
     for task in minute_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next hour to begin every-hour tasks.")
@@ -295,7 +330,7 @@ async def on_ready():
     for task in hour_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
 
@@ -307,6 +342,8 @@ async def on_command_error(context, error):
         await context.send(f"`{error.param.name}` is a required argument that is missing.")
     elif isinstance(error, PrivateMessageOnly):
         await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
+    elif isinstance(getattr(error, 'original', None), ValidationError):
+        await context.send(str(error.original))
     else:
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))

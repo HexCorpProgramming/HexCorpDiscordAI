@@ -22,3 +22,9 @@ htmlcov
 # Other misc config files
 .python-version
 .DS_Store
+
+# Unit testing temporary database
+test.db
+
+# Testing token file
+token.txt

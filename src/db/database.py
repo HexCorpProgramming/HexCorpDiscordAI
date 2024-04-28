@@ -6,9 +6,10 @@ from typing import List
 from src.db.connection import cursor, transactions
 from src.db.transaction import Transaction
 from inspect import iscoroutinefunction
-from asyncio import create_task, sleep
+from asyncio import create_task, Lock, sleep
 
 LOGGER = logging.getLogger('ai')
+db_lock = Lock()
 
 
 def connect(filename='ai.db'):
@@ -43,15 +44,22 @@ def connect(filename='ai.db'):
             Open a connection to the databse and then run func().
             '''
 
+            # Wait for the lock to be available, while allowing other tasks to run.
+            while db_lock.locked():
+                await sleep(0.1)
+
             # Open a new connection to the database.
-            while True:
-                with sqlite3.connect(filename, timeout=0.1) as connection:
+            async with db_lock:
+                with sqlite3.connect(filename, timeout=1) as connection:
                     # Fetch the connection's cursor.
                     db_cursor = connection.cursor()
 
                     # Set up the execution context's cursor and transaction stack.
                     cursor.set(db_cursor)
                     transactions.set([])
+
+                    # Enable foreign key constraints.
+                    db_cursor.execute('PRAGMA foreign_keys = ON')
 
                     # Open a new transaction and run the decorated code.
                     with Transaction():
@@ -60,6 +68,9 @@ def connect(filename='ai.db'):
         async def runner(*args, **kwargs):
             # Run the decorated function in a new execution context.
             return await create_task(run_with_connection(*args, *kwargs))
+
+        runner.__name__ = func.__name__
+        runner.__wrapped__ = func
 
         return runner
 

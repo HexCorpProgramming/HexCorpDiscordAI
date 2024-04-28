@@ -1,37 +1,54 @@
 import discord
-from discord.ext.commands import Cog, guild_only
+from discord.ext.commands import Cog, command, Greedy
 
-import src.id_converter as id_converter
+
+from typing import Optional, Union
+from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
-from src.bot_utils import command, COMMAND_PREFIX, get_id
+from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
-from src.resources import BRIEF_HIVE_MXTRESS, DRONE_AVATAR
-from src.roles import HIVE_MXTRESS, has_role
+from src.resources import DRONE_AVATAR
+from src.db.drone_dao import fetch_drone_with_id
+from src.roles import has_role, HIVE_VOICE
+from random import sample
+import logging
+
+LOGGER = logging.getLogger('ai')
 
 
 class AmplificationCog(Cog):
 
-    @guild_only()
-    @command(brief=[BRIEF_HIVE_MXTRESS], usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287')
-    async def amplify(self, context, message: str, target_channel: discord.TextChannel, *drones):
+    @channels_only(OFFICE)
+    @hive_mxtress_only()
+    @command(usage=f'{COMMAND_PREFIX}amplify "Hello, little drone." #hexcorp-transmissions 9813 3287', rest_is_raw=True)
+    async def amplify(self, context, message: str, target_channel: discord.TextChannel, members: Greedy[Union[discord.Member, DroneMemberConverter]], count: Optional[NamedParameterConverter('hive', int)] = 0):  # noqa: F821
+
         '''
         Allows the Hive Mxtress to speak through other drones.
         '''
-        member_drones = await id_converter.convert_ids_to_members(context.guild, drones) | set(context.message.mentions)
 
-        if not has_role(context.author, HIVE_MXTRESS) or context.channel.name != OFFICE:
-            return False
+        if count:
+            # Select random channel members that have the HIVE_VOICE role.
+            members = [m for m in target_channel.members if has_role(m, HIVE_VOICE)]
+            members = sample(members, min(len(members), count))
+
+        LOGGER.info('Amplifying message "' + message + '" via ' + str(len(members)) + ' drones in #' + target_channel.name)
 
         channel_webhook = await webhook.get_webhook_for_channel(target_channel)
 
-        for drone in member_drones:
+        for member in members:
 
-            formatted_message = await generate_battery_message(drone, f"{get_id(drone.display_name)} :: {message}")
+            drone = await fetch_drone_with_id(discord_id=member.id)
+
+            if drone is None:
+                continue
+
+            formatted_message = await generate_battery_message(member, f"{drone.drone_id} :: {message}")
 
             await webhook.proxy_message_by_webhook(message_content=formatted_message,
-                                                   message_username=drone.display_name,
-                                                   message_avatar=drone.display_avatar.url if not await identity_enforcable(drone, channel=target_channel) else DRONE_AVATAR,
+                                                   message_username=member.display_name,
+                                                   message_avatar=member.display_avatar.url if not await identity_enforcable(member, channel=target_channel) else DRONE_AVATAR,
                                                    webhook=channel_webhook)
         return True
