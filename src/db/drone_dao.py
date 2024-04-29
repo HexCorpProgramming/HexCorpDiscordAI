@@ -167,24 +167,24 @@ async def deincrement_battery_minutes_remaining(member: Optional[discord.Member]
         raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
 
 
-async def set_battery_minutes_remaining(member: discord.Member, minutes: int):
+async def set_battery_minutes_remaining(discord_id: int, minutes: int):
     '''
     Sets the value of battery_minutes to the specified amount.
     '''
 
-    await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
+    await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': discord_id})
 
 
-async def get_battery_minutes_remaining(member: discord.Member) -> int:
+async def get_battery_minutes_remaining(discord_id: int) -> int:
     '''
     Gets value of battery_minutes from drone table based on a given drone's Discord ID.
     Raises an Exception if the drone is not found.
     '''
 
-    drone = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': member.id})
+    drone = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': discord_id})
 
     if drone is None:
-        raise Exception('No drone record for member ' + str(member.id))
+        raise Exception('No drone record for member with id ' + str(discord_id))
 
     return drone['battery_minutes']
 
@@ -259,7 +259,7 @@ async def is_free_storage(drone: Drone) -> bool:
     return free_storage_drone is not None and bool(free_storage_drone['free_storage'])
 
 
-async def get_battery_type(member: discord.Member) -> BatteryType:
+async def get_battery_type(discord_id: int) -> BatteryType:
     '''
     Fetch the battery type information for the given member.
 
@@ -273,10 +273,10 @@ async def get_battery_type(member: discord.Member) -> BatteryType:
         'WHERE drone.discord_id = :discord_id'
     )
 
-    result = map_to_object(await fetchone(query, {'discord_id': member.id}), BatteryType)
+    result = map_to_object(await fetchone(query, {'discord_id': discord_id}), BatteryType)
 
     if result is None:
-        raise Exception('Failed to get battery type for member ' + str(member.id))
+        raise Exception('Failed to get battery type for member with ID ' + str(discord_id))
 
     return result
 
