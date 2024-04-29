@@ -21,9 +21,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member = Mock()
         member.id = '5890snowflake'
 
-        await battery.recharge_battery(member)
+        await battery.recharge_battery(member.id)
 
-        set_bat_mins.assert_called_once_with(member, 20 + 240)
+        set_bat_mins.assert_called_once_with(member.id, 20 + 240)
 
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=320)
     @patch("src.ai.battery.set_battery_minutes_remaining")
@@ -40,8 +40,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         await battery.drain_battery(member)
 
-        get_bat_mins.assert_called_once_with(member)
-        set_bat_mins.assert_called_once_with(member, 320 - 480 / 10)
+        get_bat_mins.assert_called_once_with(member.id)
+        set_bat_mins.assert_called_once_with(member.id, 320 - 480 / 10)
 
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
     @patch("src.ai.battery.set_battery_minutes_remaining")
@@ -55,9 +55,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member = Mock()
         member.id = '5890snowflake'
 
-        await battery.recharge_battery(member)
+        await battery.recharge_battery(member.id)
 
-        set_bat_mins.assert_called_once_with(member, 480)
+        set_bat_mins.assert_called_once_with(member.id, 480)
 
     @patch("src.ai.battery.deincrement_battery_minutes_remaining")
     async def test_track_active_battery_drain(self, deincrement):

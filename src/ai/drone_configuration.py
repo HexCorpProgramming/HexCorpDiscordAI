@@ -156,8 +156,8 @@ class DroneConfigurationCog(Cog):
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
         # And remove drained role if added.
         for drone in drones:
-            battery_type = await get_battery_type(drone)
-            await set_battery_minutes_remaining(drone, battery_type.capacity)
+            battery_type = await get_battery_type(drone.discord_id)
+            await set_battery_minutes_remaining(drone.discord_id, battery_type.capacity)
             await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 

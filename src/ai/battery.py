@@ -263,14 +263,14 @@ def determine_battery_emoji(battery_percentage: int, guild: Guild) -> Emoji | st
         return "[BATTERY ERROR]"
 
 
-async def recharge_battery(member: Member) -> None:
+async def recharge_battery(discord_id: int) -> None:
     '''
     Fills the battery of a drone in storage up to max.
     '''
 
-    current_minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
-    await set_battery_minutes_remaining(member, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
+    current_minutes_remaining = await get_battery_minutes_remaining(discord_id)
+    battery_type = await get_battery_type(discord_id)
+    await set_battery_minutes_remaining(discord_id, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
 
 
 async def drain_battery(member: Member):
@@ -278,7 +278,7 @@ async def drain_battery(member: Member):
     Reduces the battery charge of a drone by 10%.
     '''
 
-    minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
+    minutes_remaining = await get_battery_minutes_remaining(member.id)
+    battery_type = await get_battery_type(member.id)
 
-    await set_battery_minutes_remaining(member, minutes_remaining - battery_type.capacity / 10)
+    await set_battery_minutes_remaining(member.id, minutes_remaining - battery_type.capacity / 10)
