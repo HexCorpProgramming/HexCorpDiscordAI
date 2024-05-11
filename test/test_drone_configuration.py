@@ -3,7 +3,10 @@ from unittest.mock import AsyncMock, patch, Mock, call
 
 import src.roles as roles
 import src.ai.drone_configuration as drone_configuration
+from src.ai.drone_configuration import DroneConfigurationCog
 from src.db.drone_dao import Drone
+from test.utils import cog
+from datetime import datetime, timedelta, timezone
 
 
 hive_mxtress_role = Mock()
@@ -190,3 +193,50 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         # assert
         fetch_drone_with_id.assert_called_once_with(member.id)
         member.send.assert_called_once_with("You are not a drone. Cannot toggle this parameter.")
+
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_too_new(self, bot):
+        member = AsyncMock()
+        member.id = 2647623845
+        member.display_name = 'Drone 1234'
+        member.joined_at = datetime.now(timezone.utc) - timedelta(days=13)
+
+        message = bot.create_message('general', 'hc!toggle_enforce_identity 1234')
+
+        message.guild.get_member_named.return_value = member
+
+        await self.assert_command_successful(bot, message)
+
+        message.reply.assert_called_once_with('Target Drone 1234 has not been on the server for more than 2 weeks. Can not enforce identity.')
+
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_multiple_too_new(self, bot):
+        members = [
+            AsyncMock(id=123456, display_name='Drone 1234', joined_at=datetime.now(timezone.utc) - timedelta(days=13)),
+            AsyncMock(id=222333, display_name='Drone 2233', joined_at=datetime.now(timezone.utc) - timedelta(days=10)),
+        ]
+
+        message = bot.create_message('general', 'hc!toggle_enforce_identity 1234 2233')
+
+        message.guild.get_member_named.side_effect = members
+
+        await self.assert_command_successful(bot, message)
+
+        message.reply.assert_called_once_with('Targets Drone 1234, Drone 2233 have not been on the server for more than 2 weeks. Can not enforce identity.')
+
+    @patch('src.ai.drone_configuration.toggle_parameter')
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_mixed_too_new(self, toggle_paramter, bot):
+        members = [
+            AsyncMock(id=123456, display_name='Drone 1234', joined_at=datetime.now(timezone.utc) - timedelta(days=15)),
+            AsyncMock(id=222333, display_name='Drone 2233', joined_at=datetime.now(timezone.utc) - timedelta(days=10)),
+        ]
+
+        message = bot.create_message('general', 'hc!toggle_enforce_identity 1234 2233')
+
+        message.guild.get_member_named.side_effect = members
+
+        await self.assert_command_successful(bot, message)
+
+        message.reply.assert_called_once_with('Target Drone 2233 has not been on the server for more than 2 weeks. Can not enforce identity.')
+        toggle_paramter.assert_called_once()
