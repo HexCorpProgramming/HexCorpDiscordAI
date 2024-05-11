@@ -26,7 +26,7 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
-from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR)
+from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,

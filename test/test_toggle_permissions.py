@@ -1,9 +1,8 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from src.ai.drone_configuration import can_toggle_permissions_for
-
-from src.resources import HIVE_MXTRESS_USER_ID
+from src.roles import HIVE_MXTRESS
 
 
 class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
@@ -13,8 +12,11 @@ class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         self.hive_mxtress = AsyncMock()
-        self.hive_mxtress.id = HIVE_MXTRESS_USER_ID
+        self.hive_mxtress.id = 1
         self.hive_mxtress.display_name = "Hive Mxtress"
+        hive_mxtress_role = Mock()
+        hive_mxtress_role.name = HIVE_MXTRESS
+        self.hive_mxtress.roles = [hive_mxtress_role]
 
         self.drone_member = AsyncMock()
         self.drone_member.id = "7214376142"
@@ -30,7 +32,7 @@ class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
 
         self.get_trusted_users_patch = patch('src.ai.drone_configuration.get_trusted_users')
         self.get_trusted_users = self.get_trusted_users_patch.start()
-        self.get_trusted_users.return_value = [HIVE_MXTRESS_USER_ID, self.trusted_user_member.id]
+        self.get_trusted_users.return_value = [self.trusted_user_member.id]
 
     def tearDown(self):
         self.get_trusted_users_patch.stop()
