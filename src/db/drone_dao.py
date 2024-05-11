@@ -6,7 +6,6 @@ import discord
 
 from src.db.data_objects import BatteryType, Drone, map_to_object, map_to_objects
 from src.db.database import change, fetchall, fetchone, fetchcolumn
-from src.resources import HIVE_MXTRESS_USER_ID
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
 
@@ -24,7 +23,7 @@ async def add_new_drone_members(members: List[discord.Member]):
                 drone_id = get_id(member.display_name)
 
                 if drone_id:
-                    new_drone = Drone(member.id, drone_id, False, False, HIVE_MXTRESS_USER_ID, datetime.now(), associate_name=member.display_name)
+                    new_drone = Drone(member.id, drone_id, False, False, [], datetime.now(), associate_name=member.display_name)
                     await insert_drone(new_drone)
 
 
@@ -167,24 +166,24 @@ async def deincrement_battery_minutes_remaining(member: Optional[discord.Member]
         raise ValueError('Could not deincrement drone battery. No Discord member or drone ID provided.')
 
 
-async def set_battery_minutes_remaining(member: discord.Member, minutes: int):
+async def set_battery_minutes_remaining(discord_id: int, minutes: int):
     '''
     Sets the value of battery_minutes to the specified amount.
     '''
 
-    await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': member.id})
+    await change('UPDATE drone SET battery_minutes = :minutes WHERE discord_id = :discord', {'minutes': max(0, minutes), 'discord': discord_id})
 
 
-async def get_battery_minutes_remaining(member: discord.Member) -> int:
+async def get_battery_minutes_remaining(discord_id: int) -> int:
     '''
     Gets value of battery_minutes from drone table based on a given drone's Discord ID.
     Raises an Exception if the drone is not found.
     '''
 
-    drone = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': member.id})
+    drone = await fetchone('SELECT battery_minutes FROM drone WHERE discord_id = :discord', {'discord': discord_id})
 
     if drone is None:
-        raise Exception('No drone record for member ' + str(member.id))
+        raise Exception('No drone record for member with id ' + str(discord_id))
 
     return drone['battery_minutes']
 
@@ -196,7 +195,7 @@ async def get_battery_percent_remaining(member: discord.Member) -> int:
     '''
 
     result = await fetchone(
-        'SELECT round(drone.battery_minutes / battery_types.capacity * 100) AS percent '
+        'SELECT round(100.0 * drone.battery_minutes / battery_types.capacity) AS percent '
         'FROM drone '
         'INNER JOIN battery_types ON battery_types.id = drone.battery_type_id '
         'WHERE drone.discord_id = :discord_id',
@@ -259,7 +258,7 @@ async def is_free_storage(drone: Drone) -> bool:
     return free_storage_drone is not None and bool(free_storage_drone['free_storage'])
 
 
-async def get_battery_type(member: discord.Member) -> BatteryType:
+async def get_battery_type(discord_id: int) -> BatteryType:
     '''
     Fetch the battery type information for the given member.
 
@@ -273,10 +272,10 @@ async def get_battery_type(member: discord.Member) -> BatteryType:
         'WHERE drone.discord_id = :discord_id'
     )
 
-    result = map_to_object(await fetchone(query, {'discord_id': member.id}), BatteryType)
+    result = map_to_object(await fetchone(query, {'discord_id': discord_id}), BatteryType)
 
     if result is None:
-        raise Exception('Failed to get battery type for member ' + str(member.id))
+        raise Exception('Failed to get battery type for member with ID ' + str(discord_id))
 
     return result
 
@@ -294,4 +293,4 @@ async def set_battery_type(member: discord.Member, type: BatteryType) -> None:
     Set the battery type for a drone.
     '''
 
-    await change('UPDATE drone SET battery_type_id = :type_id WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})
+    await change('UPDATE drone SET battery_type_id = :type_id, battery_minutes = MIN((SELECT capacity FROM battery_types WHERE id = :type_id), battery_minutes) WHERE discord_id = :discord_id', {'type_id': type.id, 'discord_id': member.id})

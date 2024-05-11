@@ -172,7 +172,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         await mantra.increase_battery_by_five_percent(message)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, 264.0)
+        set_battery_minutes_remaining.assert_called_once_with(message.author.id, 264.0)
         message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
 
     @patch("src.ai.mantra.get_battery_minutes_remaining")
@@ -191,7 +191,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         await mantra.increase_battery_by_five_percent(message)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, 480)
+        set_battery_minutes_remaining.assert_called_once_with(message.author.id, 480)
         message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
 
     @patch("src.ai.mantra.get_battery_minutes_remaining")

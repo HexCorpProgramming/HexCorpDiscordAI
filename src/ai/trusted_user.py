@@ -3,13 +3,13 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import discord
-from discord.ext.commands import Cog, command, dm_only
+from discord.ext.commands import Cog, command
 from discord.ext import tasks
 from discord.utils import get
 
-from src.bot_utils import COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX, dm_only
 from src.db.drone_dao import get_trusted_users, set_trusted_users, get_discord_id_of_drone, fetch_all_drones_with_trusted_user, parse_trusted_users_text
-from src.resources import BRIEF_DRONE_OS, HIVE_MXTRESS_USER_ID
+from src.resources import BRIEF_DRONE_OS
 
 LOGGER = logging.getLogger('ai')
 REQUEST_TIMEOUT = timedelta(hours=24)
@@ -131,10 +131,6 @@ async def remove_trusted_user(context, trusted_user_name: str):
         return
 
     trusted_users = await get_trusted_users(context.author.id)
-
-    if str(trusted_user.id) == HIVE_MXTRESS_USER_ID:
-        await context.reply("Can not remove the Hive Mxtress as a trusted user.")
-        return
 
     if trusted_user.id not in trusted_users:
         await context.reply(f"User with name \"{trusted_user.display_name}\" was not trusted.")
