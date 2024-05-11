@@ -1,6 +1,6 @@
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
@@ -112,15 +112,31 @@ class DroneConfigurationCog(Cog):
         '''
         Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
         '''
-        await toggle_parameter(context,
-                               drones,
-                               "identity_enforcement",
-                               get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
-                               is_identity_enforced,
-                               lambda: "Identity enforcement is now active.",
-                               lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
-                               lambda: "Identity enforcement disengaged.",
-                               minutes)
+
+        latest_join = datetime.now(timezone.utc) - timedelta(weeks=2)
+        permitted_members = [m for m in drones if m.joined_at <= latest_join]
+        forbidden_members = [m for m in drones if m.joined_at > latest_join]
+
+        if len(forbidden_members):
+            if len(forbidden_members) == 1:
+                text = 'Target ' + forbidden_members[0].display_name + ' has'
+            else:
+                text = 'Targets ' + ', '.join([m.display_name for m in forbidden_members]) + ' have'
+
+            await context.reply(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
+
+        if len(permitted_members):
+            await toggle_parameter(
+                context,
+                permitted_members,
+                "identity_enforcement",
+                get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                is_identity_enforced,
+                lambda: "Identity enforcement is now active.",
+                lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
+                lambda: "Identity enforcement disengaged.",
+                minutes
+            )
 
     @guild_only()
     @command(aliases=['glitch', 'tdg'], brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}toggle_drone_glitch 9813 3287')
@@ -140,12 +156,12 @@ class DroneConfigurationCog(Cog):
 
     @guild_only()
     @command(aliases=['battery', 'tbp'], brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}toggle_battery_power 0001')
-    async def toggle_battery_power(self, context, drones: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
+    async def toggle_battery_power(self, context, members: Greedy[Union[discord.Member, DroneMemberConverter]], minutes: NamedParameterConverter(MINUTES_PARAMETER, int) = 0):
         '''
         Lets the Hive Mxtress or trusted users toggle whether or not a drone is battery powered.
         '''
         await toggle_parameter(context,
-                               drones,
+                               members,
                                "is_battery_powered",
                                get(context.guild.roles, name=BATTERY_POWERED),
                                is_battery_powered,
@@ -155,10 +171,10 @@ class DroneConfigurationCog(Cog):
                                minutes)
         # Additionally, reset the battery of any drone regardless of whether or not it's being toggled on or off.
         # And remove drained role if added.
-        for drone in drones:
-            battery_type = await get_battery_type(drone)
-            await set_battery_minutes_remaining(drone, battery_type.capacity)
-            await drone.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
+        for member in members:
+            battery_type = await get_battery_type(member.id)
+            await set_battery_minutes_remaining(member.id, battery_type.capacity)
+            await member.remove_roles(get(context.guild.roles, name=BATTERY_DRAINED))
 
 
 async def rename_drone(context, old_id: str, new_id: str):
@@ -242,13 +258,18 @@ async def can_toggle_permissions_for(toggling_user: discord.Member,
     return False
 
 
-def is_configured(drone_member: discord.Member) -> bool:
+async def is_configured(drone_member: discord.Member) -> bool:
     toggles = (is_prepending_id,
                is_optimized,
                is_identity_enforced,
                is_glitched,
                )
-    return any(is_toggled(drone_member) for is_toggled in toggles)
+
+    for toggle in toggles:
+        if await toggle(drone_member):
+            return True
+
+    return False
 
 
 async def toggle_parameter(context,
@@ -302,7 +323,7 @@ async def toggle_parameter(context,
 
 
 async def set_can_self_configure(drone: discord.Member):
-    still_configured = is_configured(drone)
+    still_configured = await is_configured(drone)
     if not still_configured:
         await update_droneOS_parameter(drone, "can_self_configure", True)
 
@@ -316,7 +337,7 @@ async def toggle_free_storage(target: discord.Member):
         await target.send("You are not a drone. Cannot toggle this parameter.")
         return
 
-    if await is_free_storage(target):
+    if await is_free_storage(drone):
         await update_droneOS_parameter(target, "free_storage", False)
         await target.remove_roles(get(guild.roles, name=FREE_STORAGE))
         await target.send("Free storage disabled. You can now only be stored by trusted users or the Hive Mxtress.")

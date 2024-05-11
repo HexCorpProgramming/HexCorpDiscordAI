@@ -49,7 +49,7 @@ async def get_status(member: discord.Member, requesting_user: int, context) -> d
         embed.description = "You are not registered as a trusted user of this drone."
         return embed
 
-    battery_type = await get_battery_type(member)
+    battery_type = await get_battery_type(member.id)
 
     # assemble description
     if is_trusted_user:

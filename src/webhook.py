@@ -73,6 +73,10 @@ async def webhook_if_message_altered(original: discord.Message, copy: MessageCop
             embed = discord.Embed(color=0xff66ff, description=reply_text)
             embed.set_author(name=referenced_message.author.display_name, icon_url=referenced_message.author.avatar)
 
+        # Don't try to send an empty message.  This might happen if a message is deleted.
+        if copy.content == '' and embed is None:
+            return
+
         await original.delete()
         created_message = await proxy_message_by_webhook(message_content=copy.content,
                                                          message_username=copy.display_name,

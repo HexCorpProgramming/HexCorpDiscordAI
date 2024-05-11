@@ -40,6 +40,7 @@ def hive_mxtress_only() -> Callable[[T], T]:
         '''
         Check that the message's author is the Hive Mxtress.
         '''
+
         return has_role(ctx.author, HIVE_MXTRESS)
 
     return check(predicate)
