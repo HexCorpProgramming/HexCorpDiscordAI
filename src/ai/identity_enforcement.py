@@ -9,7 +9,7 @@ async def enforce_identity(message: discord.Message, message_copy: MessageCopy):
     Message listener for activating identity enforcement.
     '''
 
-    drone = Drone.find(discord_id=message.author.id)
+    drone = await Drone.find(discord_id=message.author.id)
 
     if drone and drone.identity_enforcable(message.channel):
         message_copy.identity_enforced = True

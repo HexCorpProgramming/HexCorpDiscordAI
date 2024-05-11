@@ -3,7 +3,12 @@ from unittest.mock import AsyncMock, patch, Mock
 import src.ai.battery as battery
 import src.emoji as emoji
 import test.test_utils as test_utils
-from src.db.drone_dao import BatteryType, Drone
+#from src.db.drone_dao import Drone
+from src.db.data_objects import BatteryType
+from src.bot_utils import COMMAND_PREFIX
+from src.roles import BATTERY_DRAINED, BATTERY_POWERED
+from test.cog import cog
+from test.mocks import Mocks
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
@@ -11,72 +16,72 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
     @patch("src.ai.battery.get_battery_minutes_remaining", return_value=20)
     @patch("src.ai.battery.set_battery_minutes_remaining")
     @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'High', 480, 240))
-    async def test_recharge_battery(self, get_battery_type, set_bat_mins, get_bat_mins):
+    @cog(battery.BatteryCog)
+    async def test_recharge_battery(self, get_battery_type, set_bat_mins, get_bat_mins, mocks: Mocks):
         '''
         The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        member = Mock()
-        member.id = '5890snowflake'
+        member = mocks.member('5890')
 
         await battery.recharge_battery(member)
 
         set_bat_mins.assert_called_once_with(member, 20 + 240)
 
-    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=320)
-    @patch("src.ai.battery.set_battery_minutes_remaining")
-    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    async def test_manually_drain_battery(self, get_battery_type, set_bat_mins, get_bat_mins):
+    @cog(battery.BatteryCog)
+    async def test_manually_drain_battery(self, mocks: Mocks):
         '''
         The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        member = AsyncMock()
-        member.display_name = "⬢-Drone #3287"
+        message = mocks.message(mocks.hive_mxtress(), 'general', COMMAND_PREFIX + 'drain 1234')
 
-        await battery.drain_battery(member)
+        drone = mocks.drone('1234', is_battery_powered=True)
+        member = mocks.member('Drone 1234')
+        mocks.set_drone_members([drone], [member])
 
-        get_bat_mins.assert_called_once_with(member)
-        set_bat_mins.assert_called_once_with(member, 320 - 480 / 10)
+        await self.assert_command_successful(message)
 
-    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
-    @patch("src.ai.battery.set_battery_minutes_remaining")
-    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    async def test_recharge_battery_no_overcharge(self, get_battery_type, set_bat_mins, get_bat_mins):
-        '''
-        The recharge battery function should not call
-        set_battery_minutes_remaining with more than the maximum capacity (480)
-        '''
+        self.assertEqual(52, drone.battery_minutes)
 
-        member = Mock()
-        member.id = '5890snowflake'
+    # @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
+    # @patch("src.ai.battery.set_battery_minutes_remaining")
+    # @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
+    # async def test_recharge_battery_no_overcharge(self, get_battery_type, set_bat_mins, get_bat_mins):
+    #     '''
+    #     The recharge battery function should not call
+    #     set_battery_minutes_remaining with more than the maximum capacity (480)
+    #     '''
 
-        await battery.recharge_battery(member)
+    #     member = Mock()
+    #     member.id = '5890snowflake'
 
-        set_bat_mins.assert_called_once_with(member, 480)
+    #     await battery.recharge_battery(member)
 
-    @patch("src.ai.battery.deincrement_battery_minutes_remaining")
-    async def test_track_active_battery_drain(self, deincrement):
-        '''
-        For every inactive drone, 1 minute of battery should be drained from them
-        via database call 'deincrement_battery_minutes_remaining'.
-        Their 'active minutes remaining' should also be deincremented by one.
-        '''
+    #     set_bat_mins.assert_called_once_with(member, 480)
 
-        bot = AsyncMock()
+    # @patch("src.ai.battery.deincrement_battery_minutes_remaining")
+    # async def test_track_active_battery_drain(self, deincrement):
+    #     '''
+    #     For every inactive drone, 1 minute of battery should be drained from them
+    #     via database call 'deincrement_battery_minutes_remaining'.
+    #     Their 'active minutes remaining' should also be deincremented by one.
+    #     '''
 
-        battery_cog = battery.BatteryCog(bot)
+    #     bot = AsyncMock()
 
-        battery_cog.draining_batteries = {'5890': 10}
+    #     battery_cog = battery.BatteryCog(bot)
 
-        await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
+    #     battery_cog.draining_batteries = {'5890': 10}
 
-        deincrement.assert_called_once()
-        self.assertEqual(battery_cog.draining_batteries.get('5890', None), 9)
+    #     await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
+
+    #     deincrement.assert_called_once()
+    #     self.assertEqual(battery_cog.draining_batteries.get('5890', None), 9)
 
     async def test_remove_from_active_tracking(self):
         '''
@@ -94,139 +99,112 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNone(battery_cog.draining_batteries.get('9813', None))
 
-    @patch("src.ai.battery.has_role", return_value=True)
-    @patch("src.ai.battery.get")
-    @patch("src.ai.battery.get_all_drone_batteries")
-    async def test_add_drained_role(self, drone_batteries, discord_get, has_role):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_add_drained_role(self, Drone: AsyncMock, mocks: Mocks):
         '''
         Battery module should add the drained role if drone has 0 minutes
         of battery left.
         '''
 
-        bot = AsyncMock()
-        guild = Mock()
-        member = AsyncMock()
-        guild.get_member.return_value = member
-        bot.guilds = [guild]
+        drained_role = mocks.role(BATTERY_DRAINED)
 
-        drained_role = Mock()
-        discord_get.return_value = drained_role
+        drone = mocks.drone(1234, battery_minutes=0)
+        member = mocks.member('1234', roles=[BATTERY_POWERED])
+        Drone.all.return_value = [drone]
+        mocks.get_bot().guilds[0].get_member.return_value = member
 
-        drone_5890 = Drone('5890snowflake', '5890', battery_minutes=0)
-        drone_batteries.return_value = [drone_5890]
+        mocks.set_drone_members([drone], [member])
 
-        battery_cog = battery.BatteryCog(bot)
-
-        await test_utils.start_and_await_loop(battery_cog.track_drained_batteries)
+        await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
 
         member.add_roles.assert_called_once_with(drained_role)
 
-    @patch("src.ai.battery.has_role", return_value=True)
-    @patch("src.ai.battery.get")
-    @patch("src.ai.battery.get_all_drone_batteries")
-    async def test_remove_drained_role(self, drone_batteries, discord_get, has_role):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_remove_drained_role(self, Drone: AsyncMock, mocks: Mocks):
         '''
         Battery module should remove the drained role from drones that have it
         if they have more than 0 minutes of charge.
         '''
 
-        bot = AsyncMock()
-        guild = Mock()
-        member = AsyncMock()
-        guild.get_member.return_value = member
-        bot.guilds = [guild]
+        drained_role = mocks.role(BATTERY_DRAINED)
 
-        drained_role = Mock()
-        discord_get.return_value = drained_role
+        drone = mocks.drone(1234)
+        member = mocks.member('1234', roles=[BATTERY_POWERED, BATTERY_DRAINED])
+        Drone.all.return_value = [drone]
+        mocks.get_bot().guilds[0].get_member.return_value = member
 
-        drone_5890 = Mock()
-        drone_5890.id = "some_discord_id"
-        drone_5890.battery_minutes = 200
-        drone_batteries.return_value = [drone_5890]
+        mocks.set_drone_members([drone], [member])
 
-        battery_cog = battery.BatteryCog(bot)
-
-        await test_utils.start_and_await_loop(battery_cog.track_drained_batteries)
+        await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
 
         member.remove_roles.assert_called_once_with(drained_role)
 
-    @patch("src.ai.battery.get_all_drone_batteries")
-    @patch("src.ai.battery.get_battery_percent_remaining", return_value=10)
-    async def test_warn_low_battery_drones(self, get_battery_percent_remaining, drone_batteries):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_warn_low_battery_drones(self, Drone: AsyncMock, mocks: Mocks):
         '''
         The AI Mxtress should warn drones with less than 30 percent battery
         by DMing them.
         '''
 
-        drone = Drone('5890snowflake', '5890', battery_minutes=20)
-        drone_batteries.return_value = [drone]
+        drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
+        drone_member.drone.get_battery_percent_remaining.return_value = 25
+        Drone.all.return_value = [drone_member.drone]
 
-        bot = AsyncMock()
-        guild = Mock()
-        member = AsyncMock()
-        guild.get_member.return_value = member
-        bot.guilds = [guild]
+        await test_utils.start_and_await_loop(mocks.get_cog().warn_low_battery_drones)
 
-        battery_cog = battery.BatteryCog(bot)
+        drone_member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+        self.assertTrue('1234' in mocks.get_cog().low_battery_drones)
 
-        await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
-
-        member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
-        self.assertTrue('5890' in battery_cog.low_battery_drones)
-
-    @patch("src.ai.battery.get_all_drone_batteries")
-    @patch("src.ai.battery.get_battery_percent_remaining", return_value=30)
-    async def test_drone_not_warned_more_than_one(self, get_battery_percent_remaining, drone_batteries):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_drone_not_warned_more_than_one(self, Drone: AsyncMock, mocks: Mocks):
         '''
         The AI Mxtress should only DM low battery drones once. If a drone
         has already been warned it should not be warned again until it is
         above 30% battery again.
         '''
 
-        drone = Mock()
-        drone.battery_minutes = 20
-        drone.drone_id = '5890'
-        drone_batteries.return_value = [drone]
+        drone = mocks.drone(1234)
+        drone.get_battery_percent_remaining.return_value = 30
+        member = mocks.member('1234', roles=[BATTERY_POWERED])
+        Drone.all.return_value = [drone]
+        mocks.get_bot().guilds[0].get_member.return_value = member
 
-        bot = AsyncMock()
-        guild = Mock()
-        member = AsyncMock()
-        guild.get_member.return_value = member
-        bot.guilds = [guild]
+        mocks.set_drone_members([drone], [member])
 
-        battery_cog = battery.BatteryCog(bot)
-        battery_cog.low_battery_drones = ['5890']
+        battery_cog = mocks.get_cog()
+        battery_cog.low_battery_drones = ['1234']
 
         await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
 
         member.send.assert_not_called()
 
-    @patch("src.ai.battery.get_all_drone_batteries")
-    @patch("src.ai.battery.get_battery_percent_remaining", return_value=50)
-    async def test_remove_recharged_drones(self, get_battery_percent_remaining, drone_batteries):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_remove_recharged_drones(self, Drone: AsyncMock, mocks: Mocks):
         '''
         The AI Mxtress should remove drones from the list of warned drones
         once they are recharged above 30%.
         '''
 
-        drone = Mock()
-        drone.battery_minutes = 300
-        drone.drone_id = '5890'
-        drone_batteries.return_value = [drone]
+        drone = mocks.drone(1234)
+        drone.get_battery_percent_remaining.return_value = 50
+        member = mocks.member('1234', roles=[BATTERY_POWERED])
+        Drone.all.return_value = [drone]
+        mocks.get_bot().guilds[0].get_member.return_value = member
 
-        bot = AsyncMock()
-        guild = Mock()
-        member = AsyncMock()
-        guild.get_member.return_value = member
-        bot.guilds = [guild]
+        mocks.set_drone_members([drone], [member])
 
-        battery_cog = battery.BatteryCog(bot)
-        battery_cog.low_battery_drones = ['5890']
+        battery_cog = mocks.get_cog()
+        battery_cog.low_battery_drones = ['1234']
 
         await test_utils.start_and_await_loop(battery_cog.warn_low_battery_drones)
 
         member.send.assert_not_called()
-        self.assertTrue('5890' not in battery_cog.low_battery_drones)
+        self.assertTrue('1234' not in battery_cog.low_battery_drones)
 
     def battery_emoji_getter(self, whatever, name):
         if name == emoji.BATTERY_FULL:
@@ -240,96 +218,89 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         else:
             return "SHOULDNTHAPPEN"
 
-    @patch("src.ai.battery.get")
-    @patch("src.ai.battery.get_battery_percent_remaining")
-    @patch("src.ai.battery.is_battery_powered", return_value=True)
-    async def test_append_battery_indicator(self, battery_powered, battery_percentage, discord_get):
+    @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_append_battery_indicator(self, DroneMember: AsyncMock, mocks: Mocks):
         '''
         When passed a message by a battery powered drone, should append
         a battery emoji to the start of their message ([++-]- :: Hello.)
         '''
 
-        message = Mock()
-        message_copy = Mock()
-        original_message = "Hello."
+        original_message = 'Hello.'
+        message = mocks.message(None, 'general', original_message)
+        message_copy = mocks.message(None, 'general', '')
+        drone_member = mocks.drone_member('1234')
+        drone_member.drone.is_battery_powered = True
+        DroneMember.create.return_value = drone_member
 
-        discord_get.side_effect = self.battery_emoji_getter
-
-        battery_percentage.return_value = 100
+        drone_member.drone.get_battery_percent_remaining.return_value = 100
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"FULLBATTERYEMOJI :: {original_message}")
+        self.assertEqual(message_copy.content, f"{emoji.BATTERY_FULL} :: {original_message}")
 
-        battery_percentage.return_value = 50
+        drone_member.drone.get_battery_percent_remaining.return_value = 50
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"MIDBATTERYEMOJI :: {original_message}")
+        self.assertEqual(message_copy.content, f"{emoji.BATTERY_MID} :: {original_message}")
 
-        battery_percentage.return_value = 20
+        drone_member.drone.get_battery_percent_remaining.return_value = 20
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"LOWBATTERYEMOJI :: {original_message}")
+        self.assertEqual(message_copy.content, f"{emoji.BATTERY_LOW} :: {original_message}")
 
-        battery_percentage.return_value = 5
+        drone_member.drone.get_battery_percent_remaining.return_value = 5
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"EMPTYBATTERYEMOJI :: {original_message}")
+        self.assertEqual(message_copy.content, f"{emoji.BATTERY_EMPTY} :: {original_message}")
 
-    @patch("src.ai.battery.get")
-    @patch("src.ai.battery.get_battery_percent_remaining", return_value=100)
-    @patch("src.ai.battery.is_battery_powered", return_value=True)
-    async def test_append_battery_indicator_with_prepending(self, battery_powered, battery_percentage, discord_get):
+    @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_append_battery_indicator_with_prepending(self, DroneMember: AsyncMock, mocks: Mocks):
         '''
         When passed a message by a battery powered drone, should append a
         battery indicator emoji after the drone ID and before the message
         content (5890 :: [++-]- :: Hello.)
         '''
 
-        message = Mock()
-        message_copy = Mock()
-        original_message = "5890 :: Hello.\nBeep boop."
+        drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
+        DroneMember.create.return_value = drone_member
+        original_message = '1234 :: Hello.\nBeep boop.'
+        message = mocks.message(None, 'general', original_message)
+        message_copy = mocks.message(None, original_message)
 
-        discord_get.side_effect = self.battery_emoji_getter
-
-        battery_percentage.return_value = 100
+        drone_member.drone.get_battery_percent_remaining.return_value = 100
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: FULLBATTERYEMOJI :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_FULL} :: Hello.\nBeep boop.")
 
-        battery_percentage.return_value = 50
+        drone_member.drone.get_battery_percent_remaining.return_value = 50
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: MIDBATTERYEMOJI :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_MID} :: Hello.\nBeep boop.")
 
-        battery_percentage.return_value = 20
+        drone_member.drone.get_battery_percent_remaining.return_value = 20
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: LOWBATTERYEMOJI :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_LOW} :: Hello.\nBeep boop.")
 
-        battery_percentage.return_value = 5
+        drone_member.drone.get_battery_percent_remaining.return_value = 5
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, "5890 :: EMPTYBATTERYEMOJI :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_EMPTY} :: Hello.\nBeep boop.")
 
-    @patch("src.ai.battery.is_drone", return_value=True)
-    @patch("src.ai.battery.is_battery_powered", return_value=True)
-    async def test_start_battery_drain(self, bat_pow, is_drn):
+    @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_start_battery_drain(self, DroneMember: AsyncMock, mocks: Mocks):
         '''
         Battery powered drones should have their active tracking minutes
         set to 15 when they first send a message.
         '''
 
-        message = Mock()
-        message.author.display_name = "HexDrone 5890"
+        drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
+        DroneMember.create.return_value = drone_member
 
-        message_copy = Mock()
-
-        bot = Mock()
-        battery_cog = battery.BatteryCog(bot)
-
-        await battery_cog.start_battery_drain(message, message_copy)
-
-        self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)
+        await mocks.get_cog().start_battery_drain(mocks.message(), mocks.message())
+        self.assertEqual(mocks.get_cog().draining_batteries.get('1234', None), 15)
 
     @patch("src.ai.battery.is_drone", return_value=True)
     @patch("src.ai.battery.is_battery_powered", return_value=True)

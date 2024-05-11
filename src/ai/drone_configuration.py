@@ -12,7 +12,7 @@ from src.ai.storage import release
 from src.bot_utils import channels_only, command, COMMAND_PREFIX, dm_only, fetch, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
-from src.db.timer_dao import delete_timers_by_id_and_mode
+from src.db.drone_dao import delete_timers_by_id_and_mode
 from src.resources import BRIEF_DRONE_OS
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
@@ -46,7 +46,7 @@ class DroneConfigurationCog(Cog):
         '''
         Allows a drone to go back to the status of an Associate.
         '''
-        await unassign_drone(DroneMember.load(context.message.guild, discord_id=context.author.id))
+        await unassign_drone(await DroneMember.load(context.message.guild, discord_id=context.author.id))
 
     @dm_only()
     @command(aliases=['free_storage', 'tfs'], brief=[BRIEF_DRONE_OS], usage=f"{COMMAND_PREFIX}toggle_free_storage")
@@ -178,7 +178,7 @@ async def rename_drone(context, old_id: str, new_id: str):
     collision = await Drone.find(drone_id=new_id)
 
     if collision is None:
-        drone_member = DroneMember.load(context.guild, drone_id=old_id)
+        drone_member = await DroneMember.load(context.guild, drone_id=old_id)
         drone_member.drone.drone_id = new_id
         await drone_member.drone.save()
         await drone_member.edit(nick=f'⬡-Drone #{new_id}')
@@ -288,7 +288,7 @@ async def toggle_parameter(context,
 
         if await member.update_display_name() and not is_admin:
             # Display name has been updated, get the new drone object with updated display name.
-            member = await DroneMember(context.guild.get_member(member.id))
+            member = await DroneMember.create(context.guild.get_member(member.id))
 
         await webhook.proxy_message_by_webhook(message_content=f'{member.drone.drone_id} :: {message}',
                                                message_username=member.display_name,
@@ -310,7 +310,7 @@ async def toggle_free_storage(target: DroneMember):
     if drone is None:
         raise UserInputError("You are not a drone. Cannot toggle this parameter.")
 
-    if drone.is_free_storage():
+    if drone.free_storage:
         drone.free_storage = False
         await drone.save()
         await target.remove_roles(fetch(guild.roles, name=FREE_STORAGE))

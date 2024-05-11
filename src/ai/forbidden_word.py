@@ -7,9 +7,6 @@ from discord.utils import get
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
 from src.db.data_objects import ForbiddenWord
-from src.db.forbidden_word_dao import (delete_forbidden_word_by_id,
-                                       get_all_forbidden_words,
-                                       insert_forbidden_word)
 from src.emoji import DRONE_EMOJI
 from src.log import log
 from drone_member import DroneMember
@@ -17,7 +14,7 @@ from drone_member import DroneMember
 
 async def deny_thoughts(message: discord.Message, message_copy):
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     if not member.drone:  # Associates are allowed to think.
         return
@@ -25,7 +22,7 @@ async def deny_thoughts(message: discord.Message, message_copy):
     emoji_replacement = get(message.guild.emojis, name=DRONE_EMOJI)
     original_content = message_copy.content
 
-    for banned_word in await get_all_forbidden_words():
+    for banned_word in await ForbiddenWord.all():
         for match in re.findall(banned_word.regex, message_copy.content, flags=re.IGNORECASE):
             message_copy.content = message_copy.content.replace(match, "\_" * len(match), 1)
 
@@ -51,7 +48,8 @@ class ForbiddenWordCog(Cog):
         Lets the Hive Mxtress add a word to the list of forbidden words. The pattern is a regular expression.
         '''
 
-        await insert_forbidden_word(ForbiddenWord(id, pattern))
+        word = ForbiddenWord(id, pattern)
+        await word.insert()
         await context.send(f"Successfully added forbidden word `{id}` with pattern `{pattern}`.")
 
     @channels_only(OFFICE)
@@ -63,7 +61,7 @@ class ForbiddenWordCog(Cog):
         '''
 
         card = discord.Embed(color=0xff66ff, title="Forbidden words", description="These are the currently configured forbidden words.")
-        for forbidden_word in await get_all_forbidden_words():
+        for forbidden_word in await ForbiddenWord.all():
             card.add_field(name=forbidden_word.id, value=f"Pattern: `{forbidden_word.regex}`", inline=False)
 
         await context.send(embed=card)
@@ -76,5 +74,5 @@ class ForbiddenWordCog(Cog):
         Remove one of the forbidden words.
         '''
 
-        await delete_forbidden_word_by_id(id)
+        await ForbiddenWord.load(id).delete()
         await context.send(f"Successfully removed forbidden word with name `{id}`.")

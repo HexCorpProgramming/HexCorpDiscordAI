@@ -7,7 +7,7 @@ from drone_member import DroneMember
 
 
 async def check_if_prepending_necessary(message: discord.Message, message_copy=None):
-    member = DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     if member.drone and member.drone.id_prepending and message.channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         if message.content.startswith(f"{member.drone.drone_id} :: ") or message.content.startswith(COMMAND_PREFIX):

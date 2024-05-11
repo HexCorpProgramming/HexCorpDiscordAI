@@ -103,8 +103,8 @@ class BatteryCog(commands.Cog):
             percentage_remaining = drone.get_battery_percent_remaining()
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{drone.drone_id} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
-                                                   message_username=drone.display_name,
-                                                   message_avatar=member.avatar_url(),
+                                                   message_username=member.display_name,
+                                                   message_avatar=member.avatar_url(context.message.channel),
                                                    webhook=channel_webhook)
 
     async def start_battery_drain(self, message, message_copy=None):
@@ -113,7 +113,7 @@ class BatteryCog(commands.Cog):
         tracking them for 15 minutes worth of battery drain per message sent.
         '''
 
-        member = DroneMember(message.author)
+        member = await DroneMember.create(message.author)
 
         if not member.drone or not member.drone.is_battery_powered:
             return False
@@ -141,7 +141,7 @@ class BatteryCog(commands.Cog):
             else:
                 log.info(f"Draining 1 minute worth of charge from {drone}")
                 draining_batteries[drone] = remaining_minutes - 1
-                drone = Drone.load(drone_id=drone)
+                drone = await Drone.load(drone_id=drone)
                 drone.battery_minutes = max(0, drone.battery_minutes - 1)
                 await drone.save()
 
@@ -193,7 +193,7 @@ class BatteryCog(commands.Cog):
                 log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
-            if await drone.get_battery_percent_remaining() < 30:
+            if drone.get_battery_percent_remaining() < 30:
                 if drone.drone_id not in self.low_battery_drones:
                     log.info(f"Warning drone {drone.drone_id} of low battery.")
                     await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
@@ -214,7 +214,7 @@ async def add_battery_indicator_to_copy(message: Message, message_copy: MessageC
     which sent the original message is battery powered.
     The indicator is placed after the ID prepend if the message includes it.
     '''
-    message_copy.content = await generate_battery_message(await DroneMember(message.author), message_copy.content)
+    message_copy.content = await generate_battery_message(await DroneMember.create(message.author), message_copy.content)
 
     return False
 

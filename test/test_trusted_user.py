@@ -4,7 +4,7 @@ from discord.ext.commands import Bot
 from src.ai.trusted_user import TrustedUserCog, TrustedUserRequest
 from src.resources import HIVE_MXTRESS_USER_ID
 from src.db.drone_dao import Drone
-from test.utils import cog
+from test.cog import cog
 
 
 class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
@@ -48,7 +48,7 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         question_message.id = 123456
         question_message_id = question_message.id
         self.trusted_user_member.send.return_value = question_message
-        #self.context.author = self.drone_member
+        # self.context.author = self.drone_member
 
         # run
         message = self.bot.create_direct_message('hc!add_trusted_user 9813', author=self.drone_member)

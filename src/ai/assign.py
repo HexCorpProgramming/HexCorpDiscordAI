@@ -8,11 +8,11 @@ from discord.utils import get
 import src.messages as messages
 import src.roles as roles
 from src.channels import ASSIGNMENT_CHANNEL
-from src.db.drone_dao import insert_drone, get_used_drone_ids
+from src.db.drone_dao import get_used_drone_ids
 from src.db.data_objects import Drone
 from src.bot_utils import get_id
-from src.resources import HIVE_MXTRESS_USER_ID
 from src.log import log
+from src.db.data_objects import BatteryType
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -80,14 +80,28 @@ async def create_drone(guild: discord.Guild,
     if not is_hive_mxtress:
         await target.edit(nick=assigned_nick)
 
-    trusted_users = (additional_trusted_users or []) + [HIVE_MXTRESS_USER_ID]
+    trusted_users = additional_trusted_users or []
     # exclude self from trusted users list
     if target.id in trusted_users:
         trusted_users.remove(target.id)
 
+    # Load the default battery type.
+    battery_type = await BatteryType.load(2)
+
     # add new drone to DB
-    new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until, can_self_configure=True, associate_name=associate_name)
-    await insert_drone(new_drone)
+    new_drone = Drone(
+        discord_id=target.id,
+        drone_id=assigned_id,
+        trusted_users=trusted_users,
+        last_activity=datetime.now(),
+        temporary_until=temporary_until,
+        can_self_configure=True,
+        associate_name=associate_name,
+        battery_type_id=battery_type.id,
+        battery_minutes=battery_type.capacity
+    )
+
+    await new_drone.insert()
     await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')
 
     log.info(f'Created drone {assigned_id}')

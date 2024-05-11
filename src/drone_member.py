@@ -1,45 +1,75 @@
 import discord
-from discord.ext.commands import BadArgument, Context, MemberConverter, MemberNotFound
 from src.db.data_objects import Drone
-from typing import Any, Self
+from discord.ext.commands import BadArgument, Context, MemberConverter, MemberNotFound
+from typing import Self
 from src.resources import DRONE_AVATAR
 from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.log import log
+from operator import attrgetter
 
 
-class DroneMember(discord.Member):
+def proxy(proxied, prop: str):
     '''
-    A Discord member record augmented with a drone record.
+    Add all the properties and methods of the proxied class onto the proxy class.
 
-    This can be used anywhere that discord.Member can be used.
-    It also has a .drone property that contains a Drone record, if the Member has one.
+    proxied: The class to be proxied.
+    prop: The property name under which the proxied object will be stored in the proxy class.
     '''
 
-    drone: Drone | None
-
-    async def __init__(self, member: discord.Member):
-        self.drone = await Drone.find(member)
-        self.member = member
-
-    def __getattr__(self, name) -> Any:
-        return getattr(self.member, name)
-
-    def __setattr__(self, name: str, value: any) -> None:
-        setattr(self.member, name, value)
-
-    def identity_enforcable(self, channel: discord.TextChannel) -> bool:
+    def make_proxy(cls):
         '''
-        Determine if a member's drone identity should be enforced in the given channel.
+        Make class "cls" a proxy for class "proxied".
         '''
 
-        return self.drone and (channel.name in DRONE_HIVE_CHANNELS or self.drone.identity_enforcement) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        # Iterate over every property and method of the class to be proxied.
+        for attr, value in proxied.__dict__.items():
 
-    def avatar_url(self, channel: discord.TextChannel) -> str:
+            # Ignore private members.
+            if attr.startswith('_'):
+                continue
+
+            # Create a getter and setter that wrap the property or method.
+            getter = attrgetter(f"{prop}.{attr}")
+            setter = (lambda a: lambda self, v: setattr(getattr(self, prop), a, v))(attr)
+
+            # Set the property on the proxy class.
+            setattr(cls, attr, property(getter, setter, doc=f"{proxied.__name__}.{attr}"))
+
+        return cls
+
+    return make_proxy
+
+
+@proxy(discord.Member, '_member')
+class DroneMember:
+    _member = None
+    drone = None
+
+    def __init__(self, member: discord.Member):
         '''
-        Fetch the URL for the member's avatar.
+        Do not call this directly, use one of:
+
+        ```python
+        await DroneMember.create()
+        await DroneMember.find()
+        await DroneMember.load()
+        ```
         '''
 
-        return self.member.display_avatar.url if not self.identity_enforcable(channel) else DRONE_AVATAR
+        self._member = member
+
+    @classmethod
+    async def create(cls, member: discord.Member) -> Self:
+        '''
+        Factory for creating DroneMembers.
+
+        This is necessary because __init__ cannot be async.
+        '''
+
+        result = cls(member)
+        result.drone = await Drone.find(member=member)
+
+        return result
 
     @classmethod
     async def convert(cls, context: Context, argument: str) -> Self:
@@ -68,19 +98,59 @@ class DroneMember(discord.Member):
             raise BadArgument
 
         # Combine the Drone and Member.
-        return await DroneMember(member)
+        return await DroneMember.create(member)
 
     @classmethod
-    async def load(cls, guild: discord.Guild, *, discord_id: int | None = None, drone_id: str | None = None):
+    async def load(cls, guild: discord.Guild, *, discord_id: int | None = None, drone_id: str | None = None) -> Self:
         '''
         Create a DroneMember given a guild and either a Discord ID or a drone ID.
+
+        Raises an exception if no member is found.
+        '''
+
+        drone_member = cls.find(guild, discord_id=discord_id, drone_id=drone_id)
+
+        if drone_member is None:
+            raise Exception('Could not find guild member by Discord ID ' + discord_id)
+
+        return drone_member
+
+    @classmethod
+    async def find(cls, guild: discord.Guild, *, discord_id: int | None = None, drone_id: str | None = None) -> Self | None:
+        '''
+        Find a DroneMember given a guild and either a Discord ID or a drone ID.
+
+        Returns None if no member is found
         '''
 
         if drone_id is not None:
-            drone = Drone.load(drone_id=drone_id)
+            drone = await Drone.load(drone_id=drone_id)
+
+            if drone is None:
+                return None
+
             discord_id = drone.discord_id
 
-        return await DroneMember(guild.get_member(discord_id))
+        member = guild.get_member(discord_id)
+
+        if member is None:
+            return None
+
+        return await DroneMember.create(member)
+
+    def identity_enforcable(self, channel: discord.TextChannel) -> bool:
+        '''
+        Determine if a member's drone identity should be enforced in the given channel.
+        '''
+
+        return self.drone and (channel.name in DRONE_HIVE_CHANNELS or self.drone.identity_enforcement) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+
+    def avatar_url(self, channel: discord.TextChannel) -> str:
+        '''
+        Fetch the URL for the member's avatar.
+        '''
+
+        return self.display_avatar.url if not self.identity_enforcable(channel) else DRONE_AVATAR
 
     async def update_display_name(self):
         '''
@@ -94,10 +164,10 @@ class DroneMember(discord.Member):
 
         new_display_name = f"{icon}-Drone #{self.drone.drone_id}"
 
-        if self.member.display_name == new_display_name:
+        if self.display_name == new_display_name:
             # Return false if no update required.
             return False
 
-        log.info(f"Updating drone display name. Old name: {self.member.display_name}. New name: {new_display_name}.")
-        await self.member.edit(nick=new_display_name)
+        log.info(f"Updating drone display name. Old name: {self.display_name}. New name: {new_display_name}.")
+        await self.edit(nick=new_display_name)
         return True

@@ -92,7 +92,7 @@ async def optimize_speech(message: discord.Message, message_copy):
     This function assumes message validity has already been assessed by speech_optimization_enforcement.
     '''
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     # Do not attempt to optimize non-drones.
     if not member.drone:

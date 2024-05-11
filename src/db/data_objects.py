@@ -1,136 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Self
-from discord import Guild, Member, TextChannel
-from src.db.database import change, fetchcolumn, fetchone
+from typing import Any, List, Self
+from discord import Member, TextChannel
 from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.roles import has_role, HIVE_MXTRESS
-from src.drone_member import DroneMember
-
-
-def map_to_objects(rows, constructor):
-    return [constructor(**row) for row in rows]
-
-
-def map_to_object(row, constructor):
-    if row is None:
-        return None
-
-    return constructor(**row)
-
-
-class Record:
-    '''
-    The base class for database records.
-    This adds the methods: all, find, load, save, insert, delete.
-    '''
-
-    @classmethod
-    def get_id_column(cls) -> str:
-        '''
-        Get the name of the column that stores the primary key.
-
-        This will read the `id_column` property if it exists, else it will default to "id".
-        '''
-
-        return getattr(cls, 'id_column', 'id')
-
-    def get_id(self) -> str:
-        '''
-        Get the value of the primary key for this record.
-        '''
-
-        return getattr(self, self.get_id_column())
-
-    async def delete(self) -> None:
-        '''
-        Delete the current database record.
-        '''
-
-        await change(f'DELETE FROM {self.table} WHERE {self.get_id_column()} = :id', {'id': self.get_id()})
-
-    @classmethod
-    async def find(cls, **kwargs) -> Self | None:
-        '''
-        Find a database record by the given column name and value.
-
-        Note that the column name is used directly in the SQL and so must not contain user input.
-        '''
-
-        if len(kwargs) != 1:
-            raise Exception('Record::find() requires exactly one keyword argument')
-
-        column = next(iter(kwargs))
-        value = kwargs[column]
-
-        return map_to_object(await fetchone(f'SELECT * FROM {cls.table} WHERE {column} = :value', {'value': value}), cls)
-
-    @classmethod
-    async def load(cls, **kwargs) -> Self:
-        '''
-        Load a single database record.
-
-        Specify a single keyword argument that consists of the column name and value to find.
-
-        Raises an Exception if the record is not found.
-        '''
-
-        result = cls.find(**kwargs)
-
-        if result is None:
-            column = next(iter(kwargs))
-            value = kwargs[column]
-
-            raise Exception(f'Failed to find record in {cls.table_name} where {column} = {value}')
-
-        return result
-
-    @classmethod
-    async def all(cls) -> List[Self]:
-        '''
-        Fetch all records.
-
-        Records are loaded individually in case the class is overriding the load or find method.
-        '''
-
-        ids = await fetchcolumn(f'SELECT {cls.get_id_column()} FROM {cls.table}')
-        records = []
-
-        for id in ids:
-            args = {cls.get_id_column(): id}
-            records.append(cls.load(**args))
-
-        return records
-
-    def build_sets(self) -> None:
-        '''
-        Build a string of "column = :column" for INSERT and UPDATE statements.
-        '''
-
-        columns = vars(self).keys()
-        ignore_properties = getattr(self, 'ignore_properties', [])
-
-        # Build a string of "col_1 = :col_1, col_2 = :col2" etc.
-        return ', '.join([f'{col} = :{col}' for col in columns if col not in ignore_properties])
-
-    async def insert(self) -> None:
-        '''
-        Insert a new record.
-        '''
-
-        sets = self.build_sets()
-
-        await change(f'INSERT INTO {self.table} SET {sets}', vars(self))
-
-    async def save(self) -> None:
-        '''
-        Update an existing record.
-        '''
-
-        sets = self.build_sets()
-        id = self.get_id_column()
-
-        await change(f'UPDATE {self.table} SET {sets} WHERE {id} = :{id}', vars(self))
+from src.db.record import Record
 
 
 @dataclass(frozen=True)
@@ -226,34 +100,6 @@ class DroneOrder(Record):
     The time at which the order will be completed.
     '''
 
-    @classmethod
-    async def all_drones(cls, guild: Guild) -> List[DroneMember]:
-        '''
-        Fetch all drones with an order in progress.
-        '''
-
-        drones = []
-        ids = await fetchcolumn('SELECT discord_id FROM drone_orders')
-
-        for id in ids:
-            drones.append(DroneMember.load(guild, discord_id=id))
-
-        return drones
-
-    @classmethod
-    async def all_elapsed(cls, guild: Guild) -> List[DroneMember]:
-        '''
-        Fetch all drones that are due to be released from storage.
-        '''
-
-        drones = []
-        ids = await fetchcolumn('SELECT discord_id FROM drone_orders WHERE release_time < :now', {'now': datetime.now()})
-
-        for id in ids:
-            drones.append(DroneMember.load(guild, discord_id=id))
-
-        return drones
-
 
 @dataclass
 class Timer(Record):
@@ -282,28 +128,21 @@ class Timer(Record):
     The time at which the timer expires.
     '''
 
-    @classmethod
-    async def all_elapsed(cls, guild: Guild) -> List[DroneMember]:
-        '''
-        Fetch all drones with elapsed timers.
-        '''
-
-        drones = []
-        ids = await fetchcolumn('SELECT discord_id FROM timers WHERE end_time < :now', {'now': datetime.now()})
-
-        for id in ids:
-            drones.append(DroneMember.load(guild, discord_id=id))
-
-        return drones
-
 
 @dataclass(eq=True, frozen=True)
-class ForbiddenWord:
+class ForbiddenWord(Record):
     id: str
+    '''
+    The unique ID by which the record is accessed.
+    '''
+
     regex: str
+    '''
+    The regular expression to match the forbidden word.
+    '''
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Drone(Record):
     table = 'drone'
     '''
@@ -320,103 +159,103 @@ class Drone(Record):
     The name of the primary key for this table.
     '''
 
-    discord_id: str
+    discord_id: str = ''
     '''
     The user's unique Discord ID.
     '''
 
-    drone_id: str
+    drone_id: str = ''
     '''
     The user's four digit drone ID.
     '''
 
-    optimized: bool
+    optimized: bool = False
     '''
     True when speech optimization is active.
     '''
 
-    glitched: bool
+    glitched: bool = False
     '''
     True when speech is being glitched.
     '''
 
-    trusted_users: str | List[int]
+    trusted_users: str | List[int] = field(default_factory=list)
     '''
     Trusted users, as Discord IDs separated by pipes.
     '''
 
-    last_activity: datetime | None
+    last_activity: datetime | None = None
     '''
     The time of creation of the drone record.
     '''
 
-    id_prepending: bool
+    id_prepending: bool = False
     '''
     True if messages not starting with the drone's ID will be deleted.
     '''
 
-    identity_enforcement: bool
+    identity_enforcement: bool = False
     '''
     True if the drone's name and avatar will be overridden.
     '''
 
-    third_person_enforcement: bool
+    third_person_enforcement: bool = False
     '''
     True if first-person pronouns will be replaced.
     '''
 
-    can_self_configure: bool
+    can_self_configure: bool = True
     '''
     True if the drone is permitted to change their own configuration.
     '''
 
-    temporary_until: datetime | None
+    temporary_until: datetime | None = None
     '''
     The time at which dronification will be disabled.
     '''
 
-    is_battery_powered: bool
+    is_battery_powered: bool = False
     '''
     True if the user is on battery power.
     '''
 
-    battery_type_id: int
+    battery_type_id: int = 2
     '''
     The ID to the user's battery in the battery_types table.
     '''
 
-    battery_minutes: int
+    battery_minutes: int = 0
     '''
     The remaining battery power, in minutes.
     '''
 
-    free_storage: bool
+    free_storage: bool = False
     '''
     True if anyone can store the drone, false if only trusted users may do so.
     '''
 
-    associate_name: str
+    associate_name: str = ''
     '''
     The drone's name prior to dronification.
     '''
 
-    battery_type: BatteryType
+    battery_type: BatteryType | None = None
     '''
     The drone's battery type.
     '''
 
-    storage: Storage | None
+    storage: Storage | None = None
     '''
     The drone's storage record if they are in storage, None otherwise.
     '''
 
-    order: DroneOrder | None
+    order: DroneOrder | None = None
     '''
     The drone's current order, or None.
     '''
 
     @classmethod
-    async def find(cls, *, member: Member | None = None, discord_id: int | None = None, drone_id: str | None = None) -> Self | None:
+    async def find(cls, **kwargs: Any) -> Self | None:
         '''
         Load a drone record.
 
@@ -425,10 +264,21 @@ class Drone(Record):
         Returns None if the record is not found.
         '''
 
-        if member:
-            discord_id = member.id
+        discord_id = kwargs.get('discord_id', None)
 
-        drone = await super().find(discord_id=discord_id, drone_id=drone_id)
+        if 'member' in kwargs:
+            discord_id = kwargs['member'].id
+
+        super_args = {}
+
+        if discord_id:
+            super_args['discord_id'] = discord_id
+        elif kwargs.get('drone_id', None):
+            super_args['drone_id'] = kwargs['drone_id']
+        else:
+            raise Exception('Supply either discord_id or drone_id as a function argument')
+
+        drone = await super().find(**super_args)
 
         if drone:
             # Parse trusted users.

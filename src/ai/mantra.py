@@ -18,7 +18,7 @@ async def check_for_mantra(message: discord.Message, message_copy=None):
     Checks if a message should be counted for mantra repetition.
     '''
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     code_match = status_code_regex.match(message.content)
 

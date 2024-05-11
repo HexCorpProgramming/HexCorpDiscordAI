@@ -88,7 +88,7 @@ class OrderReportingCog(Cog):
 
 async def report_order(context, protocol_name, protocol_time: int):
     log.info("Order reported.")
-    member = DroneMember.load(context.message.guild, discord_id=context.author.id)
+    member = await DroneMember.load(context.message.guild, discord_id=context.author.id)
 
     # No non-drones allowed.
     if member.drone is None:

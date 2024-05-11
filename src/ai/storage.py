@@ -140,7 +140,7 @@ async def store_drone(message: discord.Message, message_copy=None):
     target = await DroneMember.find(drone_id=target_id)
 
     # check if target evaluates to a valid drone
-    if target.drone is None:
+    if target is None or target.drone is None:
         raise UserInputError(f'Target drone with ID {target_id} could not be found.')
 
     # check if drone is already in storage

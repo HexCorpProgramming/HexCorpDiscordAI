@@ -100,7 +100,7 @@ async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45)
     # glitch attached images
     # the data flow is:
     # CDN -> raw bytes -> BytesIO -> PIL Image -> glitch_this -> PIL Image -> BytesIO -> CDN
-    processed_attachments = []
+    processed_attachments: List[Union[discord.Attachment, discord.File]] = []
     for attachment in attachments:
         # only images have dimensions
         if attachment.height is not None:
@@ -123,7 +123,7 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
     if message.channel.category.name in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]:
         return False
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     if not member.drone:
         return False

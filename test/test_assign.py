@@ -45,28 +45,46 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await assign.check_for_assignment_message(test_message))
         test_message.delete.assert_not_called()
 
-    @patch("src.ai.assign.insert_drone")
+    @patch('src.db.record.change')
     @patch("src.ai.assign.get_used_drone_ids")
-    async def test_request_approve(self, get_used_drone_ids, insert_drone):
+    @patch("src.ai.assign.BatteryType")
+    async def test_request_approve(self, BatteryType, get_used_drone_ids, change):
         test_message = AsyncMock()
         test_message.content = assign.ASSIGNMENT_MESSAGE
         test_message.channel.name = ASSIGNMENT_CHANNEL
+        test_message.author.id = '1234snowflake'
         test_message.author.display_name = "Future Drone 1234"
         test_message.author.mention = "<mention_placeholder>"
         test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
         test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
 
+        battery_type = Mock(id=2, capacity=100)
+        BatteryType.load = AsyncMock(return_value=battery_type)
+
         self.assertTrue(await assign.check_for_assignment_message(test_message))
-        insert_drone.assert_called_once()
-        self.assertEqual(insert_drone.call_args.args[0].drone_id, "1234")
-        self.assertEqual(insert_drone.call_args.args[0].associate_name, "Future Drone 1234")
+        change.assert_called_once()
+
+        actual = change.call_args[0][1]
+        expected = {
+            'discord_id': '1234snowflake',
+            'drone_id': '1234',
+            'can_self_configure': True,
+            'battery_type_id': 2,
+            'battery_minutes': 100,
+            'associate_name': 'Future Drone 1234',
+        }
+
+        for key in expected:
+            self.assertEqual(expected[key], actual[key])
+
         test_message.author.remove_roles.assert_called_once_with(associate_role)
         test_message.author.add_roles.assert_called_once_with(drone_role)
         test_message.author.edit.assert_called_once_with(nick="⬡-Drone #1234")
 
-    @patch("src.ai.assign.insert_drone")
+    @patch("src.db.record.change")
     @patch("src.ai.assign.get_used_drone_ids")
-    async def test_assign_hive_mxtress(self, get_used_drone_ids, insert_drone):
+    @patch("src.ai.assign.BatteryType")
+    async def test_assign_hive_mxtress(self, BatteryType, get_used_drone_ids, change):
         test_message = AsyncMock()
         test_message.content = assign.ASSIGNMENT_MESSAGE
         test_message.channel.name = ASSIGNMENT_CHANNEL
@@ -77,10 +95,13 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         test_message.author.roles = [hive_mxtress_role]
         test_message.author.display_name = "Hive Mxtress"
 
+        battery_type = Mock(id=2, capacity=100)
+        BatteryType.load = AsyncMock(return_value=battery_type)
+
         self.assertTrue(await assign.check_for_assignment_message(test_message))
 
-        insert_drone.assert_called_once()
-        self.assertEqual(insert_drone.call_args.args[0].drone_id, "0006")
+        change.assert_called_once()
+        self.assertEqual(change.call_args.args[1]['drone_id'], "0006")
 
         test_message.author.remove_roles.assert_called_once_with(associate_role)
         test_message.author.add_roles.assert_called_once_with(drone_role)

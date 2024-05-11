@@ -25,7 +25,7 @@ async def trusted_user_cleanup(members: List[Member]):
     for drone in drones:
         original_count = len(drone.trusted_users)
 
-        drone.trusted_users = [u for u in drone.trusted_user if u in member_ids]
+        drone.trusted_users = [u for u in drone.trusted_users if u in member_ids]
 
         if len(drone.trusted_users) != original_count:
             log.debug(f'Trimming {original_count - len(drone.trusted_users)} trusted users from drone {drone.drone_id}')

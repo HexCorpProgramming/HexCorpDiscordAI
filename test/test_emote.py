@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import patch, AsyncMock
 import discord
 from src.ai.emote import generate_big_text, EmoteCog
-from test.utils import cog
+from test.cog import cog
+from test.mocks import Mocks
 
 
 class TestEmote(unittest.IsolatedAsyncioTestCase):
@@ -28,24 +29,24 @@ class TestEmote(unittest.IsolatedAsyncioTestCase):
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     @cog(EmoteCog)
-    async def test_return_none_if_generated_text_too_long(self, mocked_get, bot):
-        message = bot.create_message('general', 'hc!emote 9813 is such a good development drone that i could write about how wonderful they are and the bigtext generator would return none because there are too many good things to say about it')
-        await self.assert_command_error(bot, message)
+    async def test_return_none_if_generated_text_too_long(self, mocked_get, mocks: Mocks):
+        message = mocks.message(None, 'general', 'hc!emote 9813 is such a good development drone that i could write about how wonderful they are and the bigtext generator would return none because there are too many good things to say about it')
+        await self.assert_command_error(message)
 
-        message = bot.create_message('general', 'hc!emote and since we need to do two tests i\'d like to mention that 3287 is also a sweet little thing and 5890 always loves to have it around even when it bullies it by calling it a good drone and making it blush')
-        await self.assert_command_error(bot, message)
+        message = mocks.message(None, 'general', 'hc!emote and since we need to do two tests i\'d like to mention that 3287 is also a sweet little thing and 5890 always loves to have it around even when it bullies it by calling it a good drone and making it blush')
+        await self.assert_command_error(message)
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     @cog(EmoteCog)
-    async def test_return_none_if_input_contains_no_convertible_material(self, mocked_get, bot):
-        message = bot.create_message('general', 'hc!emote ʰᵉʷʷᵒˀˀ')
-        await self.assert_command_error(bot, message)
+    async def test_return_none_if_input_contains_no_convertible_material(self, mocked_get, mocks: Mocks):
+        message = mocks.message(None, 'general', 'hc!emote ʰᵉʷʷᵒˀˀ')
+        await self.assert_command_error(message)
 
-        message = bot.create_message('general', 'hc!emote ᵐʷˢᶦᵗᵉʳ_ᵒᵇᵃᵐᵃˀ')
-        await self.assert_command_error(bot, message)
+        message = mocks.message(None, 'general', 'hc!emote ᵐʷˢᶦᵗᵉʳ_ᵒᵇᵃᵐᵃˀ')
+        await self.assert_command_error(message)
 
-        message = bot.create_message('general', 'hc!emote _____')
-        await self.assert_command_error(bot, message)
+        message = mocks.message(None, 'general', 'hc!emote _____')
+        await self.assert_command_error(message)
 
     @patch("src.ai.emote.get", return_value=normal_mock_emoji)
     def test_generator_removes_custom_emojis_from_input(self, mocked_get):

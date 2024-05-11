@@ -30,6 +30,9 @@ class AmplificationCog(Cog):
             members = [m for m in target_channel.members if has_role(m, HIVE_VOICE)]
             members = sample(members, min(len(members), count))
 
+            # Convert Members to DroneMembers.
+            members = [await DroneMember.create(m) for m in members]
+
         log.info('Amplifying message "' + message + '" via ' + str(len(members)) + ' drones in #' + target_channel.name)
 
         channel_webhook = await webhook.get_webhook_for_channel(target_channel)

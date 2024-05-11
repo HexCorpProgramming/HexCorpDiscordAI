@@ -17,7 +17,7 @@ async def enforce_speech_optimization(message, message_copy):
     Function will return early if blacklist conditions are met (ignore specific channel + mantra channel if message is correct mantra).
     '''
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     if not member.drone or not member.drone.optimized:
         # Message author is not an optimized drone. Skip.

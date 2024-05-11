@@ -3,10 +3,12 @@ from typing import List
 
 import discord
 
-from src.db.data_objects import Drone, map_to_objects
-from src.db.database import fetchall, fetchone, fetchcolumn
+from src.db.data_objects import Drone
+from src.db.record import map_to_objects
+from src.db.database import change, fetchall, fetchone, fetchcolumn
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
+from src.drone_member import DroneMember
 
 
 async def add_new_drone_members(members: List[discord.Member]):
@@ -47,9 +49,47 @@ async def remove_trusted_user_on_all(trusted_user_id: int):
     ids = await fetchcolumn("SELECT discord_id FROM drone WHERE trusted_users LIKE :trusted_user_search", {'trusted_user_search': f"%{trusted_user_id}%"})
 
     for id in ids:
-        drone = Drone.load(discord_id=id)
+        drone = await Drone.load(discord_id=id)
 
         if trusted_user_id in drone.trusted_users:
             drone.trusted_users.remove(trusted_user_id)
 
         await drone.save()
+
+
+async def get_drones_with_orders(guild: discord.Guild) -> List[DroneMember]:
+    '''
+    Fetch all drones with an order in progress.
+    '''
+
+    ids = await fetchcolumn('SELECT discord_id FROM drone_orders')
+
+    return [await DroneMember.load(guild, discord_id=id) for id in ids]
+
+
+async def get_drones_to_release(guild: discord.Guild) -> List[DroneMember]:
+    '''
+    Fetch all drones that are due to be released from storage.
+    '''
+
+    ids = await fetchcolumn('SELECT discord_id FROM drone_orders WHERE release_time < :now', {'now': datetime.now()})
+
+    return [await DroneMember.load(guild, discord_id=id) for id in ids]
+
+
+async def get_drones_with_elapsed_timers(guild: discord.Guild) -> List[DroneMember]:
+    '''
+    Fetch all drones with elapsed timers.
+    '''
+
+    ids = await fetchcolumn('SELECT discord_id FROM timers WHERE end_time < :now', {'now': datetime.now()})
+
+    return [await DroneMember.load(guild, discord_id=id) for id in ids]
+
+
+async def delete_timers_by_id_and_mode(discord_id: str, mode: str):
+    '''
+    Deletes the timer with the given ID and mode.
+    '''
+
+    await change('DELETE FROM timer WHERE discord_id = :discord_id AND timer.mode = :mode', {'discord_id': discord_id, 'mode': mode})

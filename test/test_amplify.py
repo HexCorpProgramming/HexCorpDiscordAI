@@ -1,9 +1,11 @@
 import unittest
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import patch
 from src.channels import TRANSMISSIONS_CHANNEL, OFFICE
 import src.ai.amplify as amplify
-from test.utils import cog
 from src.bot_utils import COMMAND_PREFIX
+from src.roles import HIVE_VOICE
+from test.cog import cog
+from test.mocks import Mocks
 
 
 class TestAmplify(unittest.IsolatedAsyncioTestCase):
@@ -11,158 +13,107 @@ class TestAmplify(unittest.IsolatedAsyncioTestCase):
     The amplify command...
     '''
 
-    @patch("src.ai.amplify.generate_battery_message")
-    @patch("src.ai.amplify.identity_enforcable", return_value=False)
-    @patch("src.bot_utils.has_role", return_value=True)
-    @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    @patch("src.ai.amplify.fetch_drone_with_id")
-    @patch("src.ai.commands.convert_id_to_member")
     @cog(amplify.AmplificationCog)
-    async def test_webhook_called_with_appropriate_message(self, convert_id_to_member, fetch_drone_with_id, webhook_proxy, get_webhook, has_role, identity_enforceable, generate_battery_message, bot):
-
+    async def test_webhook_called_with_appropriate_message(self, webhook_proxy, mocks: Mocks):
         '''
-        should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
+        Should call proxy_message_by_webhook an amount of times equal to unique drones specified. Each message should be prepended with each drones ID.
         '''
 
-        member = AsyncMock()
-        member.display_avatar.url = "Pretty avatar"
-        member.display_name = "3287"
-        convert_id_to_member.return_value = member
+        drone = mocks.drone('3287')
+        member = mocks.member('Drone-3287')
 
-        drone = MagicMock()
-        drone.drone_id = "3287"
+        message = mocks.message(mocks.hive_mxtress(), OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" hex-office 3287')
+        mocks.set_drone_members([drone], [member])
 
-        webhook = AsyncMock()
-        get_webhook.return_value = webhook
-
-        message = bot.create_message(OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" hex-office 3287', mentions=[member])
-
-        generate_battery_message.side_effect = lambda drone, msg: msg
-        fetch_drone_with_id.return_value = drone
-
-        await self.assert_command_successful(bot, message)
+        await self.assert_command_successful(message)
         webhook_proxy.assert_called_once_with(
             message_content="3287 :: Beep boop!",
-            message_username="3287",
-            message_avatar="Pretty avatar",
-            webhook=webhook
+            message_username="Drone-3287",
+            message_avatar=member.display_avatar.url,
+            webhook=mocks.channel(OFFICE).webhook
         )
 
-        generate_battery_message.assert_called_once_with(member, "3287 :: Beep boop!")
-
-    @patch("src.bot_utils.has_role")
-    @patch("src.ai.commands.convert_id_to_member", return_value=Mock(id=3287))
-    @patch("src.ai.amplify.fetch_drone_with_id")
-    @patch("src.ai.amplify.generate_battery_message")
-    @patch("src.ai.amplify.identity_enforcable")
+    @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
     @cog(amplify.AmplificationCog)
-    async def test_does_not_work_if_not_Mxtress(self, identity_enforcable, generate_battery_message, fetch_drone_with_id, convert_id_to_member, has_role, bot):
+    async def test_does_not_work_if_not_mxtress(self, proxy_message, mocks):
         '''
         only works when called by the Hive Mxtress in the Hex Office channel.
         '''
 
         content = COMMAND_PREFIX + 'amplify "Hello" hex-office 3287'
+        initiator = mocks.member()
+        target = mocks.member('Drone-3287')
+        drone = mocks.drone('3287')
 
         # In Office, is Mxtress.
-        message = bot.create_message(OFFICE, content)
-        has_role.return_value = True
-        await self.assert_command_successful(bot, message)
-        fetch_drone_with_id.assert_called_once()
+        message = mocks.message(mocks.hive_mxtress(), OFFICE, content)
+        mocks.set_drone_members([drone], [target])
+        await self.assert_command_successful(message)
+        proxy_message.assert_called_once()
 
         # In Office, not Mxtress.
-        message = bot.create_message(OFFICE, content)
-        has_role.return_value = False
-        await self.assert_command_error(bot, message)
+        message = mocks.message(initiator, OFFICE, content)
+        mocks.set_drone_members([drone], [target])
+        await self.assert_command_error(message)
 
         # Out of office, is Mxtress
-        message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
-        has_role.return_value = True
-        await self.assert_command_error(bot, message)
+        message = mocks.message(mocks.hive_mxtress(), TRANSMISSIONS_CHANNEL, content)
+        mocks.set_drone_members([drone], [target])
+        await self.assert_command_error(message)
 
         # Out of office, not Mxtress.
-        message = bot.create_message(TRANSMISSIONS_CHANNEL, content)
-        has_role.return_value = False
-        await self.assert_command_error(bot, message)
+        message = mocks.message(initiator, TRANSMISSIONS_CHANNEL, content)
+        mocks.set_drone_members([drone], [target])
+        await self.assert_command_error(message)
 
-    @patch("src.ai.amplify.has_role")
-    @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    @patch("src.ai.amplify.generate_battery_message")
-    @patch("src.ai.amplify.identity_enforcable")
-    @patch("src.ai.amplify.fetch_drone_with_id")
-    async def test_with_count(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+    @cog(amplify.AmplificationCog)
+    async def test_with_count(self, proxy_message_by_webhook, mocks):
         '''
         Ensure that a count of users can be specified.
         '''
 
-        bot = AsyncMock()
-        bot.add_command = Mock()
-        amplification_cog = amplify.AmplificationCog()
-        amplification_cog = amplification_cog._inject(bot)
+        # The channel members.
+        members = [
+            mocks.member('Drone-0001'),
+            mocks.member('Drone-1234'),
+            mocks.member('Drone-5678'),
+        ]
 
-        context = AsyncMock()
-        context.channel.name = OFFICE
+        voice_role = mocks.role(HIVE_VOICE)
 
-        # The channel to which the message will be sent.
-        target_channel = Mock()
-        target_channel.members = [Mock(), Mock(), Mock()]
-        target_channel.name = 'general'
+        # Member 0 doesn't have the voice role and so should not take part in amplification.
+        members[1].roles = [voice_role]
+        members[2].roles = [voice_role]
 
-        # The drones that will amplify the message.
-        target_channel.members[0].display_name = '1234'
-        target_channel.members[1].display_name = '5678'
+        # The drone records for the members that will amplify the message.
+        # The first None ends the DroneMember argument converter.
+        drones = [
+            None,
+            mocks.drone('1234'),
+            mocks.drone('5678'),
+        ]
 
-        # Give only two channel members out of three have the required role.
-        has_role.side_effect = [True, True, False]
+        mocks.channel('general').members = members
 
-        # Mock helper functions to return what they were passed.
-        generate_battery_message.side_effect = lambda a, b: b
+        message = mocks.message(mocks.hive_mxtress(), OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" general -hive=3')
 
-        identity_enforcable.return_value = False
+        # Return the drone records when DroneMember.create is called.
+        mocks.set_drone_members(drones, [None])
 
-        # The drones to be looked up from the members.
-        drones = [Mock(), Mock()]
-        drones[0].drone_id = 1234
-        drones[1].drone_id = 5678
-        fetch_drone_with_id.side_effect = drones
-
-        self.assertTrue(await amplification_cog.amplify(context, "Hello world", target_channel, members=[], count=3))
+        await self.assert_command_successful(message)
         self.assertEqual(2, len(proxy_message_by_webhook.mock_calls))
 
-    @patch("src.ai.amplify.has_role")
-    @patch("src.ai.amplify.webhook.get_webhook_for_channel")
     @patch("src.ai.amplify.webhook.proxy_message_by_webhook")
-    @patch("src.ai.amplify.generate_battery_message")
-    @patch("src.ai.amplify.identity_enforcable")
-    @patch("src.ai.amplify.fetch_drone_with_id")
-    async def test_with_non_drone_mention(self, fetch_drone_with_id, identity_enforcable, generate_battery_message, proxy_message_by_webhook, get_webhook_for_channel, has_role):
+    @cog(amplify.AmplificationCog)
+    async def test_with_non_drone_mention(self, proxy_message_by_webhook, mocks):
         '''
         Ensure that an @mention of a non-drone does not cause an error.
         '''
 
-        bot = AsyncMock()
-        bot.add_command = Mock()
-        amplification_cog = amplify.AmplificationCog()
-        amplification_cog = amplification_cog._inject(bot)
+        message = mocks.message(mocks.hive_mxtress(), OFFICE, COMMAND_PREFIX + 'amplify "Beep boop!" general 3')
+        mocks.set_drone_members([None], mocks.member(id=3))
 
-        context = AsyncMock()
-        context.channel.name = OFFICE
-
-        # The channel to which the message will be sent.
-        target_channel = Mock()
-        target_channel.members = [Mock()]
-        target_channel.name = 'general'
-
-        # The @mentioned member.
-        member = Mock()
-
-        # The member is not a drone.
-        fetch_drone_with_id.return_value = None
-
-        # Mock helper functions to return what they were passed.
-        generate_battery_message.side_effect = lambda a, b: b
-
-        identity_enforcable.return_value = False
-
-        self.assertTrue(await amplification_cog.amplify(context, "Hello world", target_channel, members=[member]))
+        await self.assert_command_successful(message)
+        proxy_message_by_webhook.assert_not_called()

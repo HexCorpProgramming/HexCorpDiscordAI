@@ -12,7 +12,7 @@ async def enforce_third_person(message: Message, message_copy: MessageCopy) -> N
     Replace first person pronounds if third person enforcement is enabled.
     '''
 
-    member = await DroneMember(message.author)
+    member = await DroneMember.create(message.author)
 
     if member.drone and member.drone.third_person_enforcable(message.channel):
         message_copy.third_person_enforced = True

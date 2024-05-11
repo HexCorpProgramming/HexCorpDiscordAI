@@ -283,7 +283,7 @@ async def on_member_join(member: discord.Member):
 @connect()
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    drone_member = await DroneMember(member)
+    drone_member = await DroneMember.create(member)
 
     if drone_member.drone:
         await drone_member.drone.delete()
