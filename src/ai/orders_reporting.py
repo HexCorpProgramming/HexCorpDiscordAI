@@ -4,7 +4,7 @@ from uuid import uuid4
 from typing import Union
 from src.validation_error import ValidationError
 
-from discord import Member
+from discord import Embed, Member
 from discord.ext import tasks
 from discord.ext.commands import Cog, command
 from discord.utils import get
@@ -18,6 +18,7 @@ from src.db.drone_order_dao import (delete_drone_order, fetch_all_drone_orders,
 from src.db.drone_dao import fetch_drone_with_id
 from src.roles import DRONE, has_role
 from src.ai.commands import DroneMemberConverter
+from src.resources import HEXCORP_AVATAR
 
 LOGGER = logging.getLogger('ai')
 
@@ -66,21 +67,21 @@ class OrderReportingCog(Cog):
         # Mark the order as complete.
         await delete_drone_order(order.id)
 
-        # Delete the original message.
-        await context.message.delete()
+        # Delete the original message.  Use the delay parameter to ignore failures.
+        # The call will fail if the message has already been deleted, which will happen if
+        # identity enforcement is enabled.
+        await context.message.delete(delay=0.0)
 
         # Output the task summary message.
-        report = ('===Drone Report===\n'
-                  f'Drone ID: {order.drone_id}\n'
-                  f'Objective: {order_name}\n'
-                  f'Issuer: {drone.drone_id}\n'
-                  '\n'
-                  'Report Details:\n'
-                  f'{order_description}\n'
-                  '\n'
-                  'End report.')
+        report = Embed(color=0xff66ff, title="Drone Report", description=f'Summary of activity for {drone.drone_id}')
+        report.set_thumbnail(url=HEXCORP_AVATAR)
+        report.add_field(name='Drone ID', value=drone.drone_id, inline=True)
+        report.add_field(name='Issuer', value=drone.drone_id, inline=True)
+        report.add_field(name='Objective', value=order_name, inline=False)
+        report.add_field(name='Report Details', value=order_description, inline=False)
+        report.add_field(name='Report Complete', value='End report.', inline=False)
 
-        await context.channel.send(report)
+        await context.channel.send(embed=report)
 
         LOGGER.info(f'Drone {drone.drone_id} order #{order.id}: {order.protocol}')
 

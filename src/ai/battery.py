@@ -112,7 +112,7 @@ class BatteryCog(commands.Cog):
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
                                                    message_username=drone.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) else drone.avatar.url,
+                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) or drone.avatar is None else drone.avatar.url,
                                                    webhook=channel_webhook)
 
     async def start_battery_drain(self, message, message_copy=None):
@@ -263,14 +263,14 @@ def determine_battery_emoji(battery_percentage: int, guild: Guild) -> Emoji | st
         return "[BATTERY ERROR]"
 
 
-async def recharge_battery(member: Member) -> None:
+async def recharge_battery(discord_id: int) -> None:
     '''
     Fills the battery of a drone in storage up to max.
     '''
 
-    current_minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
-    await set_battery_minutes_remaining(member, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
+    current_minutes_remaining = await get_battery_minutes_remaining(discord_id)
+    battery_type = await get_battery_type(discord_id)
+    await set_battery_minutes_remaining(discord_id, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
 
 
 async def drain_battery(member: Member):
@@ -278,7 +278,7 @@ async def drain_battery(member: Member):
     Reduces the battery charge of a drone by 10%.
     '''
 
-    minutes_remaining = await get_battery_minutes_remaining(member)
-    battery_type = await get_battery_type(member)
+    minutes_remaining = await get_battery_minutes_remaining(member.id)
+    battery_type = await get_battery_type(member.id)
 
-    await set_battery_minutes_remaining(member, minutes_remaining - battery_type.capacity / 10)
+    await set_battery_minutes_remaining(member.id, minutes_remaining - battery_type.capacity / 10)
