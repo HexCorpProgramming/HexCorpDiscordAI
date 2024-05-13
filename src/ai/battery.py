@@ -80,9 +80,9 @@ class BatteryCog(commands.Cog):
 
             LOGGER.info(f"Energizing {member.display_name}")
 
-            battery_type = await get_battery_type(member)
+            battery_type = await get_battery_type(member.id)
 
-            await set_battery_minutes_remaining(member, battery_type.capacity)
+            await set_battery_minutes_remaining(member.id, battery_type.capacity)
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
             await webhook.proxy_message_by_webhook(message_content=f'{get_id(member.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
                                                    message_username=member.display_name,
