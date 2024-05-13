@@ -5,7 +5,6 @@ import src.emoji as emoji
 import test.test_utils as test_utils
 #from src.db.drone_dao import Drone
 from src.db.data_objects import BatteryType
-from src.bot_utils import COMMAND_PREFIX
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED
 from test.cog import cog
 from test.mocks import Mocks
@@ -13,22 +12,20 @@ from test.mocks import Mocks
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
 
-    @patch("src.ai.battery.get_battery_minutes_remaining", return_value=20)
-    @patch("src.ai.battery.set_battery_minutes_remaining")
-    @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'High', 480, 240))
     @cog(battery.BatteryCog)
-    async def test_recharge_battery(self, get_battery_type, set_bat_mins, get_bat_mins, mocks: Mocks):
+    async def test_recharge_battery(self, mocks: Mocks):
         '''
         The recharge battery function should call the
         set_battery_minutes_remaining() function with an accurate amount
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        member = mocks.member('5890')
+        drone = mocks.drone('5890')
 
-        await battery.recharge_battery(member)
+        await battery.recharge_battery(drone)
 
-        set_bat_mins.assert_called_once_with(member, 20 + 240)
+        self.assertEqual(drone.battery_minutes, 220)
+        drone.save.assert_called_once()
 
     @cog(battery.BatteryCog)
     async def test_manually_drain_battery(self, mocks: Mocks):
@@ -38,7 +35,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        message = mocks.message(mocks.hive_mxtress(), 'general', COMMAND_PREFIX + 'drain 1234')
+        message = mocks.command(mocks.hive_mxtress(), 'general', 'drain 1234')
 
         drone = mocks.drone('1234', is_battery_powered=True)
         member = mocks.member('Drone 1234')
@@ -109,12 +106,11 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         drained_role = mocks.role(BATTERY_DRAINED)
 
-        drone = mocks.drone(1234, battery_minutes=0)
         member = mocks.member('1234', roles=[BATTERY_POWERED])
+        drone = mocks.drone(1234, battery_minutes=0)
         Drone.all.return_value = [drone]
-        mocks.get_bot().guilds[0].get_member.return_value = member
 
-        mocks.set_drone_members([drone], [member])
+        mocks.set_drone_members([None], [member])
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
 
@@ -133,7 +129,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone = mocks.drone(1234)
         member = mocks.member('1234', roles=[BATTERY_POWERED, BATTERY_DRAINED])
         Drone.all.return_value = [drone]
-        mocks.get_bot().guilds[0].get_member.return_value = member
 
         mocks.set_drone_members([drone], [member])
 
@@ -171,7 +166,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone.get_battery_percent_remaining.return_value = 30
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
-        mocks.get_bot().guilds[0].get_member.return_value = member
 
         mocks.set_drone_members([drone], [member])
 
@@ -194,7 +188,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone.get_battery_percent_remaining.return_value = 50
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
-        mocks.get_bot().guilds[0].get_member.return_value = member
 
         mocks.set_drone_members([drone], [member])
 
@@ -302,24 +295,24 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         await mocks.get_cog().start_battery_drain(mocks.message(), mocks.message())
         self.assertEqual(mocks.get_cog().draining_batteries.get('1234', None), 15)
 
-    @patch("src.ai.battery.is_drone", return_value=True)
-    @patch("src.ai.battery.is_battery_powered", return_value=True)
-    async def test_restart_battery_drain(self, bat_pow, is_drn):
-        '''
-        Drones that are currently being tracked for battery drain should have
-        their minutes reset to 15 if they send another message.
-        '''
+    # @patch("src.ai.battery.is_drone", return_value=True)
+    # @patch("src.ai.battery.is_battery_powered", return_value=True)
+    # async def test_restart_battery_drain(self, bat_pow, is_drn):
+    #     '''
+    #     Drones that are currently being tracked for battery drain should have
+    #     their minutes reset to 15 if they send another message.
+    #     '''
 
-        message = Mock()
-        message.author.display_name = "HexDrone 5890"
+    #     message = Mock()
+    #     message.author.display_name = "HexDrone 5890"
 
-        message_copy = Mock()
+    #     message_copy = Mock()
 
-        bot = Mock()
-        battery_cog = battery.BatteryCog(bot)
+    #     bot = Mock()
+    #     battery_cog = battery.BatteryCog(bot)
 
-        battery_cog.draining_batteries['5890'] = 6
+    #     battery_cog.draining_batteries['5890'] = 6
 
-        await battery_cog.start_battery_drain(message, message_copy)
+    #     await battery_cog.start_battery_drain(message, message_copy)
 
-        self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)
+    #     self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)

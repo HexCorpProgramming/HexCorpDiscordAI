@@ -8,10 +8,11 @@ from src.roles import (INITIATE, ASSOCIATE, DRONE, STORED, DEVELOPMENT, ADMIN, M
                        SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
                        THIRD_PERSON_ENFORCEMENT, BATTERY_POWERED, BATTERY_DRAINED, FREE_STORAGE,
                        HIVE_VOICE, MODERATION_ROLES, VOICE, NITRO_BOOSTER, EVERYONE)
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, create_autospec, MagicMock
 from src.db.data_objects import BatteryType, Drone, DroneOrder, Storage, Timer
 from src.drone_member import DroneMember
 from src.bot_utils import COMMAND_PREFIX
+from src.db.record import Record
 
 unique_id = 1
 
@@ -32,6 +33,12 @@ roles = [
 class Mocks():
     '''
     Manage a mock guild.
+
+    This class creates a mock guild and provides factory methods for creating mock objects associated with the guild.
+    Creating a mock object will automatically add it to the guild.
+
+    Mocks are created with create_autospec() instead of Mock() so that accessing invalid properties or members will
+    cause an error, rather than creating a new mock property.
     '''
 
     _guild: MagicMock
@@ -117,7 +124,7 @@ class Mocks():
 
         props = kwargs.items()
 
-        for item in collection:
+        for item in collection.values() if isinstance(collection, dict) else collection:
             if all_equal(item, props):
                 return item
 
@@ -171,23 +178,31 @@ class Mocks():
         # This will be filled in by set_drone_members().
         guild.drone_members = {'drones': [], 'members': []}
 
+        guild.get_member = lambda discord_id: self.find(guild._members, id=discord_id)
+
         return guild
 
-    def record(self, **kwargs) -> Any:
+    def record(self, spec=Record, **kwargs) -> Any:
         '''
         Create a mock of a class that derives from Record.
         '''
 
-        record = MagicMock(**kwargs)
+        record = create_autospec(spec)
 
-        record.insert = AsyncMock()
-        record.delete = AsyncMock()
-        record.find = AsyncMock()
-        record.load = AsyncMock()
-        record.save = AsyncMock()
-        record.all = AsyncMock()
+        self.set_props(record, kwargs)
 
         return record
+
+        # record = MagicMock(**kwargs)
+
+        # record.insert = AsyncMock()
+        # record.delete = AsyncMock()
+        # record.find = AsyncMock()
+        # record.load = AsyncMock()
+        # record.save = AsyncMock()
+        # record.all = AsyncMock()
+
+        # return record
 
     def drone(self, drone_id: str | int, **kwargs) -> MagicMock:
         '''
@@ -195,12 +210,13 @@ class Mocks():
         '''
 
         drone_id = str(drone_id)
-        drone = self.record(spec=Drone, table='drone')
+        #drone = self.record(spec=Drone, table='drone')
+        drone = create_autospec(Drone, table='drone')
 
         drone.drone_id = drone_id
         drone.ignore_properties = ['battery_type', 'storage', 'order']
         drone.id_column = 'discord_id'
-        drone.discord_id = drone_id + 'snowflake'
+        drone.discord_id = 'snowflake' + drone_id
         drone.optimized = False
         drone.glitched = False
         drone.trusted_users = []
@@ -243,7 +259,8 @@ class Mocks():
         if existing:
             return existing
 
-        channel = MagicMock(spec=TextChannel)
+        # channel = MagicMock(spec=TextChannel)
+        channel = create_autospec(TextChannel)
         channel.id = self.get_unique_id()
         channel.name = name
 
@@ -266,7 +283,8 @@ class Mocks():
         if existing:
             return existing
 
-        role = MagicMock(spec=Role)
+        # role = MagicMock(spec=Role)
+        role = create_autospec(Role)
         role.id = self.get_unique_id()
         role.name = name
         role.guild = self._guild
@@ -283,7 +301,8 @@ class Mocks():
         if nick is None:
             nick = 'User' + str(self.get_unique_id())
 
-        member = MagicMock(spec=Member)
+        # member = MagicMock(spec=Member)
+        member = create_autospec(Member)
 
         member.id = kwargs.get('id', 'snowflake' + nick)
         member.bot = False
@@ -304,6 +323,15 @@ class Mocks():
 
         return member
 
+    def command(self, author=None, channel_name='', content='', **kwargs) -> Message:
+        '''
+        Create a mock message prefixed with COMMAND_PREFIX.
+
+        This is a convenience method to save you from having to import COMMAND_PREFIX into every test.
+        '''
+
+        return self.message(author, channel_name, COMMAND_PREFIX + content, **kwargs)
+
     def message(self, author=None, channel_name='', content='', **kwargs) -> Message:
         '''
         Create a new mock Message object.
@@ -314,7 +342,10 @@ class Mocks():
         Any additional keyword parameters are set as properties on the message.
         '''
 
-        message = AsyncMock(spec=Message, mentions=[], author=author or self.member())
+        # message = AsyncMock(spec=Message, mentions=[], author=author or self.member())
+        message = create_autospec(Message)
+        message.mentions = []
+        message.author = author or self.member()
         message.id = self.get_unique_id()
         message.drone_members = {'drones': [], 'members': []}
         message.channel = self.channel(channel_name)
@@ -324,9 +355,7 @@ class Mocks():
         message.state = AsyncMock()
         message.state.create_message = MagicMock()
 
-        # Set any additional properties.
-        for n, v in kwargs.items():
-            setattr(message, n, v)
+        self.set_props(message, kwargs)
 
         return message
 
@@ -339,16 +368,8 @@ class Mocks():
         Any additional keyword parameters are set as properties on the message.
         '''
 
-        message = AsyncMock(spec=Message, mentions=[], author=author or self.member())
-        message.id = self.get_unique_id()
-        message.drone_members = {'drones': [], 'members': []}
+        message = self.message(author, content, **kwargs)
         message.guild = None
-        message.content = content
-
-        message.state = AsyncMock()
-        message.state.create_message = MagicMock()
-
-        self.set_props(message, kwargs)
 
         return message
 
@@ -402,10 +423,11 @@ class Mocks():
             drone_member.drone = None
 
         drone_id = str(drone_id)
-        discord_id = drone_id + 'snowflake'
+        discord_id = 'snowflake' + drone_id
         nick = 'Drone-#' + drone_id
 
-        drone_member = MagicMock(spec=DroneMember)
+        # drone_member = MagicMock(spec=DroneMember)
+        drone_member = create_autospec(DroneMember)
         drone_member.id = discord_id
         drone_member.bot = False
         drone_member._avatar = 'Pretty avatar'
@@ -434,7 +456,11 @@ class Mocks():
             'timeout_for',
             'remove_timeout',
             'request_to_speak',
-            'move_to'
+            'move_to',
+            'send',
+            'trigger_typing',
+            'fetch_message',
+            'pins',
         ]
 
         # Set async methods to async mocks.
@@ -443,6 +469,10 @@ class Mocks():
 
         self.set_props(drone_member, {k: v for k, v in kwargs.items() if not k.startswith('drone_')})
         self.set_props(drone_member.drone, {k[6:]: v for k, v in kwargs.items() if k.startswith('drone_')})
+
+        # Add the DroneMember to the guild.  This should really be just a Member, not a DroneMember.
+        if drone_member.id not in self._guild._members:
+            self._guild._members[drone_member.id] = drone_member
 
         return drone_member
 
@@ -457,6 +487,8 @@ class Mocks():
         drone_order.protocol = ''
         drone_order.finish_time = datetime.now()
 
+        self.set_props(drone_order, kwargs)
+
         return drone_order
 
     def storage(self, **kwargs) -> MagicMock:
@@ -468,6 +500,8 @@ class Mocks():
         storage.table = 'storage'
         storage.id = self.get_unique_id()
 
+        self.set_props(storage, kwargs)
+
         return storage
 
     def timer(self, **kwargs) -> MagicMock:
@@ -478,6 +512,8 @@ class Mocks():
         timer = self.record(spec=Timer)
         timer.table = 'timer'
         timer.id = self.get_unique_id()
+
+        self.set_props(timer, kwargs)
 
         return timer
 
@@ -496,6 +532,8 @@ class Mocks():
         # Set up the guild to reference the mock guild.
         bot._connection._guilds = {0: self._guild}
 
+        self.set_props(bot, kwargs)
+
         return bot
 
     def emoji(self, name: str, **kwargs) -> MagicMock:
@@ -508,7 +546,8 @@ class Mocks():
         if existing:
             return existing
 
-        emoji = MagicMock(spec=Emoji)
+        # emoji = MagicMock(spec=Emoji)
+        emoji = create_autospec(Emoji)
         emoji.id = self.get_unique_id()
         emoji.name = name
         emoji.__str__ = lambda e: e.name
