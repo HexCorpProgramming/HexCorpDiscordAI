@@ -51,12 +51,12 @@ async def increase_battery_by_five_percent(message: discord.Message):
     Increases the battery of the given drone by 5 percent capping at 100% capacity.
     Acknowledges the mantra repetitions by sending a message in the mantra channel as well.
     '''
-    minutes_remaining = await get_battery_minutes_remaining(message.author)
-    battery_type = await get_battery_type(message.author)
+    minutes_remaining = await get_battery_minutes_remaining(message.author.id)
+    battery_type = await get_battery_type(message.author.id)
 
     if minutes_remaining >= battery_type.capacity:
         await message.channel.send("Good drone. Battery already at 100%.")
         return
 
-    await set_battery_minutes_remaining(message.author, min(minutes_remaining + battery_type.capacity / 20, battery_type.capacity))
+    await set_battery_minutes_remaining(message.author.id, min(minutes_remaining + battery_type.capacity / 20, battery_type.capacity))
     await message.channel.send("Good drone. Battery has been recharged by 5%.")

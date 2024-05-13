@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime, timedelta
 
 import discord
-from discord.ext.commands import Bot, command as bot_command, MissingRequiredArgument
+from discord.ext.commands import Bot, MissingRequiredArgument
 from discord.ext.commands.errors import PrivateMessageOnly
 from src.db.database import connect
 
@@ -160,7 +160,7 @@ hour_tasks = [
 timing_agnostic_tasks = [status_message_cog.change_status]
 
 
-@bot_command(usage=f'{bot.command_prefix}help', parent=bot)
+@bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
     '''
     Displays this help.
@@ -303,7 +303,7 @@ async def on_ready():
     for task in timing_agnostic_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
@@ -317,7 +317,7 @@ async def on_ready():
     for task in minute_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
     LOGGER.info("Awaiting start of next hour to begin every-hour tasks.")
@@ -332,7 +332,7 @@ async def on_ready():
     for task in hour_tasks:
         if not task.is_running():
             task.start()
-        elif task.has_failed():
+        elif task.failed():
             task.restart()
 
 
@@ -341,12 +341,13 @@ async def on_command_error(context, error):
     if isinstance(error, MissingRequiredArgument):
         # missing arguments should not be that noisy and can be reported to the user
         LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
-        await context.send(f"`{error.param.name}` is a required argument that is missing.")
+        await context.reply(f"`{error.param.name}` is a required argument that is missing.")
     elif isinstance(error, PrivateMessageOnly):
         await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-    elif isinstance(error.original, ValidationError):
+    elif isinstance(getattr(error, 'original', None), ValidationError):
         await context.send(str(error.original))
     else:
+        await context.reply(glitch_message.glitch_text('Command processing failure'))
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 

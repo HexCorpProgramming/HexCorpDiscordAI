@@ -11,7 +11,6 @@ from src.channels import ASSIGNMENT_CHANNEL
 from src.db.drone_dao import insert_drone, get_used_drone_ids
 from src.db.data_objects import Drone
 from src.bot_utils import get_id
-from src.resources import HIVE_MXTRESS_USER_ID
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -77,7 +76,7 @@ async def create_drone(guild: discord.Guild,
     if not is_hive_mxtress:
         await target.edit(nick=assigned_nick)
 
-    trusted_users = (additional_trusted_users or []) + [HIVE_MXTRESS_USER_ID]
+    trusted_users = additional_trusted_users or []
     # exclude self from trusted users list
     if target.id in trusted_users:
         trusted_users.remove(target.id)

@@ -74,7 +74,7 @@ class StorageCog(Cog):
                 else:
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by `Drone #{initiator_drone.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
-                await recharge_battery(stored)
+                await recharge_battery(stored.target_id)
 
     @report_storage.before_loop
     async def get_storage_channel(self):

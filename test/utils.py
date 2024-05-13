@@ -84,6 +84,9 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             message.guild = guild
             message.content = content
 
+            message.state = AsyncMock()
+            message.state.create_message = MagicMock()
+
             for n, v in kwargs.items():
                 setattr(message, n, v)
 
