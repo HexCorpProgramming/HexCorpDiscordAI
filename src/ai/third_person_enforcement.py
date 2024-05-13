@@ -38,7 +38,7 @@ def replace_third_person(text: str) -> str:
     text = re.sub(r'(([.!?]|^)\s*)[iI]\'ve(\s|\W)', '\\1It\'s\\3', text)
 
     # Replace I, I'm, I'd, I'll at the beginning of a sentence with 'It'*'.
-    text = re.sub('(([.!?]|^)\\s*)[iI](\'m|\'d|\'ll)?(?=\\s|\\W|$)', r'\1It\3', text)
+    text = re.sub(r'(([.!?]|^)\s*)[iI](\'m|\'d|\'ll)?(?=\s|\W|$)', r'\1It\3', text)
 
     # Replace remaining first person pronouns.
     replacements = [
