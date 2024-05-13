@@ -65,6 +65,6 @@ def replace_third_person(text: str) -> str:
     ]
 
     for search, replace in replacements:
-        text = re.sub(r'(\W|^)' + re.escape(search) + r'(\W|$)', r'\1' + replace + r'\2', text)
+        text = re.sub(r'(\W|^)' + re.escape(search) + r'(?=\W|$)', r'\1' + replace, text)
 
     return text
