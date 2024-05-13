@@ -26,6 +26,7 @@ class ThirdPersonEnforcementTest(IsolatedAsyncioTestCase):
             ('test! I. I? I@ I', 'test! It. It? It@ it'),
             ('I.I.I', 'It.It.It'),
             ('I. I. I', 'It. It. It'),
+            ('i i i i', 'It it it it'),
             ('I\'d do what i\'d do', 'It\'d do what it\'d do'),
 
             # These cases could be improved.
