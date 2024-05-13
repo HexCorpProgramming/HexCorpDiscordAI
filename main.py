@@ -339,12 +339,13 @@ async def on_command_error(context, error):
     if isinstance(error, MissingRequiredArgument):
         # missing arguments should not be that noisy and can be reported to the user
         LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
-        await context.send(f"`{error.param.name}` is a required argument that is missing.")
+        await context.reply(f"`{error.param.name}` is a required argument that is missing.")
     elif isinstance(error, PrivateMessageOnly):
         await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
     elif isinstance(getattr(error, 'original', None), ValidationError):
         await context.send(str(error.original))
     else:
+        await context.reply(glitch_message.glitch_text('Command processing failure'))
         LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
         LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 

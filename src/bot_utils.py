@@ -1,6 +1,6 @@
 import re
 from discord.ext.commands import check, Context, CheckFailure, PrivateMessageOnly
-from src.roles import HIVE_MXTRESS, has_role
+from src.roles import HIVE_MXTRESS, has_role, TEST_BOT
 from typing import Callable, Optional, TypeVar
 
 COMMAND_PREFIX = 'hc!'
@@ -48,17 +48,17 @@ def hive_mxtress_only() -> Callable[[T], T]:
 
 def dm_only() -> Callable[[T], T]:
     '''
-    Only allow a command to be used in a direct message
+    Only allow a command to be used in a direct message.
+
+    This has an exception for TestBot because bots cannot DM each other.
     '''
 
     def predicate(ctx: Context) -> bool:
         '''
-        Check that the message's author is the Hive Mxtress.
-
-        There is an exception for TestBot because one bot cannot DM another.
+        Check that a message is in DM or from TestBot
         '''
 
-        if ctx.guild is not None and ctx.message.author.name != 'TestBot':
+        if not has_role(ctx.author, TEST_BOT) and ctx.guild is not None:
             raise PrivateMessageOnly()
 
         return True

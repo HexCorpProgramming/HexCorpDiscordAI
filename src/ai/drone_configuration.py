@@ -1,6 +1,6 @@
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
@@ -26,7 +26,7 @@ from src.db.drone_dao import (can_self_configure, delete_drone_by_drone_id,
 from src.db.timer_dao import (delete_timers_by_id_and_mode, insert_timer)
 from src.display_names import update_display_name
 from src.id_converter import convert_id_to_member
-from src.resources import (BRIEF_DRONE_OS, DRONE_AVATAR)
+from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, HIVE_MXTRESS, ID_PREPENDING,
                        IDENTITY_ENFORCEMENT, MODERATION_ROLES,
@@ -112,15 +112,31 @@ class DroneConfigurationCog(Cog):
         '''
         Lets the Hive Mxtress or trusted users toggle drone identity enforcement.
         '''
-        await toggle_parameter(context,
-                               drones,
-                               "identity_enforcement",
-                               get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
-                               is_identity_enforced,
-                               lambda: "Identity enforcement is now active.",
-                               lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
-                               lambda: "Identity enforcement disengaged.",
-                               minutes)
+
+        latest_join = datetime.now(timezone.utc) - timedelta(weeks=2)
+        permitted_members = [m for m in drones if m.joined_at <= latest_join]
+        forbidden_members = [m for m in drones if m.joined_at > latest_join]
+
+        if len(forbidden_members):
+            if len(forbidden_members) == 1:
+                text = 'Target ' + forbidden_members[0].display_name + ' has'
+            else:
+                text = 'Targets ' + ', '.join([m.display_name for m in forbidden_members]) + ' have'
+
+            await context.reply(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
+
+        if len(permitted_members):
+            await toggle_parameter(
+                context,
+                permitted_members,
+                "identity_enforcement",
+                get(context.guild.roles, name=IDENTITY_ENFORCEMENT),
+                is_identity_enforced,
+                lambda: "Identity enforcement is now active.",
+                lambda minutes: f"Identity enforcement is now active for {minutes} minute(s).",
+                lambda: "Identity enforcement disengaged.",
+                minutes
+            )
 
     @guild_only()
     @command(aliases=['glitch', 'tdg'], brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}toggle_drone_glitch 9813 3287')

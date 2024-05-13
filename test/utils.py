@@ -1,6 +1,5 @@
-from asyncio import get_running_loop, timeout
 from discord import Message, TextChannel
-from discord.ext.commands import Bot, Cog, Context
+from discord.ext.commands import Bot, CheckFailure, Cog
 from discord.utils import get
 from functools import wraps
 from typing import Any, Callable, Type
@@ -19,12 +18,14 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
     Usage:
 
     ```
+    from test.utils import cog
+
     @cog(MyCog)
     async def test_my_cog(self, bot):
         message = bot.create_message('general', '!my_command with parameters')
 
         # Run MyCog.my_command('with', 'parameters') and ensure that its checks pass.
-        await assert_command_successful(bot, message)
+        await self.assert_command_successful(bot, message)
     ```
     '''
 
@@ -33,20 +34,8 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         A decorator to create and pass in a Bot object for testing with.
         '''
 
-        async def r(context: Context, exception: Exception) -> None:
-            '''
-            The error handler for the bot.
-            When a CheckFailure exception is raised this function will be called and it will
-            save the exception to the `message.err` future.
-            '''
-
-            context.message.err.set_result(exception)
-
         # Create the bot
         bot = Bot(command_prefix=COMMAND_PREFIX)
-
-        # Register the error handler.
-        bot.on_command_error = r
 
         # Add the Cog under test to the bot.
         bot.add_cog(CogType(bot))
@@ -95,6 +84,9 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             message.guild = guild
             message.content = content
 
+            message.state = AsyncMock()
+            message.state.create_message = MagicMock()
+
             for n, v in kwargs.items():
                 setattr(message, n, v)
 
@@ -108,6 +100,12 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             Call the wrapped function, passing in the Bot as the last positional argument.
             '''
 
+            # Patch assertions onto the Test class.  Note that they are async and must be awaited.
+            # This is done so that they can use other assert* functions.
+            self = args[0]
+            self.assert_command_error = lambda bot, message: assert_command_error(self, bot, message)
+            self.assert_command_successful = lambda bot, message: assert_command_successful(self, bot, message)
+
             return await func(*args, bot, **kwargs)
 
         return wrapper
@@ -115,43 +113,48 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
     return decorator
 
 
-async def assert_command_error(bot: Bot, message: Message) -> None:
+async def run_command(bot: Bot, message: Message) -> Exception | None:
+    '''
+    Run a command and return the error that it produced.
+    '''
+    command_error = None
+
+    async def on_error(cog, context, error) -> None:
+        '''
+        Store errors from the command.
+        '''
+
+        nonlocal command_error
+        command_error = error
+
+    for name, command in bot.prefixed_commands.items():
+        command.on_error = on_error
+
+    # Run the Cog command.
+    await bot.process_commands(message)
+
+    return command_error
+
+
+async def assert_command_error(self, bot: Bot, message: Message) -> None:
     '''
     Ensure that a command invocation causes a check failure.
     '''
 
-    message.err = get_running_loop().create_future()
-
-    # Run the Cog command.
-    await bot.process_commands(message)
-
-    # Wait for the on_error handler to be called.
-    async with timeout(0.1):
-        await message.err
+    command_error = await run_command(bot, message)
 
     # Check that an error was recorded.
-    if not isinstance(message.err.result(), Exception):
-        raise Exception('Expected CheckFailure was not raised')
+    self.assertIsNotNone(command_error)
+
+    # An exception was recorded but not the correct one.
+    self.assertIsInstance(command_error, CheckFailure)
 
 
-async def assert_command_successful(bot: Bot, message: Message) -> None:
+async def assert_command_successful(self, bot: Bot, message: Message) -> None:
     '''
     Ensure that a command invocation does not cause a check failure.
     '''
 
-    message.err = get_running_loop().create_future()
+    command_error = await run_command(bot, message)
 
-    # Run the Cog command.
-    await bot.process_commands(message)
-
-    # The code below should ensure that the error callback was not called,
-    # however it triggers a bug in the code coverage tool.
-
-    # Wait for the on_error handler to be called.
-    # try:
-    #     async with timeout(0.1):
-    #          await message.err
-    #          raise message.err.result()
-    # except TimeoutError:
-    #     # Success: The command did not raise an error.
-    #     pass
+    self.assertIsNone(command_error)

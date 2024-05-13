@@ -9,8 +9,6 @@ TRAFFIC_LIGHTS = ["🔴", "🟡", "🟢"]
 # Bot IDs
 BOT_IDS = [673470104519835659, 665846816121815071]
 
-HIVE_MXTRESS_USER_ID = "194126224828661760"
-
 HEXCORP_MANTRA = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
 
 # Speech optimization status codes (V2).

@@ -6,7 +6,6 @@ import discord
 
 from src.db.data_objects import BatteryType, Drone, map_to_object, map_to_objects
 from src.db.database import change, fetchall, fetchone, fetchcolumn
-from src.resources import HIVE_MXTRESS_USER_ID
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
 
@@ -24,7 +23,7 @@ async def add_new_drone_members(members: List[discord.Member]):
                 drone_id = get_id(member.display_name)
 
                 if drone_id:
-                    new_drone = Drone(member.id, drone_id, False, False, HIVE_MXTRESS_USER_ID, datetime.now(), associate_name=member.display_name)
+                    new_drone = Drone(member.id, drone_id, False, False, [], datetime.now(), associate_name=member.display_name)
                     await insert_drone(new_drone)
 
 
