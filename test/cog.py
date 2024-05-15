@@ -1,9 +1,51 @@
+import time
 from discord import Message
-from discord.ext.commands import Bot, CheckFailure, Cog
+from discord.ext.commands import Bot, CheckFailure, Cog, Context, Converter, Greedy, MemberNotFound
+from discord.utils import find
 from functools import wraps
+from re import match
+from src.drone_member import DroneMember
+from test.mocks import Mocks
 from typing import Any, Callable, Type
 from unittest.mock import AsyncMock, patch
-from test.mocks import Mocks
+
+
+class MockDroneMemberConverter(Converter):
+    '''
+    A parameter converter to automatically create DroneMember objects from command parameters.
+    '''
+
+    async def convert(self, context: Context, argument: str):
+        '''
+        Try to find a DroneMember that matches the "argument" string.
+        '''
+
+        member = None
+        members = context.guild._members.values()
+
+        # Match by Discord ID.
+        discord_id = match(r"<(?:@[!&]?|#)([0-9]{15,20})>$", argument)
+
+        if discord_id is not None:
+            member = members.get(int(argument))
+
+        # Match by member name or nickname.
+        if member is None:
+            member = find(lambda m: m.name == argument or m.nick == argument, members)
+
+        # Match by drone ID.
+        if member is None:
+            for m in members:
+                drone = getattr(m, 'drone', None)
+
+                if drone is not None and str(drone.drone_id) == argument:
+                    member = m
+                    break
+
+        if member is None:
+            raise MemberNotFound(argument)
+
+        return member
 
 
 def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
@@ -32,9 +74,10 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         '''
         A decorator to create and pass in a Mocks object for testing with.
         '''
-
+        start = time.time()
         # The Mocks object contains a Guild and a Bot.
         mocks = Mocks()
+        print('Initializing mocks took ' + str(time.time() - start))
 
         # Add the Cog under test to the bot.
         mocks.get_bot().add_cog(CogType(mocks.get_bot()))
@@ -74,12 +117,23 @@ async def run_command(bot: Bot, message: Message, Drone, MemberConverter) -> Exc
         nonlocal command_error
         command_error = error
 
+    # Create a command parameter converter.
+    converter = MockDroneMemberConverter()
+
+    # Modify each every bot command.
     for name, command in bot.prefixed_commands.items():
+        # Override the error handler to store the result locally.
         command.on_error = on_error
 
-    MemberConverter.return_value = AsyncMock()
-    MemberConverter.return_value.convert.side_effect = message.guild.drone_members['members']
-    Drone.find.side_effect = message.guild.drone_members['drones']
+        # Override any DroneMember parameter converters with one
+        # that returns a mock DroneMember from the mock guild.
+        for name, param in command.params.items():
+            if isinstance(param._annotation, Greedy):
+                if param._annotation.converter == DroneMember:
+                    param._annotation.converter = converter
+            else:
+                if param._annotation == DroneMember:
+                    param._annotation = converter
 
     # Run the Cog command.
     await bot.process_commands(message)

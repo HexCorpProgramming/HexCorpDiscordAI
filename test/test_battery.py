@@ -1,10 +1,8 @@
 import unittest
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, patch
 import src.ai.battery as battery
 import src.emoji as emoji
 import test.test_utils as test_utils
-#from src.db.drone_dao import Drone
-from src.db.data_objects import BatteryType
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED
 from test.cog import cog
 from test.mocks import Mocks
@@ -20,7 +18,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         of minutes of recharge (4 hours of charge for every hour in storage)
         '''
 
-        drone = mocks.drone('5890')
+        drone = mocks.drone('1234')
 
         await battery.recharge_battery(drone)
 
@@ -36,65 +34,55 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         '''
 
         message = mocks.command(mocks.hive_mxtress(), 'general', 'drain 1234')
-
-        drone = mocks.drone('1234', is_battery_powered=True)
-        member = mocks.member('Drone 1234')
-        mocks.set_drone_members([drone], [member])
+        drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
 
         await self.assert_command_successful(message)
 
-        self.assertEqual(52, drone.battery_minutes)
+        # The battery starts at 100 minutes and is drained by 10% of the 480 minute capacity.
+        self.assertEqual(52, drone_member.drone.battery_minutes)
 
-    # @patch("src.ai.battery.get_battery_minutes_remaining", return_value=500)
-    # @patch("src.ai.battery.set_battery_minutes_remaining")
-    # @patch("src.ai.battery.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    # async def test_recharge_battery_no_overcharge(self, get_battery_type, set_bat_mins, get_bat_mins):
-    #     '''
-    #     The recharge battery function should not call
-    #     set_battery_minutes_remaining with more than the maximum capacity (480)
-    #     '''
+    @cog(battery.BatteryCog)
+    async def test_recharge_battery_no_overcharge(self, mocks: Mocks):
+        '''
+        The recharge battery function should not call
+        set_battery_minutes_remaining with more than the maximum capacity (480)
+        '''
 
-    #     member = Mock()
-    #     member.id = '5890snowflake'
+        drone = mocks.drone(1234, battery_minutes=470)
+        await battery.recharge_battery(drone)
+        self.assertEqual(drone.battery_minutes, 480)
 
-    #     await battery.recharge_battery(member)
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_track_active_battery_drain(self, Drone: AsyncMock, mocks: Mocks):
+        '''
+        For every inactive drone, 1 minute of battery should be drained from them
+        via database call 'deincrement_battery_minutes_remaining'.
+        Their 'active minutes remaining' should also be deincremented by one.
+        '''
 
-    #     set_bat_mins.assert_called_once_with(member, 480)
+        cog = mocks.get_cog()
+        cog.draining_batteries = {'1234': 10}
+        Drone.load.return_value = mocks.drone('1234')
 
-    # @patch("src.ai.battery.deincrement_battery_minutes_remaining")
-    # async def test_track_active_battery_drain(self, deincrement):
-    #     '''
-    #     For every inactive drone, 1 minute of battery should be drained from them
-    #     via database call 'deincrement_battery_minutes_remaining'.
-    #     Their 'active minutes remaining' should also be deincremented by one.
-    #     '''
+        await test_utils.start_and_await_loop(cog.track_active_battery_drain)
 
-    #     bot = AsyncMock()
+        self.assertEqual(cog.draining_batteries.get('1234', None), 9)
 
-    #     battery_cog = battery.BatteryCog(bot)
-
-    #     battery_cog.draining_batteries = {'5890': 10}
-
-    #     await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
-
-    #     deincrement.assert_called_once()
-    #     self.assertEqual(battery_cog.draining_batteries.get('5890', None), 9)
-
-    async def test_remove_from_active_tracking(self):
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_remove_from_active_tracking(self, Drone: AsyncMock, mocks: Mocks):
         '''
         If an inactive drone has 0 minutes of draining left, they should be
         removed from the dictionary.
         '''
 
-        bot = AsyncMock()
+        cog = mocks.get_cog()
+        cog.draining_batteries = {'1234': 0}
 
-        battery_cog = battery.BatteryCog(bot)
+        await test_utils.start_and_await_loop(cog.track_active_battery_drain)
 
-        battery_cog.draining_batteries = {'9813': 0}
-
-        await test_utils.start_and_await_loop(battery_cog.track_active_battery_drain)
-
-        self.assertIsNone(battery_cog.draining_batteries.get('9813', None))
+        self.assertIsNone(cog.draining_batteries.get('1234', None))
 
     @patch('src.ai.battery.Drone', new_callable=AsyncMock)
     @cog(battery.BatteryCog)
@@ -109,8 +97,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         drone = mocks.drone(1234, battery_minutes=0)
         Drone.all.return_value = [drone]
-
-        mocks.set_drone_members([None], [member])
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
 
@@ -129,8 +115,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone = mocks.drone(1234)
         member = mocks.member('1234', roles=[BATTERY_POWERED, BATTERY_DRAINED])
         Drone.all.return_value = [drone]
-
-        mocks.set_drone_members([drone], [member])
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
 
@@ -167,8 +151,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
 
-        mocks.set_drone_members([drone], [member])
-
         battery_cog = mocks.get_cog()
         battery_cog.low_battery_drones = ['1234']
 
@@ -188,8 +170,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone.get_battery_percent_remaining.return_value = 50
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
-
-        mocks.set_drone_members([drone], [member])
 
         battery_cog = mocks.get_cog()
         battery_cog.low_battery_drones = ['1234']
@@ -283,7 +263,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
     @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
     @cog(battery.BatteryCog)
-    async def test_start_battery_drain(self, DroneMember: AsyncMock, mocks: Mocks):
+    async def test_start_battery_drain(self, DroneMember: AsyncMock, mocks: Mocks) -> None:
         '''
         Battery powered drones should have their active tracking minutes
         set to 15 when they first send a message.
@@ -295,24 +275,16 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         await mocks.get_cog().start_battery_drain(mocks.message(), mocks.message())
         self.assertEqual(mocks.get_cog().draining_batteries.get('1234', None), 15)
 
-    # @patch("src.ai.battery.is_drone", return_value=True)
-    # @patch("src.ai.battery.is_battery_powered", return_value=True)
-    # async def test_restart_battery_drain(self, bat_pow, is_drn):
-    #     '''
-    #     Drones that are currently being tracked for battery drain should have
-    #     their minutes reset to 15 if they send another message.
-    #     '''
+    @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_restart_battery_drain(self, DroneMember: AsyncMock, mocks: Mocks) -> None:
+        '''
+        Drones that are currently being tracked for battery drain should have
+        their minutes reset to 15 if they send another message.
+        '''
 
-    #     message = Mock()
-    #     message.author.display_name = "HexDrone 5890"
-
-    #     message_copy = Mock()
-
-    #     bot = Mock()
-    #     battery_cog = battery.BatteryCog(bot)
-
-    #     battery_cog.draining_batteries['5890'] = 6
-
-    #     await battery_cog.start_battery_drain(message, message_copy)
-
-    #     self.assertEqual(battery_cog.draining_batteries.get("5890", None), 15)
+        cog = mocks.get_cog()
+        cog.draining_batteries['1234'] = 6
+        DroneMember.create.return_value = mocks.drone_member(1234, drone_is_battery_powered=True)
+        await cog.start_battery_drain(mocks.message(), mocks.message())
+        self.assertEqual(cog.draining_batteries.get('1234', None), 15)

@@ -3,7 +3,7 @@ import discord
 from src.bot_utils import COMMAND_PREFIX
 from src.channels import HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.log import log
-from drone_member import DroneMember
+from src.drone_member import DroneMember
 
 
 async def check_if_prepending_necessary(message: discord.Message, message_copy=None):

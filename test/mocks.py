@@ -210,7 +210,6 @@ class Mocks():
         '''
 
         drone_id = str(drone_id)
-        #drone = self.record(spec=Drone, table='drone')
         drone = create_autospec(Drone, table='drone')
 
         drone.drone_id = drone_id
@@ -234,6 +233,7 @@ class Mocks():
         drone.battery_type = self.battery_type()
         drone.storage = None
         drone.order = None
+        drone.get_battery_percent_remaining.side_effect = lambda: 100 / drone.battery_type.capacity * drone.battery_minutes
 
         # TODO: Use autospec?
 
@@ -424,7 +424,7 @@ class Mocks():
 
         drone_id = str(drone_id)
         discord_id = 'snowflake' + drone_id
-        nick = 'Drone-#' + drone_id
+        nick = 'Drone-' + drone_id
 
         # drone_member = MagicMock(spec=DroneMember)
         drone_member = create_autospec(DroneMember)
@@ -440,6 +440,7 @@ class Mocks():
         drone_member.roles = drone_member._roles
         # drone_member.roles = property(lambda self: self._roles)
         drone_member.drone = self.drone(drone_id)
+        drone_member.avatar_url.return_value = drone_member._avatar
 
         async_methods = [
             'create',
