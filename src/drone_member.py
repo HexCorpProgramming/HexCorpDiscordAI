@@ -59,7 +59,7 @@ class DroneMember:
         self._member = member
 
     @classmethod
-    async def create(cls, member: discord.Member) -> Self:
+    async def create(cls, member: discord.Member, drone: Drone | None = None) -> Self:
         '''
         Factory for creating DroneMembers.
 
@@ -67,7 +67,7 @@ class DroneMember:
         '''
 
         result = cls(member)
-        result.drone = await Drone.find(member=member)
+        result.drone = drone or await Drone.find(member=member)
 
         return result
 
@@ -152,7 +152,7 @@ class DroneMember:
 
         return self.display_avatar.url if not self.identity_enforcable(channel) else DRONE_AVATAR
 
-    async def update_display_name(self):
+    async def update_display_name(self) -> None:
         '''
         Change the drone's display name depending on their DroneOS state.
         '''
@@ -166,8 +166,7 @@ class DroneMember:
 
         if self.display_name == new_display_name:
             # Return false if no update required.
-            return False
+            return
 
         log.info(f"Updating drone display name. Old name: {self.display_name}. New name: {new_display_name}.")
         await self.edit(nick=new_display_name)
-        return True

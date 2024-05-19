@@ -353,8 +353,8 @@ class Drone(Record):
             'optimized',
             'glitched',
             'id_prepending',
-            'identity_enforced',
-            'third_person_enforced'
+            'identity_enforcement',
+            'third_person_enforcement',
             'is_battery_powered',
         ]
 
@@ -372,4 +372,4 @@ class Drone(Record):
         Takes a context or channel object and uses it to check if the identity of a user should be enforced.
         '''
 
-        return (channel.name in DRONE_HIVE_CHANNELS or self.third_person_enforced) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        return (channel.name in DRONE_HIVE_CHANNELS or self.third_person_enforcement) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]

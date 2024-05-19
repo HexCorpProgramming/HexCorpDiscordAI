@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from discord import Emoji, Member, Message, Role, TextChannel
 from discord.ext.commands import Bot, Cog
 from discord.utils import get
+from functools import partial
 from typing import Any, List, Iterable
 from src.emoji import BATTERY_FULL, BATTERY_MID, BATTERY_LOW, BATTERY_EMPTY, DRONE_EMOJI
 from src.roles import (INITIATE, ASSOCIATE, DRONE, STORED, DEVELOPMENT, ADMIN, MODERATION, HIVE_MXTRESS,
@@ -17,9 +18,10 @@ from src.db.record import Record
 unique_id = 1
 
 emojis = [
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
-    'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'blank', 'hex_slash', 'hex_dot', 'hex_questionmark', 'hex_exclamationmark', 'hex_comma',
+    'hex_a', 'hex_b', 'hex_c', 'hex_d', 'hex_e', 'hex_f', 'hex_g', 'hex_h', 'hex_i', 'hex_j', 'hex_k', 'hex_l',
+    'hex_m', 'hex_n', 'hex_o', 'hex_p', 'hex_q', 'hex_r', 'hex_s', 'hex_t', 'hex_u', 'hex_v', 'hex_w', 'hex_x',
+    'hex_y', 'hex_z', 'hex_1', 'hex_2', 'hex_3', 'hex_4', 'hex_5', 'hex_6', 'hex_7', 'hex_8', 'hex_9',
+    'blank', 'hex_slash', 'hex_dot', 'hex_questionmark', 'hex_exclamationmark', 'hex_comma', 'hex_dc',
     BATTERY_FULL, BATTERY_MID, BATTERY_LOW, BATTERY_EMPTY, DRONE_EMOJI,
 ]
 
@@ -63,9 +65,6 @@ class Mocks():
         self.hive_mxtress()
 
         self._bot = self.bot()
-
-        # Add the Bot as a property on the guild so it can be accessed by the Cog test.
-        self._guild._bot = self._bot
 
     def get_guild(self) -> MagicMock:
         '''
@@ -233,9 +232,14 @@ class Mocks():
         drone.battery_type = self.battery_type()
         drone.storage = None
         drone.order = None
-        drone.get_battery_percent_remaining.side_effect = lambda: 100 / drone.battery_type.capacity * drone.battery_minutes
 
-        # TODO: Use autospec?
+        # Use the actual implementation of these simple functions.
+        drone.allows_configuration_by.side_effect = partial(Drone.allows_configuration_by, drone)
+        drone.allows_storage_by.side_effect = partial(Drone.allows_storage_by, drone)
+        drone.trusts.side_effect = partial(Drone.trusts, drone)
+        drone.is_configured.side_effect = partial(Drone.is_configured, drone)
+        drone.get_battery_percent_remaining.side_effect = partial(Drone.get_battery_percent_remaining, drone)
+        drone.third_person_enforcable.side_effect = partial(Drone.third_person_enforcable, drone)
 
         self.set_props(drone, kwargs)
 
@@ -263,6 +267,7 @@ class Mocks():
         channel = create_autospec(TextChannel)
         channel.id = self.get_unique_id()
         channel.name = name
+        channel.guild = self._guild
 
         # A shortcut to get the first webhook.
         channel.webhook = AsyncMock()
@@ -311,6 +316,7 @@ class Mocks():
         member.display_name = nick
         member.edit = AsyncMock()
         member.mention = ''
+        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
 
         self.set_props(member, kwargs)
 
@@ -359,6 +365,15 @@ class Mocks():
 
         return message
 
+    def direct_command(self, author=None, content='', **kwargs) -> Message:
+        '''
+        Create a mock direct message prefixed with COMMAND_PREFIX.
+
+        This is a convenience method to save you from having to import COMMAND_PREFIX into every test.
+        '''
+
+        return self.direct_message(author, COMMAND_PREFIX + content, **kwargs)
+
     def direct_message(self, author=None, content='', **kwargs) -> Message:
         '''
         Create a new mock Message object.
@@ -368,7 +383,7 @@ class Mocks():
         Any additional keyword parameters are set as properties on the message.
         '''
 
-        message = self.message(author, content, **kwargs)
+        message = self.message(author, '', content, **kwargs)
         message.guild = None
 
         return message
@@ -551,7 +566,7 @@ class Mocks():
         emoji = create_autospec(Emoji)
         emoji.id = self.get_unique_id()
         emoji.name = name
-        emoji.__str__ = lambda e: e.name
+        emoji.__str__ = lambda e: f':{e.name}:'
 
         self.set_props(emoji, kwargs)
 

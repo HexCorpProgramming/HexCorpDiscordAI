@@ -14,7 +14,9 @@ class NamedParameterConverterTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await converter.convert(None, "-number=69"), 69)
         self.assertEqual(await converter.convert(None, "-number=0"), 0)
         self.assertEqual(await converter.convert(None, "-number=-1"), -1)
+
         with self.assertRaises(BadArgument):
             await converter.convert(None, "notAProperInput")
+
         with self.assertRaises(ValueError):
             await converter.convert(None, "-number=notANumber")

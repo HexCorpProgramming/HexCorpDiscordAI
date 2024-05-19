@@ -17,16 +17,13 @@ ACCESS_GRANTED = 'Access granted.'
 
 class AddVoiceCog(Cog):
 
-    def __init__(self, bot):
-        self.bot = bot
-
     @dm_only()
     @command(usage=f'{COMMAND_PREFIX}request_voice_role')
     async def request_voice_role(self, context):
         '''
         Gives you the Voice role and thus access to voice channels if you have been on the server for more than 2 weeks.
         '''
-        await add_voice(context, self.bot.guilds[0])
+        await add_voice(context, context.bot.guilds[0])
 
 
 async def add_voice(context, guild: discord.Guild):

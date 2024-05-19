@@ -74,13 +74,13 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         '''
         A decorator to create and pass in a Mocks object for testing with.
         '''
-        start = time.time()
+
         # The Mocks object contains a Guild and a Bot.
         mocks = Mocks()
-        print('Initializing mocks took ' + str(time.time() - start))
 
         # Add the Cog under test to the bot.
-        mocks.get_bot().add_cog(CogType(mocks.get_bot()))
+        bot = mocks.get_bot()
+        bot.add_cog(CogType(bot))
 
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -91,8 +91,8 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             # Patch assertions onto the Test class.  Note that they are async and must be awaited.
             # This is done so that they can use other assert* functions.
             self = args[0]
-            self.assert_command_error = lambda message: assert_command_error(self, message.guild._bot, message)
-            self.assert_command_successful = lambda message: assert_command_successful(self, message.guild._bot, message)
+            self.assert_command_error = lambda message: assert_command_error(self, mocks.get_bot(), message)
+            self.assert_command_successful = lambda message: assert_command_successful(self, mocks.get_bot(), message)
 
             return await func(*args, mocks, **kwargs)
 
