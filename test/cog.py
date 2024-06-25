@@ -1,13 +1,12 @@
-import time
 from discord import Message
-from discord.ext.commands import Bot, CheckFailure, Cog, Context, Converter, Greedy, MemberNotFound
+from discord.ext.commands import Bot, Cog, CommandError, Context, Converter, Greedy, MemberNotFound
 from discord.utils import find
 from functools import wraps
 from re import match
 from src.drone_member import DroneMember
 from test.mocks import Mocks
 from typing import Any, Callable, Type
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 
 class MockDroneMemberConverter(Converter):
@@ -91,8 +90,8 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
             # Patch assertions onto the Test class.  Note that they are async and must be awaited.
             # This is done so that they can use other assert* functions.
             self = args[0]
-            self.assert_command_error = lambda message: assert_command_error(self, mocks.get_bot(), message)
-            self.assert_command_successful = lambda message: assert_command_successful(self, mocks.get_bot(), message)
+            self.assert_command_error = lambda message, error_message='': assert_command_error(self, bot, message, error_message)
+            self.assert_command_successful = lambda message: assert_command_successful(self, bot, message)
 
             return await func(*args, mocks, **kwargs)
 
@@ -102,8 +101,7 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
 
 
 @patch('src.drone_member.MemberConverter')
-@patch('src.drone_member.Drone', new_callable=AsyncMock)
-async def run_command(bot: Bot, message: Message, Drone, MemberConverter) -> Exception | None:
+async def run_command(bot: Bot, message: Message, MemberConverter) -> Exception | None:
     '''
     Run a command and return the error that it produced.
     '''
@@ -135,13 +133,26 @@ async def run_command(bot: Bot, message: Message, Drone, MemberConverter) -> Exc
                 if param._annotation == DroneMember:
                     param._annotation = converter
 
-    # Run the Cog command.
-    await bot.process_commands(message)
+    context = await bot.get_context(message)
+
+    # Mock asynchronous Messageable methods.
+    for name in 'send', 'trigger_typing', 'fetch_message':
+        setattr(context, name, AsyncMock())
+
+    # Mock synchronous Messageable methods.
+    for name in 'typing', 'can_send', 'history':
+        setattr(context, name, Mock())
+
+    # Store the context on the bot so it can be accessed later, for example:
+    # mocks.get_bot().context.assert_called_once()
+    bot.context = context
+
+    await bot.invoke(context)
 
     return command_error
 
 
-async def assert_command_error(self, bot: Bot, message: Message) -> None:
+async def assert_command_error(self, bot: Bot, message: Message, error_message: str = '') -> None:
     '''
     Ensure that a command invocation causes a check failure.
     '''
@@ -152,7 +163,10 @@ async def assert_command_error(self, bot: Bot, message: Message) -> None:
     self.assertIsNotNone(command_error)
 
     # An exception was recorded but not the correct one.
-    self.assertIsInstance(command_error, CheckFailure)
+    self.assertIsInstance(command_error, CommandError)
+
+    if error_message != '':
+        self.assertEqual(error_message, str(command_error))
 
 
 async def assert_command_successful(self, bot: Bot, message: Message) -> None:

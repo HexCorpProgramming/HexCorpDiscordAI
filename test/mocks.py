@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from discord import Emoji, Member, Message, Role, TextChannel
-from discord.ext.commands import Bot, Cog
+from discord.ext.commands import Bot, Cog, Context
 from discord.utils import get
 from functools import partial
 from typing import Any, List, Iterable
@@ -30,6 +30,10 @@ roles = [
     GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT, THIRD_PERSON_ENFORCEMENT, BATTERY_POWERED, BATTERY_DRAINED,
     FREE_STORAGE, HIVE_VOICE, MODERATION_ROLES, VOICE, NITRO_BOOSTER, EVERYONE,
 ]
+
+
+class TestBot(Bot):
+    context: Context = None
 
 
 class Mocks():
@@ -540,7 +544,7 @@ class Mocks():
         This creates an actual Bot object, not a mock, so that the argument parsing for commands is in place.
         '''
         # Create the bot
-        bot = Bot(command_prefix=COMMAND_PREFIX)
+        bot = TestBot(command_prefix=COMMAND_PREFIX)
 
         # Give the bot a user as if it is connected to the server.
         bot._connection.user = self.member(bot=True)
