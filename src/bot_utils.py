@@ -58,7 +58,7 @@ def dm_only() -> Callable[[T], T]:
         Check that a message is in DM or from TestBot
         '''
 
-        if not has_role(ctx.author, TEST_BOT) and ctx.guild is not None:
+        if ctx.guild is not None and not has_role(ctx.author, TEST_BOT):
             raise PrivateMessageOnly()
 
         return True
