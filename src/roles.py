@@ -10,6 +10,7 @@ DEVELOPMENT = '⬡-Development'
 ADMIN = 'admin'
 MODERATION = '⬡-Moderation'
 HIVE_MXTRESS = 'Drone Hive Mxtress'
+TEST_BOT = 'TestBot'
 
 SPEECH_OPTIMIZATION = "⬡-Optimized"
 GLITCHED = "⬡-Glitched"

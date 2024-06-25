@@ -1,6 +1,6 @@
 import re
 from discord.ext.commands import check, command as bot_command, Context, CheckFailure, PrivateMessageOnly
-from src.roles import HIVE_MXTRESS, has_role
+from src.roles import HIVE_MXTRESS, has_role, TEST_BOT
 from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar
 from functools import wraps
 from src.log import LogContext
@@ -84,7 +84,7 @@ def dm_only() -> Callable[[T], T]:
         There is an exception for TestBot because one bot cannot DM another.
         '''
 
-        if ctx.guild is not None and ctx.message.author.name != 'TestBot':
+        if ctx.guild is not None and not has_role(ctx.author, TEST_BOT):
             raise PrivateMessageOnly()
 
         return True
