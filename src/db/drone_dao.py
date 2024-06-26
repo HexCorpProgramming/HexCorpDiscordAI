@@ -23,7 +23,7 @@ async def add_new_drone_members(members: List[discord.Member]):
                 drone_id = get_id(member.display_name)
 
                 if drone_id:
-                    new_drone = Drone(member.id, drone_id, False, False, [], datetime.now(), associate_name=member.display_name)
+                    new_drone = Drone(member.id, drone_id, False, False, '', datetime.now(), associate_name=member.display_name)
                     await insert_drone(new_drone)
 
 
