@@ -10,7 +10,13 @@ class DroneMemberConverter(Converter):
         Converts a given argument to a Member that is a drone. Raises BadArgument otherwise.
         Does not handle mentions. Those should be handled by the default converter.
         '''
-        member = await convert_id_to_member(context.message.guild, argument)
+
+        if context.message.guild:
+            guild = context.message.guild
+        else:
+            guild = context.bot.guilds[0]
+
+        member = await convert_id_to_member(guild, argument)
 
         if member is not None:
             return member
