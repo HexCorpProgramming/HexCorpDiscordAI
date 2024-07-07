@@ -53,8 +53,7 @@ async def remove_trusted_user_on_all(trusted_user_id: int):
 
         if trusted_user_id in drone.trusted_users:
             drone.trusted_users.remove(trusted_user_id)
-
-        await drone.save()
+            await drone.save()
 
 
 async def get_drones_with_orders(guild: discord.Guild) -> List[DroneMember]:
