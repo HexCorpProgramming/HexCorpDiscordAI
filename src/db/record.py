@@ -54,11 +54,31 @@ class Record:
         await change(f'DELETE FROM {self.table} WHERE {self.get_id_column()} = :id', {'id': self.get_id()})
 
     @classmethod
+    async def cast(cls, data: dict) -> dict:
+        '''
+        Override this function to convert data types retrieved from the datbase.
+
+        ```py
+        def MyRecord(Record):
+            @classmethod
+            def cast(cls, row: dict) -> dict:
+                row['my_coumn'] = int(row['my_column'])
+                return row
+        ```
+        '''
+        return data
+
+    @classmethod
     async def find(cls, id: Any = None, **kwargs) -> Self | None:
         '''
         Find a database record by the given column name and value.
 
         Note that the column name is used directly in the SQL and so must not contain user input.
+
+        Examples:
+
+        Record.find(123)
+        Record.find(discord_id=456)
         '''
 
         if id is not None:
@@ -70,7 +90,15 @@ class Record:
         column = next(iter(kwargs))
         value = kwargs[column]
 
-        return map_to_object(await fetchone(f'SELECT * FROM {cls.table} WHERE {column} = :value', {'value': value}), cls)
+        # Fetch the row from the database.
+        row = await fetchone(f'SELECT * FROM {cls.table} WHERE {column} = :value', {'value': value})
+
+        # Values from the datbase come back as strings.
+        # Override the 'cast' function to convert them to other types.
+        if row is not None:
+            row = cls.cast(row)
+
+        return map_to_object(row, cls)
 
     @classmethod
     async def load(cls, id: Any = None, **kwargs) -> Self:
@@ -91,7 +119,7 @@ class Record:
             column = next(iter(kwargs))
             value = kwargs[column]
 
-            raise Exception(f'Failed to find record in {cls.table_name} where {column} = {value}')
+            raise Exception(f'Failed to find record in {cls.table} where {column} = {value}')
 
         return result
 

@@ -5,6 +5,7 @@ from discord import Member, TextChannel
 from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.roles import has_role, HIVE_MXTRESS
 from src.db.record import Record
+from src.db.database import fetchcolumn
 
 
 @dataclass(frozen=True)
@@ -47,12 +48,12 @@ class Storage(Record):
     The unique ID of the storage record.
     '''
 
-    stored_by: str
+    stored_by: int | None
     '''
-    The Discord ID of the user that initiated the storage.
+    The Discord ID of the user that initiated the storage. None for Hive Mxtress.
     '''
 
-    target_id: str
+    target_id: int
     '''
     The Discord ID of the drone that was stored.
     '''
@@ -71,6 +72,25 @@ class Storage(Record):
     '''
     The time at which the drone should be released from storage.
     '''
+
+    @classmethod
+    def cast(cls, row: dict) -> dict:
+        row['stored_by'] = int(row['stored_by'])
+        row['target_id'] = int(row['target_id'])
+        row['release_time'] = datetime.fromisoformat(row['release_time'])
+
+        return row
+
+    @classmethod
+    async def all_elapsed(cls) -> List[Self]:
+        ids = await fetchcolumn(f'SELECT {cls.get_id_column()} FROM {cls.table} WHERE release_time <= datetime("now")')
+        records = []
+
+        for id in ids:
+            args = {cls.get_id_column(): id}
+            records.append(cls.load(**args))
+
+        return records
 
 
 @dataclass
@@ -333,6 +353,9 @@ class Drone(Record):
             return True
 
         if member.id in self.trusted_users:
+            return True
+
+        if member.id == self.discord_id:
             return True
 
         return self.free_storage
