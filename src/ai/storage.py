@@ -10,7 +10,7 @@ from discord.utils import get
 
 import src.roles as roles
 from src.ai.battery import recharge_battery
-from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
+from src.bot_utils import COMMAND_PREFIX, moderator_only
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.database import connect
 from src.db.data_objects import Drone, Storage
@@ -37,7 +37,7 @@ class StorageCog(Cog):
         self.stored_role = None
 
     @guild_only()
-    @hive_mxtress_only()
+    @moderator_only()
     @command(usage=f'{COMMAND_PREFIX}release 9813')
     async def release(self, context, member: DroneMember):
         '''
@@ -58,7 +58,7 @@ class StorageCog(Cog):
         else:
             for storage in storages:
                 # calculate remaining hours
-                remaining_hours = hours_from_now(datetime.fromisoformat(storage.release_time))
+                remaining_hours = hours_from_now(storage.release_time)
                 stored_drone = await Drone.load(discord_id=storage.target_id)
 
                 if storage.stored_by is None:
@@ -81,11 +81,13 @@ class StorageCog(Cog):
     async def release_timed(self):
         guild = self.bot.guilds[0]
 
-        for member in await Storage.all_elapsed(guild):
+        for storage in await Storage.all_elapsed(guild):
+            member = await DroneMember.load(guild, storage.target_id)
+
             # restore roles to release from storage
             await member.remove_roles(self.stored_role)
-            await member.add_roles(*get_roles_for_names(guild, member.roles.split('|')))
-            await member.drone.storage.delete()
+            await member.add_roles(*get_roles_for_names(guild, storage.roles.split('|')))
+            await storage.delete()
 
     @release_timed.before_loop
     async def get_stored_role(self):
@@ -130,7 +132,7 @@ async def store_drone(message: discord.Message, message_copy=None):
     if not 0 < time <= 24:
         raise UserInputError(f'{format_time(time)} is not between 0 and 24.')
 
-    # find initiator
+    # Find initiator. Hive Mxtress must be loaded by Discord ID because they do not have a drone record.
     if initiator_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS):
         initiator = await DroneMember.load(message.guild, discord_id=message.author.id)
     else:
@@ -204,7 +206,7 @@ async def release(context, member: DroneMember):
     if not roles.has_any_role(context.author, roles.MODERATION_ROLES):
         return False
 
-    storage = member.storage
+    storage = member.drone.storage
 
     if storage is not None:
         stored_role = get(context.guild.roles, name=roles.STORED)

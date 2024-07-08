@@ -1,6 +1,6 @@
 import re
 from discord.ext.commands import check, command as bot_command, Context, CheckFailure, PrivateMessageOnly
-from src.roles import HIVE_MXTRESS, has_role, TEST_BOT
+from src.roles import HIVE_MXTRESS, has_any_role, has_role, MODERATION_ROLES, TEST_BOT
 from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar
 from functools import wraps
 from src.log import LogContext
@@ -72,6 +72,21 @@ def hive_mxtress_only() -> Callable[[T], T]:
     return check(predicate)
 
 
+def moderator_only() -> Callable[[T], T]:
+    '''
+    Only allow a command to be used by users with a moderation role.
+    '''
+
+    def predicate(ctx: Context) -> bool:
+        '''
+        Check that the message's author is a moderator.
+        '''
+
+        return has_any_role(ctx.author, MODERATION_ROLES)
+
+    return check(predicate)
+
+
 def dm_only() -> Callable[[T], T]:
     '''
     Only allow a command to be used in a direct message
@@ -79,7 +94,7 @@ def dm_only() -> Callable[[T], T]:
 
     def predicate(ctx: Context) -> bool:
         '''
-        Check that the message's author is the Hive Mxtress.
+        Check that the message was sent privately, not in a channel.
 
         There is an exception for TestBot because one bot cannot DM another.
         '''
@@ -96,6 +111,7 @@ def get_id(username: str) -> Optional[str]:
     '''
     Find the four digit ID in a nickname or None if no such ID is found.
     '''
+
     found = re.search(r"\d{4}", username)
     if found is None:
         return None
