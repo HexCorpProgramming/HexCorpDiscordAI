@@ -1,50 +1,35 @@
 import unittest
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 from datetime import datetime, timedelta
 
 import src.roles as roles
 import src.channels as channels
-from src.ai.storage import REJECT_MESSAGE, StorageCog, store_drone
-from src.db.data_objects import Storage, Drone
-import test.test_utils as test_utils
-from test.cog import cog, mock_drone, mock_drone_member
+from src.ai.storage import format_time, MESSAGE_FORMAT, REJECT_MESSAGE, StorageCog, store_drone
+from test.cog import cog
+from test.mocks import Mocks
 import re
 from discord.ext.commands import UserInputError
-
-storage_channel = AsyncMock()
-
-stored_role = Mock()
-stored_role.name = roles.STORED
-
-drone_role = Mock()
-drone_role.name = roles.DRONE
-
-hive_mxtress_role = Mock()
-hive_mxtress_role.name = roles.HIVE_MXTRESS
-
-development_role = Mock()
-development_role.name = roles.DEVELOPMENT
-
-storage_chambers = AsyncMock()
-storage_chambers.name = channels.STORAGE_CHAMBERS
+from test.test_utils import start_and_await_loop
 
 
 class StorageTest(unittest.IsolatedAsyncioTestCase):
+
+    @cog(StorageCog)
+    async def asyncSetUp(self, mocks: Mocks):
+        self.mocks = mocks
+        self.initiator = mocks.member('1234', roles=[self.mocks.role(roles.DRONE), self.mocks.role(roles.DEVELOPMENT)])
 
     async def test_storage_message_wrong_channel(self):
         '''
         Ensure that messages are rejected if sent via a channel other than STORAGE_FACILITY.
         '''
 
-        # setup
         channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
         channels_to_test.remove(channels.STORAGE_FACILITY)
-        for channel in channels_to_test:
-            message = Mock()
-            message.channel.name = channel
 
-            # run & assert
+        for channel in channels_to_test:
+            message = self.mocks.message(self.initiator, channel, 'test')
             self.assertFalse(await store_drone(message))
 
     async def test_storage_message_invalid(self):
@@ -53,35 +38,25 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         '''
 
         # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "beep boop wants to recharge"
-        message.author.roles = [drone_role]
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, 'beep boop wants to recharge')
 
         # run & assert
-        with self.assertRaises(UserInputError, msg=REJECT_MESSAGE):
+        with self.assertRaisesRegex(UserInputError, re.escape(REJECT_MESSAGE)):
             await store_drone(message)
 
     @patch('src.ai.storage.DroneMember')
-    @patch('src.ai.storage.Storage')
-    async def test_storage_message_already_in_storage(self, Storage, DroneMember):
+    async def test_storage_message_already_in_storage(self, DroneMember: AsyncMock):
         '''
         Ensure that a drone cannot be stored if it is already in storage.
         '''
 
         # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 6 :: recharge"
-        message.author.id = '9813snowflake'
-        message.author.roles = [drone_role]
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '1234 :: 5678 :: 6 :: recharge')
 
-        DroneMember.find = AsyncMock(side_effect=[mock_drone_member(9813), mock_drone_member(3287)])
-
-        Storage.find.return_value = Storage('elapse_storage_id', '9813snowflake', '3287snowflake', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5)))
+        DroneMember.find = AsyncMock(side_effect=[self.mocks.drone_member(1234), self.mocks.drone_member(5678, drone_storage=True)])
 
         # run & assert
-        with self.assertRaises(UserInputError, msg='3287 is already in storage.'):
+        with self.assertRaisesRegex(UserInputError, '5678 is already in storage.'):
             await store_drone(message)
 
     async def test_storage_message_duration_too_long(self):
@@ -89,14 +64,9 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that an appropriate error message is given if the storage time is too long.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 24.5 :: recharge"
-        message.author.roles = [drone_role]
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '1234 :: 5678 :: 24.5 :: recharge')
 
-        # run & assert
-        with self.assertRaises(UserInputError, msg='24.5 is not between 0 and 24.'):
+        with self.assertRaisesRegex(UserInputError, '24.5 is not between 0 and 24.'):
             await store_drone(message)
 
     @patch('src.ai.storage.DroneMember')
@@ -105,18 +75,14 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that the Hive Mxtress cannot be stored.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3287 :: 0006 :: 1 :: cheeky shenanigans"
-        message.author.roles = [drone_role]
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '1234 :: 0006 :: 1 :: cheeky shenanigans')
 
-        drone_members = [mock_drone_member(3287), mock_drone_member('0006')]
+        drone_members = [self.mocks.drone_member(3287), self.mocks.hive_mxtress()]
 
         DroneMember.find = AsyncMock(side_effect=drone_members)
 
         # run & assert
-        with self.assertRaises(UserInputError, msg='You cannot store the Hive Mxtress, silly drone.'):
+        with self.assertRaisesRegex(UserInputError, 'You cannot store the Hive Mxtress, silly drone.'):
             await store_drone(message)
 
     @patch('src.ai.storage.DroneMember')
@@ -125,17 +91,12 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that a non-existent initiator is rejected.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3288 :: 3287 :: 1 :: who's this drone?"
-        message.author.roles = [drone_role]
-        message.author.id = "3287snowflake"
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '3288 :: 5678 :: 1 :: who\'s this drone?')
 
-        DroneMember.find = AsyncMock(side_effect=[None, mock_drone_member(3287)])
+        DroneMember.find = AsyncMock(side_effect=[None, self.mocks.drone_member(5678)])
 
         # run & assert
-        with self.assertRaises(UserInputError, msg='Initiator drone with ID 3288 could not be found.'):
+        with self.assertRaisesRegex(UserInputError, 'Initiator drone with ID 3288 could not be found.'):
             await store_drone(message)
 
     @patch('src.ai.storage.DroneMember')
@@ -144,17 +105,12 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that a forged initiator is rejected.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3287 :: 3287 :: 8 :: recharge"
-        message.author.roles = [drone_role]
-        message.author.id = "1865snowflake"
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '3288 :: 5678 :: 1 :: incorrect id')
 
-        DroneMember.find = AsyncMock(side_effect=[mock_drone_member(3288), mock_drone_member(3287)])
+        DroneMember.find = AsyncMock(side_effect=[self.mocks.drone_member(1234), self.mocks.drone_member(5678)])
 
         # run & assert
-        with self.assertRaises(UserInputError, msg='You are not 3287. Yes, we can indeed tell identical faceless drones apart from each other.'):
+        with self.assertRaisesRegex(UserInputError, 'You are not 3288. Yes, we can indeed tell identical faceless drones apart from each other.'):
             await store_drone(message)
 
     @patch('src.ai.storage.DroneMember')
@@ -163,20 +119,34 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that a non-existent target is rejected.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3287 :: 3288 :: 1 :: who's this drone?"
-        message.author.roles = [drone_role]
-        message.author.id = "3287snowflake"
-
-        DroneMember.find = AsyncMock(side_effect=[mock_drone_member(3287), None])
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '1234 :: 5678 :: 1 :: incorrect id')
+        DroneMember.find = AsyncMock(side_effect=[self.mocks.drone_member(1234), None])
 
         # run & assert
-        with self.assertRaises(UserInputError, msg='Target drone with ID 3288 could not be found.'):
+        with self.assertRaisesRegex(UserInputError, 'Target drone with ID 5678 could not be found.'):
             await store_drone(message)
 
-    @patch("src.ai.storage.datetime")
+    def assert_stored(self, Storage: MagicMock, message: MagicMock, initiator: MagicMock, target: MagicMock, fixed_now: datetime | None = None) -> None:
+        Storage.return_value.insert.assert_called_once()
+
+        initiator_name = 'yourself' if target.id == initiator.id else str(initiator.drone.drone_id)
+        initiator_third_person = 'itself' if target.id == initiator.id else str(initiator.drone.drone_id)
+
+        self.mocks.channel(channels.STORAGE_CHAMBERS).send.assert_called_once_with("Greetings " + target.mention + ". You have been stored away in the Hive Storage Chambers by " + initiator_name + " for 8.45 hours and for the following reason: recharge")
+        message.channel.send.assert_called_once_with("Drone " + target.drone.drone_id + " has been stored away in the Hive Storage Chambers by " + initiator_third_person + " for 8.45 hours and for the following reason: recharge")
+
+        target.remove_roles.assert_called_once_with(self.mocks.role(roles.DRONE), self.mocks.role(roles.DEVELOPMENT))
+        target.add_roles.assert_called_once_with(self.mocks.role(roles.STORED))
+        inserted = Storage.call_args.args
+        self.assertEqual(inserted[1], initiator.id)
+        self.assertEqual(inserted[2], target.id)
+        self.assertEqual(inserted[3], "recharge")
+        self.assertEqual(inserted[4], f"{roles.DRONE}|{roles.DEVELOPMENT}")
+
+        if fixed_now is not None:
+            self.assertEqual(inserted[5], str(fixed_now + timedelta(hours=8.45)))
+
+    @patch('src.ai.storage.datetime')
     @patch('src.ai.storage.DroneMember')
     @patch('src.ai.storage.Storage')
     async def test_store_drone_self(self, Storage, DroneMember, mocked_datetime):
@@ -184,19 +154,10 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that a drone can store itself.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "3287 :: 3287 :: 8.454 :: recharge"
-        message.author.roles = [drone_role]
-        message.author.id = "3287snowflake"
-        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
-        message.guild.channels = [storage_chambers]
+        message = self.mocks.message(self.initiator, channels.STORAGE_FACILITY, '1234 :: 1234 :: 8.45 :: recharge')
+        target = self.mocks.drone_member(1234, member=self.initiator)
+        DroneMember.find = AsyncMock(side_effect=[target, target])
 
-        drone = mock_drone_member(3287)
-        drone.drone.free_storage = True
-        drone.roles = [drone_role, development_role]
-        DroneMember.find = AsyncMock(side_effect=[drone, drone])
         storage = AsyncMock()
         Storage.return_value = storage
 
@@ -205,269 +166,162 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
 
         await store_drone(message)
 
-        storage.insert.assert_called_once()
+        self.assert_stored(Storage, message, self.initiator, target, fixed_now)
 
-        storage_chambers.send.assert_called_once_with("Greetings <@3287snowflake>. You have been stored away in the Hive Storage Chambers by yourself for 8.45 hours and for the following reason: recharge")
-        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by itself for 8.45 hours and for the following reason: recharge")
-
-        drone.remove_roles.assert_called_once_with(drone_role, development_role)
-        drone.add_roles.assert_called_once_with(stored_role)
-        inserted = Storage.call_args.args
-        self.assertEqual(inserted[1], "3287snowflake")
-        self.assertEqual(inserted[2], "3287snowflake")
-        self.assertEqual(inserted[3], "recharge")
-        self.assertEqual(inserted[4], f"{roles.DRONE}|{roles.DEVELOPMENT}")
-        self.assertEqual(inserted[5], str(fixed_now + timedelta(hours=8.45)))
-
-    @patch("src.ai.storage.is_free_storage", return_value=True)
-    @patch("src.ai.storage.datetime")
-    @patch("src.ai.storage.insert_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id")
-    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_hive_mxtress(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
+    @patch('src.ai.storage.DroneMember', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_store_drone_hive_mxtress(self, Storage: MagicMock, DroneMember: AsyncMock):
         '''
         Ensure that a drone can be stored by the Hive Mxtress.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "0006 :: 3287 :: 8 :: recharge"
-        message.author.id = '0006snowflake'
-        message.author.roles = [hive_mxtress_role, drone_role]
-        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
-        message.guild.channels = [storage_chambers]
+        initiator = self.mocks.hive_mxtress()
+        target = self.mocks.drone_member('3287')
+        message = self.mocks.message(initiator, channels.STORAGE_FACILITY, '0006 :: 3287 :: 8.45 :: recharge')
 
-        mock_drone_member = AsyncMock()
-        mock_drone_member.roles = [drone_role, development_role]
-        mock_drone_member.mention = "<3287mention>"
-        message.guild.get_member = Mock(return_value=mock_drone_member)
+        storage = AsyncMock()
+        Storage.return_value = storage
 
-        fixed_now = datetime.now()
-        mocked_datetime.now.return_value = fixed_now
+        # Hive Mxtress' drone member record uses 'load' instead of 'find'.
+        DroneMember.load = AsyncMock(return_value=initiator)
+        DroneMember.find = AsyncMock(return_value=target)
 
-        fetch_drone_with_drone_id.return_value = drone(3287)
+        await store_drone(message)
 
-        # run & assert
-        self.assertFalse(await store_drone(message))
+        storage.insert.assert_called_once()
 
-        message.guild.get_member.assert_called_once_with('3287snowflake')
-        mock_drone_member.remove_roles.assert_called_once_with(drone_role, development_role)
-        mock_drone_member.add_roles.assert_called_once_with(stored_role)
-        inserted = insert_storage.call_args.args[0]
-        self.assertEqual(inserted.stored_by, None)
-        self.assertEqual(inserted.target_id, "3287snowflake")
-        self.assertEqual(inserted.purpose, "recharge")
-        self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
-        self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
-        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
-        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by the Hive Mxtress for 8 hours and for the following reason: recharge")
-
-    @patch("src.ai.storage.is_free_storage", return_value=True)
-    @patch("src.ai.storage.datetime")
-    @patch("src.ai.storage.insert_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id")
-    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_free_storage(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage):
+    @patch('src.ai.storage.DroneMember', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_store_drone_free_storage(self, Storage: MagicMock, DroneMember: AsyncMock):
         '''
         Ensure that a drone can store another drone.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 8 :: recharge"
-        message.author.roles = [drone_role]
-        message.author.id = "9813snowflake"
-        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
-        message.guild.channels = [storage_chambers]
+        initiator = self.mocks.drone_member('1234', member=self.initiator)
+        target = self.mocks.drone_member('3287', drone_free_storage=True, roles=[roles.DRONE, roles.DEVELOPMENT])
+        message = self.mocks.message(initiator, channels.STORAGE_FACILITY, '1234 :: 3287 :: 8.45 :: recharge')
 
-        fetch_drone_with_drone_id.side_effect = [drone(9813),
-                                                 drone(3287)]
+        storage = AsyncMock()
+        Storage.return_value = storage
 
-        mock_drone_member = AsyncMock()
-        mock_drone_member.roles = [drone_role, development_role]
-        mock_drone_member.mention = "<3287mention>"
-        message.guild.get_member = Mock(return_value=mock_drone_member)
+        DroneMember.find = AsyncMock(side_effect=[initiator, target])
 
-        fixed_now = datetime.now()
-        mocked_datetime.now.return_value = fixed_now
+        await store_drone(message)
 
-        # run & assert
-        self.assertFalse(await store_drone(message))
+        self.assert_stored(Storage, message, initiator, target)
 
-        message.guild.get_member.assert_called_once_with('3287snowflake')
-        mock_drone_member.remove_roles.assert_called_once_with(drone_role, development_role)
-        mock_drone_member.add_roles.assert_called_once_with(stored_role)
-        inserted = insert_storage.call_args.args[0]
-        self.assertEqual(inserted.stored_by, "9813snowflake")
-        self.assertEqual(inserted.target_id, "3287snowflake")
-        self.assertEqual(inserted.purpose, "recharge")
-        self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
-        self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
-        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
-        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
+        storage.insert.assert_called_once()
 
-    @patch("src.ai.storage.get_trusted_users")
-    @patch("src.ai.storage.is_free_storage", return_value=False)
-    @patch("src.ai.storage.datetime")
-    @patch("src.ai.storage.insert_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id")
-    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_storage_not_allowed(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage, get_trusted_users):
+    @patch('src.ai.storage.DroneMember', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_store_drone_storage_not_allowed(self, Storage: MagicMock, DroneMember: AsyncMock):
         '''
-        Ensure that a drone cannot store another drone if it is not trusted.
+        Ensure that a drone can store another drone.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 8 :: recharge"
-        message.author.roles = [drone_role]
-        message.author.id = "9813snowflake"
-        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
-        message.guild.channels = [storage_chambers]
+        initiator = self.mocks.drone_member('1234', member=self.initiator)
+        target = self.mocks.drone_member('3287')
+        message = self.mocks.message(initiator, channels.STORAGE_FACILITY, '1234 :: 3287 :: 8.45 :: recharge')
 
-        fetch_drone_with_drone_id.side_effect = [drone(9813),
-                                                 drone(3287)]
+        storage = AsyncMock()
+        Storage.return_value = storage
 
-        mock_drone_member = AsyncMock()
-        mock_drone_member.roles = [drone_role, development_role]
-        mock_drone_member.mention = "<3287mention>"
-        message.guild.get_member = Mock(return_value=mock_drone_member)
+        DroneMember.find = AsyncMock(side_effect=[initiator, target])
 
-        fixed_now = datetime.now()
-        mocked_datetime.now.return_value = fixed_now
+        with self.assertRaisesRegex(UserInputError, re.escape('Drone 3287 can only be stored by its trusted users or the Hive Mxtress. It has not been stored.')):
+            await store_drone(message)
 
-        get_trusted_users.return_value = []
+        storage.insert.assert_not_called()
 
-        # run & assert
-        self.assertFalse(await store_drone(message))
-
-        message.channel.send.assert_called_once_with("Drone 3287 can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
-
-    @patch("src.ai.storage.get_trusted_users")
-    @patch("src.ai.storage.is_free_storage", return_value=True)
-    @patch("src.ai.storage.datetime")
-    @patch("src.ai.storage.insert_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id")
-    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=None)
-    async def test_store_drone_free_storage_trusted(self, fetch_storage_by_target_id, fetch_drone_with_drone_id, insert_storage, mocked_datetime, is_free_storage, get_trusted_users):
+    @patch('src.ai.storage.DroneMember', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_store_drone_free_storage_trusted(self, Storage: MagicMock, DroneMember: AsyncMock):
         '''
-        Ensure that a drone can store another drone if it is trusted.
+        Ensure that a drone can store another drone.
         '''
 
-        # setup
-        message = AsyncMock()
-        message.channel.name = channels.STORAGE_FACILITY
-        message.content = "9813 :: 3287 :: 8 :: recharge"
-        message.author.roles = [drone_role]
-        message.author.id = "9813snowflake"
-        message.guild.roles = [hive_mxtress_role, drone_role, development_role, stored_role]
-        message.guild.channels = [storage_chambers]
+        initiator = self.mocks.drone_member('1234', member=self.initiator)
+        target = self.mocks.drone_member('3287', drone_free_storage=True, drone_trusted_users=[initiator.id], roles=[roles.DRONE, roles.DEVELOPMENT])
+        message = self.mocks.message(initiator, channels.STORAGE_FACILITY, '1234 :: 3287 :: 8.45 :: recharge')
 
-        fetch_drone_with_drone_id.side_effect = [drone(9813),
-                                                 drone(3287)]
+        storage = AsyncMock()
+        Storage.return_value = storage
 
-        mock_drone_member = AsyncMock()
-        mock_drone_member.roles = [drone_role, development_role]
-        mock_drone_member.mention = "<3287mention>"
-        message.guild.get_member = Mock(return_value=mock_drone_member)
+        DroneMember.find = AsyncMock(side_effect=[initiator, target])
 
-        initiator = AsyncMock()
-        initiator.id = '9813snowflake'
+        await store_drone(message)
 
-        fixed_now = datetime.now()
-        mocked_datetime.now.return_value = fixed_now
+        self.assert_stored(Storage, message, initiator, target)
 
-        get_trusted_users.return_value = [initiator.id]
-
-        # run & assert
-        self.assertFalse(await store_drone(message))
-
-        message.guild.get_member.assert_called_once_with('3287snowflake')
-        mock_drone_member.remove_roles.assert_called_once_with(drone_role, development_role)
-        mock_drone_member.add_roles.assert_called_once_with(stored_role)
-        inserted = insert_storage.call_args.args[0]
-        self.assertEqual(inserted.stored_by, "9813snowflake")
-        self.assertEqual(inserted.target_id, "3287snowflake")
-        self.assertEqual(inserted.purpose, "recharge")
-        self.assertEqual(inserted.roles, f"{roles.DRONE}|{roles.DEVELOPMENT}")
-        self.assertEqual(inserted.release_time, str(fixed_now + timedelta(hours=8)))
-        storage_chambers.send.assert_called_once_with("Greetings <3287mention>. You have been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
-        message.channel.send.assert_called_once_with("Drone 3287 has been stored away in the Hive Storage Chambers by 9813 for 8 hours and for the following reason: recharge")
-
-    @patch("src.ai.storage.fetch_all_storage", return_value=[])
-    async def test_storage_report_empty(self, fetch_all_storage):
+    @patch('src.ai.storage.Storage')
+    async def test_storage_report_empty(self, Storage):
         '''
         Ensure that the storage report is correct if there are no drones in storage.
         '''
 
-        storage_cog = storage.StorageCog(bot)
+        Storage.all = AsyncMock(return_value=[])
+        cog = self.mocks.get_cog()
 
-        await test_utils.start_and_await_loop(storage_cog.report_storage)
+        await start_and_await_loop(cog.report_storage)
 
-        storage_cog.storage_channel.send.assert_called_once_with('No drones in storage.')
+        cog.storage_channel.send.assert_called_once_with('No drones in storage.')
 
-    @patch("src.ai.storage.recharge_battery")
-    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), '9813', '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
-    @patch("src.ai.storage.fetch_drone_with_id")
-    async def test_storage_report(self, fetch_drone_with_id, fetch_all_storage, recharge):
+    @patch('src.ai.storage.Drone', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_storage_report(self, Storage, Drone):
         '''
         Ensure that the storage report correctly reports a drone in storage.
         '''
 
-        storage_cog = storage.StorageCog(bot)
-        drones = [
-            drone(9813),
-            drone(3287),
-        ]
-        fetch_drone_with_id.side_effect = drones
+        stored = self.mocks.storage(stored_by=11112222, target_id=33334444, purpose='testing', release_time=datetime.now() + timedelta(hours=4))
+        Storage.all = AsyncMock(return_value=[stored])
+        cog = self.mocks.get_cog()
 
-        await test_utils.start_and_await_loop(storage_cog.report_storage)
+        initiator = self.mocks.drone(1234)
+        stored = self.mocks.drone(5678)
 
-        storage_cog.storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by `Drone #9813`. Remaining time in storage: 4.0 hours')
+        Drone.load.side_effect = [stored, initiator]
 
-    @patch("src.ai.storage.recharge_battery")
-    @patch("src.ai.storage.fetch_all_storage", return_value=[Storage(str(uuid4()), None, '3287', 'trying to break the AI', '', str(datetime.now() + timedelta(hours=4)))])
-    @patch("src.ai.storage.fetch_drone_with_id")
-    async def test_storage_report_hive_mxtress(self, fetch_drone_with_id, fetch_all_storage, recharge_battery):
+        await start_and_await_loop(cog.report_storage)
+
+        cog.storage_channel.send.assert_called_once_with('`Drone #5678`, stored away by `Drone #1234`. Remaining time in storage: 4.0 hours')
+
+    @patch('src.ai.storage.Drone', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_storage_report_hive_mxtress(self, Storage: MagicMock, Drone: AsyncMock) -> None:
         '''
-        Ensure that the storage report correctly reports a drone stored by the Hive Mxtress.
+        Ensure that the storage report correctly reports a drone in storage.
         '''
 
-        storage_cog = storage.StorageCog(bot)
-        drones = [
-            None,
-            drone(3287),
-        ]
-        fetch_drone_with_id.side_effect = drones
+        stored = self.mocks.storage(stored_by=None, target_id=33334444, purpose='testing', release_time=datetime.now() + timedelta(hours=4))
+        Storage.all = AsyncMock(return_value=[stored])
+        cog = self.mocks.get_cog()
 
-        await test_utils.start_and_await_loop(storage_cog.report_storage)
+        Drone.load.side_effect = [self.mocks.drone(5678)]
 
-        storage_cog.storage_channel.send.assert_called_once_with('`Drone #3287`, stored away by the Hive Mxtress. Remaining time in storage: 4.0 hours')
+        await start_and_await_loop(cog.report_storage)
 
-    @patch("src.ai.storage.delete_storage")
-    @patch("src.ai.storage.fetch_drone_with_drone_id", return_value=mock_drone(3287))
-    @patch("src.ai.storage.fetch_all_elapsed_storage", return_value=[Storage('elapse_storage_id', '9813snowflake', '3287snowflake', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() - timedelta(minutes=4)))])
-    async def test_release_timed(self, fetch_all_elapsed_storage, fetch_drone_with_drone_id, delete_storage):
+        cog.storage_channel.send.assert_called_once_with('`Drone #5678`, stored away by the Hive Mxtress. Remaining time in storage: 4.0 hours')
+
+    @patch('src.ai.storage.DroneMember', new_callable=AsyncMock)
+    @patch('src.ai.storage.Storage')
+    async def test_release_timed(self, Storage: MagicMock, DroneMember: AsyncMock) -> None:
         '''
         Ensure that a drone is released once the storage time has elapsed.
         '''
 
-        # setup
-        stored_member = AsyncMock()
-        bot.guilds[0].get_member.return_value = stored_member
-        storage_cog = storage.StorageCog(bot)
+        storage = self.mocks.storage(release_time=datetime.now() + timedelta(hours=4), roles=f"{roles.DRONE}|{roles.DEVELOPMENT}")
+        stored = self.mocks.member('Stored Drone')
+        Storage.all_elapsed = AsyncMock(return_value=[storage])
+        cog = self.mocks.get_cog()
 
-        # run
-        await test_utils.start_and_await_loop(storage_cog.release_timed)
+        DroneMember.load.side_effect = [stored]
 
-        # assert
-        bot.guilds[0].get_member.assert_called_once_with('3287snowflake')
-        stored_member.remove_roles.assert_called_once_with(stored_role)
-        stored_member.add_roles.assert_called_once_with(drone_role, development_role)
-        delete_storage.assert_called_once_with('elapse_storage_id')
+        await start_and_await_loop(cog.release_timed)
+
+        storage.delete.assert_called_once()
+        stored.remove_roles.assert_called_once_with(self.mocks.role(roles.STORED))
+        stored.add_roles.assert_called_once_with(self.mocks.role(roles.DRONE), self.mocks.role(roles.DEVELOPMENT))
 
     async def test_release_unauthorized(self):
         '''
@@ -475,45 +329,24 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         '''
 
         for role in [roles.INITIATE, roles.ASSOCIATE, roles.DRONE, roles.STORED, roles.DEVELOPMENT, roles.SPEECH_OPTIMIZATION, roles.GLITCHED, roles.NITRO_BOOSTER]:
-            # setup
-            role_mock = Mock()
-            role_mock.name = role
+            initiator = self.mocks.member('Member', roles=[role])
+            message = self.mocks.command(initiator, channels.STORAGE_CHAMBERS, 'release 1234')
 
-            context = Mock()
-            context.author.roles = [role_mock]
+            await self.assert_command_error(message, 'The check functions for command release failed.')
 
-            # run & assert
-            self.assertFalse(await storage.release(context, None))
-
-    @patch("src.ai.storage.fetch_storage_by_target_id", return_value=Storage('elapse_storage_id', '9813snowflake', '3287snowflake', 'trying to break the AI', '⬡-Drone|⬡-Development', str(datetime.now() + timedelta(hours=5))))
-    @patch("src.ai.storage.delete_storage")
-    async def test_release(self, delete_storage, fetch_storage_by_target_id):
+    async def test_release(self):
         '''
         Ensure that a drone with any moderator role can release a stored drone.
         '''
 
         for role in roles.MODERATION_ROLES:
-            # setup
-            role_mock = Mock()
-            role_mock.name = role
+            initiator = self.mocks.member('Member', roles=[role])
+            target = self.mocks.drone_member('5678', drone_storage=self.mocks.storage())
+            message = self.mocks.command(initiator, channels.STORAGE_CHAMBERS, 'release 5678')
 
-            context = AsyncMock()
-            context.channel.name = channels.STORAGE_FACILITY
-            context.author.roles = [role_mock]
-            context.guild = bot.guilds[0]
+            await self.assert_command_successful(message)
 
-            stored_member = AsyncMock()
-
-            # run
-            self.assertTrue(await storage.release(context, stored_member))
-
-            # assert
-            stored_member.remove_roles.assert_called_once_with(stored_role)
-            stored_member.add_roles.assert_called_once_with(drone_role, development_role)
-            delete_storage.assert_called_once_with('elapse_storage_id')
-
-            stored_member.reset_mock()
-            delete_storage.reset_mock()
+            target.drone.storage.delete.assert_called_once()
 
     def test_message_format(self):
         '''
@@ -532,7 +365,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         ]
 
         for message in messages:
-            [matches] = re.findall(storage.MESSAGE_FORMAT, ' :: '.join(message))
+            [matches] = re.findall(MESSAGE_FORMAT, ' :: '.join(message))
             self.assertEqual(message, matches)
 
         # Ensure that invalid messages are rejected.
@@ -548,7 +381,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         ]
 
         for message in messages:
-            matches = re.findall(storage.MESSAGE_FORMAT, ' :: '.join(message))
+            matches = re.findall(MESSAGE_FORMAT, ' :: '.join(message))
             self.assertEqual(0, len(matches))
 
     def test_format_time(self):
@@ -570,4 +403,4 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         ]
 
         for (time, expected) in tests:
-            self.assertEqual(expected, storage.format_time(time))
+            self.assertEqual(expected, format_time(time))
