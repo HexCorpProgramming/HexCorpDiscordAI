@@ -49,7 +49,7 @@ class DroneOSStatusTest(unittest.IsolatedAsyncioTestCase):
         member = Mock(id='9813snowflake')
 
         # run
-        with self.assertRaises(UserInputError, msg='You are not registered as a trusted user of this drone.'):
+        with self.assertRaisesRegex(UserInputError, 'You are not registered as a trusted user of this drone\.'):
             await get_status(member, 782638723, context)
 
         # assert
