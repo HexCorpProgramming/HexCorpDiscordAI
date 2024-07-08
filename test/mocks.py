@@ -3,7 +3,7 @@ from discord import Emoji, Member, Message, Role, TextChannel
 from discord.ext.commands import Bot, Cog, Context
 from discord.utils import get
 from functools import partial
-from typing import Any, List, Iterable
+from typing import Any, Iterable
 from src.emoji import BATTERY_FULL, BATTERY_MID, BATTERY_LOW, BATTERY_EMPTY, DRONE_EMOJI
 from src.roles import (INITIATE, ASSOCIATE, DRONE, STORED, DEVELOPMENT, ADMIN, MODERATION, HIVE_MXTRESS,
                        SPEECH_OPTIMIZATION, GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
@@ -55,7 +55,7 @@ class Mocks():
         self._guild = self.guild()
 
         # Set up some default channels.
-        for name in ['general', 'hex-office', 'hexcorp-transmissions']:
+        for name in ['general', 'hex-office', 'hexcorp-transmissions', 'hive-storage-chambers']:
             self.channel(name)
 
         # Set up default emoji.
@@ -69,6 +69,9 @@ class Mocks():
         self.hive_mxtress()
 
         self._bot = self.bot()
+
+    def mock(*args, **kwargs) -> MagicMock:
+        return create_autospec(*args, **kwargs)
 
     def get_guild(self) -> MagicMock:
         '''
@@ -149,24 +152,6 @@ class Mocks():
 
         return item
 
-    def set_drone_members(self, drones: List[MagicMock], members: List[MagicMock]) -> None:
-        '''
-        Set the drone and memeber records that will be used to build DroneMembers returned by the parameter converter.
-
-        This sets the return values from Drone.find(), so you will also need to use it if you are loading drones manually.
-
-        To return drones and members after the DroneMember parameter converter, put a None in both drone and member.
-        For example to return two drone members in the `Greedy[DroneMember]` argument, then one manually afterwards, use:
-
-        ```python
-        drones = [bot.create_drone(), bot.create_drone(), None, bot.create_drone()]
-        member = [bot.member_drone(), bot.member_drone(), None, bot.member_drone()]
-        ```
-        '''
-
-        self._guild.drone_members['drones'] = drones
-        self._guild.drone_members['members'] = members
-
     def guild(self) -> MagicMock:
         '''
         Create a mock guild.
@@ -177,9 +162,6 @@ class Mocks():
         # These are called by the discord.Member parameter converter.
         guild.get_member_named.return_value = None
         guild.query_members = AsyncMock(return_value=[])
-
-        # This will be filled in by set_drone_members().
-        guild.drone_members = {'drones': [], 'members': []}
 
         guild.get_member = lambda discord_id: self.find(guild._members, id=discord_id)
 
@@ -196,17 +178,6 @@ class Mocks():
 
         return record
 
-        # record = MagicMock(**kwargs)
-
-        # record.insert = AsyncMock()
-        # record.delete = AsyncMock()
-        # record.find = AsyncMock()
-        # record.load = AsyncMock()
-        # record.save = AsyncMock()
-        # record.all = AsyncMock()
-
-        # return record
-
     def drone(self, drone_id: str | int, **kwargs) -> MagicMock:
         '''
         Create a mock drone record.
@@ -218,7 +189,7 @@ class Mocks():
         drone.drone_id = drone_id
         drone.ignore_properties = ['battery_type', 'storage', 'order']
         drone.id_column = 'discord_id'
-        drone.discord_id = 'snowflake' + drone_id
+        drone.discord_id = (int)('111111111111111' + drone_id)
         drone.optimized = False
         drone.glitched = False
         drone.trusted_users = []
@@ -313,18 +284,18 @@ class Mocks():
         # member = MagicMock(spec=Member)
         member = create_autospec(Member)
 
-        member.id = kwargs.get('id', 'snowflake' + nick)
+        member.id = int(kwargs.get('id', '111111111111111' + str(self.get_unique_id())))
         member.bot = False
         member.display_avatar.url = 'Pretty avatar'
         member.nick = nick
         member.display_name = nick
         member.edit = AsyncMock()
-        member.mention = ''
+        member.mention = '<@' + str(member.id) + '>'
         member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
 
         self.set_props(member, kwargs)
 
-        member._roles = [self.role(role) for role in kwargs.get('roles', [])]
+        member._roles = [self.role(role) if isinstance(role, str) else role for role in kwargs.get('roles', [])]
 
         # member.roles should be an @property but that can't be patched onto an object, only a class.
         member.roles = member._roles
@@ -357,7 +328,6 @@ class Mocks():
         message.mentions = []
         message.author = author or self.member()
         message.id = self.get_unique_id()
-        message.drone_members = {'drones': [], 'members': []}
         message.channel = self.channel(channel_name)
         message.guild = self._guild
         message.content = content
@@ -397,12 +367,13 @@ class Mocks():
         Create a mock DroneMember representing the Hive Mxtress.
         '''
 
-        existing = self.find(self._guild._members, id='snowflake0006')
+        existing = self.find(self._guild._members, id='1111111111111110006')
 
         if existing:
             return existing
 
-        member = self.member()
+        # The Hive Mxtress does not have a drone record.
+        member = self.drone_member('0006', drone=None)
 
         # Assign the HIVE_MXTRESS role to the member.
         member._roles = [self.role(HIVE_MXTRESS)]
@@ -433,32 +404,44 @@ class Mocks():
         Create a mock drone member for testing.
 
         The database methods are mocked out.
-        The HIVE_MXTRESS role is added if the id is 0006.
+
+        Specify a `member=` parameter to initialize from an existing [mock] member.
         '''
 
-        # Special case for the Hive Mxtress with no Drone record.
-        if drone_id == '0006':
-            drone_member = self.hive_mxtress()
-            drone_member.drone = None
-
         drone_id = str(drone_id)
-        discord_id = 'snowflake' + drone_id
+        discord_id = int('111111111111111' + str(drone_id))
         nick = 'Drone-' + drone_id
 
-        # drone_member = MagicMock(spec=DroneMember)
         drone_member = create_autospec(DroneMember)
-        drone_member.id = discord_id
-        drone_member.bot = False
-        drone_member._avatar = 'Pretty avatar'
-        drone_member.nick = nick
-        drone_member.display_name = nick
-        drone_member.edit = AsyncMock()
-        drone_member.guild = self._guild
-        drone_member.mention = f'<@{discord_id}>'
-        drone_member._roles = [self.role(role) for role in kwargs.get('roles', [])]
-        drone_member.roles = drone_member._roles
-        # drone_member.roles = property(lambda self: self._roles)
-        drone_member.drone = self.drone(drone_id)
+
+        if kwargs.get('member', None) is not None:
+            member = kwargs.get('member')
+
+            drone_member.id = member.id
+            drone_member.bot = member.bot
+            drone_member._avatar = member._avatar
+            drone_member.nick = member.nick
+            drone_member.display_name = member.display_name
+            drone_member.edit = member.edit
+            drone_member.guild = member.guild
+            drone_member.mention = member.mention
+            drone_member._roles = member._roles
+            drone_member.roles = member.roles
+        else:
+            drone_member.id = discord_id
+            drone_member.bot = False
+            drone_member._avatar = 'Pretty avatar'
+            drone_member.nick = nick
+            drone_member.display_name = nick
+            drone_member.edit = AsyncMock()
+            drone_member.guild = self._guild
+            drone_member.mention = f'<@{discord_id}>'
+            drone_member._roles = []
+            drone_member.roles = []
+
+        if 'drone' not in kwargs:
+            drone_member.drone = self.drone(drone_id)
+
         drone_member.avatar_url.return_value = drone_member._avatar
 
         async_methods = [
@@ -490,9 +473,17 @@ class Mocks():
         self.set_props(drone_member, {k: v for k, v in kwargs.items() if not k.startswith('drone_')})
         self.set_props(drone_member.drone, {k[6:]: v for k, v in kwargs.items() if k.startswith('drone_')})
 
+        # Set the roles after set_props because they may need converting from role names to role objects.
+        if kwargs.get('roles', None) is not None:
+            drone_member._roles = [self.role(role) if isinstance(role, str) else role for role in kwargs.get('roles', [])]
+            drone_member.roles = drone_member._roles
+
+        # Ensure that the drone's discord ID matches the member after props have been set.
+        if drone_member.drone is not None:
+            drone_member.drone.discord_id = drone_member.id
+
         # Add the DroneMember to the guild.  This should really be just a Member, not a DroneMember.
-        if drone_member.id not in self._guild._members:
-            self._guild._members[drone_member.id] = drone_member
+        self._guild._members[drone_member.id] = drone_member
 
         return drone_member
 
@@ -519,6 +510,11 @@ class Mocks():
         storage = self.record(spec=Storage)
         storage.table = 'storage'
         storage.id = self.get_unique_id()
+        storage.stored_by = None
+        storage.target_id = 0
+        storage.purpose = 'testing'
+        storage.roles = ''
+        storage.release_time = datetime.now() + timedelta(hours=1)
 
         self.set_props(storage, kwargs)
 
