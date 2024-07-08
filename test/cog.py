@@ -2,7 +2,7 @@ from discord import Message
 from discord.ext.commands import Bot, Cog, CommandError, Context, Converter, Greedy, MemberNotFound
 from discord.utils import find
 from functools import wraps
-from re import match
+from re import match, sub
 from src.drone_member import DroneMember
 from test.mocks import Mocks
 from typing import Any, Callable, Type
@@ -20,13 +20,22 @@ class MockDroneMemberConverter(Converter):
         '''
 
         member = None
-        members = context.guild._members.values()
+
+        if context.guild:
+            guild = context.guild
+        else:
+            guild = context.bot.guilds[0]
+
+        members = guild._members.values()
 
         # Match by Discord ID.
+        # An ID is an int with 15 to 20 digits.
+        # Matches <@ID>, <#ID>.
         discord_id = match(r"<(?:@[!&]?|#)([0-9]{15,20})>$", argument)
 
         if discord_id is not None:
-            member = members.get(int(argument))
+            discord_id = int(sub('[^0-9]', '', discord_id.group(1)))
+            member = guild._members.get(discord_id)
 
         # Match by member name or nickname.
         if member is None:
@@ -74,18 +83,18 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         A decorator to create and pass in a Mocks object for testing with.
         '''
 
-        # The Mocks object contains a Guild and a Bot.
-        mocks = Mocks()
-
-        # Add the Cog under test to the bot.
-        bot = mocks.get_bot()
-        bot.add_cog(CogType(bot))
-
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             '''
             Call the wrapped function, passing in the Bot as the last positional argument.
             '''
+
+            # The Mocks object contains a Guild and a Bot.
+            mocks = Mocks()
+
+            # Add the Cog under test to the bot.
+            bot = mocks.get_bot()
+            bot.add_cog(CogType(bot))
 
             # Patch assertions onto the Test class.  Note that they are async and must be awaited.
             # This is done so that they can use other assert* functions.
@@ -136,7 +145,7 @@ async def run_command(bot: Bot, message: Message, MemberConverter) -> Exception 
     context = await bot.get_context(message)
 
     # Mock asynchronous Messageable methods.
-    for name in 'send', 'trigger_typing', 'fetch_message':
+    for name in 'reply', 'send', 'trigger_typing', 'fetch_message':
         setattr(context, name, AsyncMock())
 
     # Mock synchronous Messageable methods.
