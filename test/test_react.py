@@ -89,6 +89,7 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
+        message.author.id = 123456789
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
@@ -97,6 +98,7 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         member = AsyncMock()
         member.display_name = '⬡-Drone #3287'
         member.roles = [DRONE_ROLE]
+        member.id = 111111
 
         # run
         await react.delete_marked_message(reaction, member)
@@ -109,12 +111,14 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
+        message.author.id = 123456789
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
         member = AsyncMock()
+        member.id = 123456789
         member.display_name = '⬡-Drone #9813'
         member.roles = [DRONE_ROLE]
 
@@ -129,12 +133,14 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
+        message.author.id = 123456789
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
         member = AsyncMock()
+        member.id = 123456789
         member.display_name = '⬢-Drone #9813'
         member.roles = [DRONE_ROLE]
 
@@ -149,12 +155,14 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
+        message.author.id = 123456789
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
         member = AsyncMock()
+        member.id = 11111
         member.display_name = 'not a drone 9813'
         member.roles = [ASSOCIATE_ROLE]
 
