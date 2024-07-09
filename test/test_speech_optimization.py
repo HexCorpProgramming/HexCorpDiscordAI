@@ -1,7 +1,10 @@
 import unittest
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, patch, MagicMock
 from src.ai.speech_optimization import StatusType, get_status_type, build_status_message, optimize_speech
-from src.ai.data_objects import MessageCopy
+from test.mocks import Mocks
+from src.channels import CASUAL_CHANNEL
+
+mocks = Mocks()
 
 
 class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
@@ -9,145 +12,80 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
     The optimize_speech function...
     '''
 
-    @patch("src.ai.speech_optimization.get_status_type", return_value=(StatusType.PLAIN, Mock(), Mock()))
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_calls_get_status_type(self, is_drone, get_status_type):
+    def setUp(self) -> None:
+        self.author = mocks.drone_member('1234')
+
+    @patch('src.ai.speech_optimization.DroneMember')
+    async def send(self, msg: str, DroneMember: MagicMock) -> None:
+        DroneMember.create = AsyncMock(return_value=self.author)
+        self.message = mocks.message(self.author, CASUAL_CHANNEL, msg)
+        self.message_copy = mocks.message(self.author, CASUAL_CHANNEL, msg)
+
+        await optimize_speech(self.message, self.message_copy)
+
+    async def test_delete_mismatching_id_messages(self) -> None:
         '''
-        should call 'get_status_type' if author is drone, message IDs match, and the message is a status code.
-        '''
-        message = AsyncMock()
-        message.author.display_name = "5890"
-        message_copy = Mock()
-        message_copy.content = "5890 :: 200"
-
-        self.assertTrue(await optimize_speech(message, message_copy))
-        get_status_type.assert_called_once()
-
-    @patch("src.ai.speech_optimization.build_status_message")
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_calls_build_status_message(self, is_drone, build_status_message):
-        message = Mock()
-        message.author.display_name = "5890"
-        message_copy = Mock()
-        message_copy.content = "5890 :: 200"
-
-        self.assertFalse(await optimize_speech(message, message_copy))
-        build_status_message.assert_called_once()
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_delete_mismatching_id_messages(self, is_drone):
-        '''
-        should delete message if author ID does not match status ID.
-        '''
-        message = AsyncMock()
-        message.author.display_name = "5890"
-        message_copy = Mock()
-        message_copy.content = "9813 :: 200"
-
-        self.assertTrue(await optimize_speech(message, message_copy))
-        message.delete.assert_called_once()
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=False)
-    async def test_dont_operate_on_non_drone_messages(self, is_drone):
-        '''
-        should return False early if message author is not a drone.
-        '''
-        message = Mock()
-        message_copy = Mock()
-        self.assertFalse(await optimize_speech(message, message_copy))
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_status_codes_transform_message_copy(self, is_drone):
-        '''
-        should update message_copy when passed message content with a valid status code.
-        '''
-        message = AsyncMock()
-        message.author.display_name = "5890"
-        message_copy = Mock()
-        message_copy.content = "5890 :: 200"
-
-        self.assertFalse(await optimize_speech(message, message_copy))
-        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative.", message_copy.content)
-
-        message_copy.content = "5890 :: 200 :: Additional information."
-
-        self.assertFalse(await optimize_speech(message, message_copy))
-        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative. :: Additional information.", message_copy.content)
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_plain_code(self, is_drn):
-        '''
-        should take a plain status code and set message copy content to plain status message.
+        Should delete message if author ID does not match status ID.
         '''
 
-        message = Mock()
-        message.content = "5890 :: 200"
-        message.author.display_name = "5890"
-        message_copy = MessageCopy(content=message.content)
+        await self.send('5678 :: 200')
+        self.message.delete.assert_called_once()
 
-        await optimize_speech(message, message_copy)
-
-        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative.", message_copy.content)
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_informative_code(self, is_drn):
+    async def test_dont_operate_on_non_drone_messages(self) -> None:
         '''
-        should take an informative status code and set message copy content to an informative status message.
+        Should not modify message author is not a drone.
         '''
 
-        message = Mock()
-        message.content = "5890 :: 200 :: Additional information"
-        message.author.display_name = "5890"
-        message_copy = MessageCopy(content=message.content)
+        self.author.drone = None
+        await self.send('1234 :: 200')
 
-        await optimize_speech(message, message_copy)
+        self.assertEqual(self.message.content, self.message_copy.content)
 
-        self.assertEqual("5890 :: Code `200` :: Response :: Affirmative. :: Additional information", message_copy.content)
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_informative_id_code(self, is_drn):
+    async def test_plain_code(self) -> None:
         '''
-        should take an informative address by ID and set message copy content to an equivalent translated message.
+        Should take a plain status code and set message copy content to plain status message.
         '''
 
-        message = Mock()
-        message.content = "5890 :: 110 :: 9813 :: Hello there"
-        message.author.display_name = "5890"
-        message_copy = MessageCopy(content=message.content)
+        await self.send('1234 :: 200')
 
-        await optimize_speech(message, message_copy)
+        self.assertEqual(self.message_copy.content, '1234 :: Code `200` :: Response :: Affirmative.')
 
-        self.assertEqual("5890 :: Code `110` :: Addressing: Drone #9813 :: Hello there", message_copy.content)
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_plain_id_code(self, is_drn):
+    async def test_informative_code(self) -> None:
         '''
-        should take a plain address by ID and set message copy content to an address by ID message.
+        Should take an informative status code and set message copy content to an informative status message.
         '''
 
-        message = Mock()
-        message.content = "5890 :: 110 :: 9813"
-        message.author.display_name = "5890"
-        message_copy = MessageCopy(content=message.content)
+        await self.send('1234 :: 200 :: Additional information.')
 
-        await optimize_speech(message, message_copy)
+        self.assertEqual(self.message_copy.content, '1234 :: Code `200` :: Response :: Affirmative. :: Additional information.')
 
-        self.assertEqual("5890 :: Code `110` :: Addressing: Drone #9813", message_copy.content)
-
-    @patch("src.ai.speech_optimization.is_drone", return_value=True)
-    async def test_no_status_found(self, is_drn):
+    async def test_informative_id_code(self) -> None:
         '''
-        should not edit the message copy if no status code is found.
+        Should take an informative address by ID and set message copy content to an equivalent translated message.
         '''
 
-        message = Mock()
-        message.content = "5890 :: It is a good day to be a good drone."
-        message.author.display_name = "5890"
-        message_copy = MessageCopy(content=message.content)
+        await self.send('1234 :: 110 :: 9813 :: Hello there')
 
-        await optimize_speech(message, message_copy)
+        self.assertEqual(self.message_copy.content, '1234 :: Code `110` :: Addressing: Drone #9813 :: Hello there')
 
-        self.assertEqual("5890 :: It is a good day to be a good drone.", message_copy.content)
+    async def test_plain_id_code(self) -> None:
+        '''
+        Should take a plain address by ID and set message copy content to an address by ID message.
+        '''
+
+        await self.send('1234 :: 110 :: 9813')
+
+        self.assertEqual(self.message_copy.content, '1234 :: Code `110` :: Addressing: Drone #9813')
+
+    async def test_no_status_found(self) -> None:
+        '''
+        Should not edit the message copy if no status code is found.
+        '''
+
+        msg = '1234 :: It is a good day to be a good drone.'
+        await self.send(msg)
+
+        self.assertEqual(self.message_copy.content, msg)
 
 
 class TestGetStatusType(unittest.TestCase):
