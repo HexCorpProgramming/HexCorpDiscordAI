@@ -6,6 +6,7 @@ from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MO
 from src.roles import has_role, HIVE_MXTRESS
 from src.db.record import Record
 from src.db.database import fetchcolumn
+from src.db.timer import Timer
 
 
 @dataclass(frozen=True)
@@ -118,34 +119,6 @@ class DroneOrder(Record):
     finish_time: datetime
     '''
     The time at which the order will be completed.
-    '''
-
-
-@dataclass
-class Timer(Record):
-    table = 'timer'
-    '''
-    The database table name.
-    '''
-
-    id: str
-    '''
-    The timer's unique ID.
-    '''
-
-    discord_id: str
-    '''
-    The Discord ID of the user to which the timer applies.
-    '''
-
-    mode: str
-    '''
-    The DroneOS parameter being timed.
-    '''
-
-    end_time: datetime
-    '''
-    The time at which the timer expires.
     '''
 
 
@@ -274,6 +247,11 @@ class Drone(Record):
     The drone's current order, or None.
     '''
 
+    timer: Timer | None = None
+    '''
+    The drone's current timer, or None.
+    '''
+
     @classmethod
     async def find(cls, **kwargs: Any) -> Self | None:
         '''
@@ -313,6 +291,9 @@ class Drone(Record):
 
             # Load the order record.
             drone.order = await DroneOrder.find(discord_id=drone.discord_id)
+
+            # Load the timer record.
+            drone.timer = await Timer.find(discord_id=drone.discord_id)
 
         return drone
 
