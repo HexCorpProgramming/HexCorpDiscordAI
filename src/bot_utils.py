@@ -24,7 +24,7 @@ def fetch(collection: Iterable[T], **kwargs: Any) -> T:
     Raise an Exception if no item was found.
     '''
 
-    key, value = kwargs.items()[0]
+    key, value = next(iter(kwargs.items()))
 
     for item in collection:
         if getattr(item, key) == value:
