@@ -1,7 +1,6 @@
 import discord
 from discord.ext.commands import Cog, command, Context, UserInputError
 
-from src.db.drone_dao import get_battery_percent_remaining
 from src.resources import BRIEF_DRONE_OS, DRONE_AVATAR
 from src.bot_utils import COMMAND_PREFIX
 from src.roles import MODERATION_ROLES, has_any_role
@@ -64,7 +63,7 @@ async def get_status(member: DroneMember, context: Context) -> discord.Embed:
         .add_field(name="Identity enforced", value=boolean_to_enabled_disabled(drone.identity_enforcement)) \
         .add_field(name="Battery powered", value=boolean_to_enabled_disabled(drone.is_battery_powered)) \
         .add_field(name="Battery type", value=battery_type.name)\
-        .add_field(name="Battery percentage", value=f"{await get_battery_percent_remaining(member)}%")\
+        .add_field(name="Battery percentage", value=f"{drone.get_battery_percent_remaining()}%")\
         .add_field(name="Free storage", value=boolean_to_enabled_disabled(drone.free_storage))
 
     # create list of trusted users

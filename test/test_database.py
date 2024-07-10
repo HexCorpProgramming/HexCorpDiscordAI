@@ -11,8 +11,9 @@ class TestDatabase(IsolatedAsyncioTestCase):
     def setUpClass(cls):
         asyncio.run(TestDatabase.setUpDatabase())
 
+    @classmethod
     @connect()
-    async def setUpDatabase(self):
+    async def setUpDatabase(cls):
         '''
         Initialize the database schema in "test.db" before running the tests.
         '''

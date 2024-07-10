@@ -9,7 +9,7 @@ from src.channels import OFFICE
 from src.db.data_objects import ForbiddenWord
 from src.emoji import DRONE_EMOJI
 from src.log import log
-from drone_member import DroneMember
+from src.drone_member import DroneMember
 
 
 async def deny_thoughts(message: discord.Message, message_copy):

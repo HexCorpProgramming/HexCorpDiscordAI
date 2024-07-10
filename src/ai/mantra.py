@@ -5,7 +5,7 @@ import discord
 
 from src.ai.speech_optimization import status_code_regex
 from src.channels import REPETITIONS
-from drone_member import DroneMember
+from src.drone_member import DroneMember
 
 mantra_counters: Dict[str, int] = {}
 '''
