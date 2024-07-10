@@ -10,7 +10,8 @@ from src.roles import (INITIATE, ASSOCIATE, DRONE, STORED, DEVELOPMENT, ADMIN, M
                        THIRD_PERSON_ENFORCEMENT, BATTERY_POWERED, BATTERY_DRAINED, FREE_STORAGE,
                        HIVE_VOICE, MODERATION_ROLES, VOICE, NITRO_BOOSTER, EVERYONE)
 from unittest.mock import AsyncMock, create_autospec, MagicMock
-from src.db.data_objects import BatteryType, Drone, DroneOrder, Storage, Timer
+from src.db.data_objects import BatteryType, Drone, DroneOrder, Storage
+from src.db.timer import Timer
 from src.drone_member import DroneMember
 from src.bot_utils import COMMAND_PREFIX
 from src.db.record import Record
@@ -182,6 +183,9 @@ class Mocks():
         '''
         Create a mock drone record.
         '''
+
+        if len(str(drone_id)) != 4:
+            raise RuntimeError('Drone IDs should be 4 digits.')
 
         drone_id = str(drone_id)
         drone = create_autospec(Drone, table='drone')
@@ -427,6 +431,7 @@ class Mocks():
             drone_member.mention = member.mention
             drone_member._roles = member._roles
             drone_member.roles = member.roles
+            drone_member.joined_at = member.joined_at
         else:
             drone_member.id = discord_id
             drone_member.bot = False
@@ -438,6 +443,7 @@ class Mocks():
             drone_member.mention = f'<@{discord_id}>'
             drone_member._roles = []
             drone_member.roles = []
+            drone_member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
 
         if 'drone' not in kwargs:
             drone_member.drone = self.drone(drone_id)
