@@ -29,7 +29,7 @@ class DronificationRequest:
 
 class TemporaryDronificationCog(Cog):
 
-    dronfication_requests: List[DronificationRequest] = []
+    dronification_requests: List[DronificationRequest] = []
 
     def __init__(self, bot):
         self.bot = bot
@@ -38,7 +38,7 @@ class TemporaryDronificationCog(Cog):
     @connect()
     async def clean_dronification_requests(self):
         now = datetime.now()
-        self.dronfication_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronfication_requests))
+        self.dronification_requests = list(filter(lambda request: request.issued + REQUEST_TIMEOUT > now, self.dronification_requests))
 
     @tasks.loop(minutes=1)
     @connect()
@@ -74,11 +74,11 @@ class TemporaryDronificationCog(Cog):
         question_message = await context.reply(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
         request = DronificationRequest(target, context.author, hours, question_message)
         log.info(f"Adding a new request for temporary dronification: {request}")
-        self.dronfication_requests.append(request)
+        self.dronification_requests.append(request)
 
     async def temporary_dronification_response(self, message: discord.Message, message_copy=None):
         matching_request = None
-        for request in self.dronfication_requests:
+        for request in self.dronification_requests:
             if request.target == message.author:
                 matching_request = request
                 break
@@ -87,14 +87,14 @@ class TemporaryDronificationCog(Cog):
             log.info(f"Message detected as response to a temporary dronification request {matching_request}")
             if message.content.lower() == "y".lower():
                 log.info("Consent given for temporary dronification. Changing roles and writing to DB...")
-                self.dronfication_requests.remove(matching_request)
+                self.dronification_requests.remove(matching_request)
                 dronification_until = datetime.now() + timedelta(hours=matching_request.hours)
                 plural = "hour" if int(matching_request.hours) == 1 else "hours"
                 await message.reply(f"Consent noted. HexCorp dronification suite engaged for the next {matching_request.hours} {plural}.")
                 await create_drone(message.guild, message.author, message.channel, [str(matching_request.issuer.id)], dronification_until)
             elif message.content.lower() == "n".lower():
                 log.info("Consent not given for temporary dronification. Removing the request.")
-                self.dronfication_requests.remove(matching_request)
+                self.dronification_requests.remove(matching_request)
                 await message.reply("Consent not given. Procedure aborted.")
 
         return False
