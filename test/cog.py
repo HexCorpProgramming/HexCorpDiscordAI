@@ -2,6 +2,7 @@ from discord import Message
 from discord.ext.commands import Bot, Cog, CommandError, Context, Converter, Greedy, MemberNotFound
 from discord.utils import find
 from functools import wraps
+from inspect import iscoroutinefunction
 from re import match, sub
 from src.drone_member import DroneMember
 from test.mocks import Mocks
@@ -82,6 +83,10 @@ def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
         '''
         A decorator to create and pass in a Mocks object for testing with.
         '''
+
+        # This is designed to work only with async functions.
+        if not iscoroutinefunction(func):
+            raise RuntimeError('@cog can only be used on async functions')
 
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
