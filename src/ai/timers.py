@@ -2,7 +2,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 from src.db.database import connect
-from src.db.data_objects import Timer
+from src.db.timer import Timer
 from src.roles import (GLITCHED, ID_PREPENDING, IDENTITY_ENFORCEMENT,
                        SPEECH_OPTIMIZATION, BATTERY_POWERED, THIRD_PERSON_ENFORCEMENT)
 from src.log import log
@@ -33,10 +33,15 @@ class TimersCog(commands.Cog):
 
         for member in await Timer.all_elapsed(self.bot.guilds[0]):
             setattr(member.drone, member.drone.timer.mode, False)
-            await member.drone.save()
             await member.drone.timer.delete()
 
             await member.remove_roles(get(self.bot.guilds[0].roles, name=MODE_TO_ROLE[member.drone.timer.mode]))
             await member.update_display_name()
-            await member.drone.update_self_configuration()
+
+            # Enable self-configuration if the drone is no longer configured at all.
+            if not member.drone.is_configured():
+                member.drone.can_self_configure = True
+
+            await member.drone.save()
+
             log.info(f"Elapsed timer for {member.display_name}; toggled off {member.drone.timer.mode}")
