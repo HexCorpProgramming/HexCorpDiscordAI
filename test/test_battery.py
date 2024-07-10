@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 import src.ai.battery as battery
 import src.emoji as emoji
 import test.test_utils as test_utils
@@ -95,7 +95,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drained_role = mocks.role(BATTERY_DRAINED)
 
         member = mocks.member('1234', roles=[BATTERY_POWERED])
-        drone = mocks.drone(1234, battery_minutes=0)
+        drone = mocks.drone(1234, battery_minutes=0, discord_id=member.id)
         Drone.all.return_value = [drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
@@ -112,8 +112,8 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         drained_role = mocks.role(BATTERY_DRAINED)
 
-        drone = mocks.drone(1234)
         member = mocks.member('1234', roles=[BATTERY_POWERED, BATTERY_DRAINED])
+        drone = mocks.drone(1234, discord_id=member.id)
         Drone.all.return_value = [drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
@@ -129,7 +129,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         '''
 
         drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
-        drone_member.drone.get_battery_percent_remaining.return_value = 25
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=25)
         Drone.all.return_value = [drone_member.drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().warn_low_battery_drones)
@@ -147,7 +147,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         '''
 
         drone = mocks.drone(1234)
-        drone.get_battery_percent_remaining.return_value = 30
+        drone.get_battery_percent_remaining = Mock(return_value=30)
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
 
@@ -166,9 +166,9 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         once they are recharged above 30%.
         '''
 
-        drone = mocks.drone(1234)
-        drone.get_battery_percent_remaining.return_value = 50
         member = mocks.member('1234', roles=[BATTERY_POWERED])
+        drone = mocks.drone(1234, discord_id=member.id)
+        drone.get_battery_percent_remaining = Mock(return_value=50)
         Drone.all.return_value = [drone]
 
         battery_cog = mocks.get_cog()
@@ -178,18 +178,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         member.send.assert_not_called()
         self.assertTrue('1234' not in battery_cog.low_battery_drones)
-
-    def battery_emoji_getter(self, whatever, name):
-        if name == emoji.BATTERY_FULL:
-            return "FULLBATTERYEMOJI"
-        elif name == emoji.BATTERY_MID:
-            return "MIDBATTERYEMOJI"
-        elif name == emoji.BATTERY_LOW:
-            return "LOWBATTERYEMOJI"
-        elif name == emoji.BATTERY_EMPTY:
-            return "EMPTYBATTERYEMOJI"
-        else:
-            return "SHOULDNTHAPPEN"
 
     @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
     @cog(battery.BatteryCog)
@@ -206,25 +194,25 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drone_member.drone.is_battery_powered = True
         DroneMember.create.return_value = drone_member
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 100
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=100)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"{emoji.BATTERY_FULL} :: {original_message}")
+        self.assertEqual(message_copy.content, f":{emoji.BATTERY_FULL}: :: {original_message}")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 50
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=50)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"{emoji.BATTERY_MID} :: {original_message}")
+        self.assertEqual(message_copy.content, f":{emoji.BATTERY_MID}: :: {original_message}")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 20
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=20)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"{emoji.BATTERY_LOW} :: {original_message}")
+        self.assertEqual(message_copy.content, f":{emoji.BATTERY_LOW}: :: {original_message}")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 5
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=5)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"{emoji.BATTERY_EMPTY} :: {original_message}")
+        self.assertEqual(message_copy.content, f":{emoji.BATTERY_EMPTY}: :: {original_message}")
 
     @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
     @cog(battery.BatteryCog)
@@ -241,25 +229,25 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         message = mocks.message(None, 'general', original_message)
         message_copy = mocks.message(None, original_message)
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 100
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=100)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_FULL} :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: :{emoji.BATTERY_FULL}: :: Hello.\nBeep boop.")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 50
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=50)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_MID} :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: :{emoji.BATTERY_MID}: :: Hello.\nBeep boop.")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 20
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=20)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_LOW} :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: :{emoji.BATTERY_LOW}: :: Hello.\nBeep boop.")
 
-        drone_member.drone.get_battery_percent_remaining.return_value = 5
+        drone_member.drone.get_battery_percent_remaining = Mock(return_value=5)
         message_copy.content = original_message
         await battery.add_battery_indicator_to_copy(message, message_copy)
-        self.assertEqual(message_copy.content, f"1234 :: {emoji.BATTERY_EMPTY} :: Hello.\nBeep boop.")
+        self.assertEqual(message_copy.content, f"1234 :: :{emoji.BATTERY_EMPTY}: :: Hello.\nBeep boop.")
 
     @patch('src.ai.battery.DroneMember', new_callable=AsyncMock)
     @cog(battery.BatteryCog)
