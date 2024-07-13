@@ -9,15 +9,15 @@ from discord.ext.commands import Cog, Context, Greedy, guild_only, UserInputErro
 import src.webhook as webhook
 from src.ai.commands import NamedParameterConverter
 from src.ai.storage import release
-from src.bot_utils import channels_only, command, COMMAND_PREFIX, dm_only, fetch, hive_mxtress_only
+from src.bot_utils import channels_only, command, COMMAND_PREFIX, dm_only, fetch, hive_mxtress_only, moderator_only
 from src.channels import OFFICE
 from src.db.data_objects import Timer
 from src.db.drone_dao import delete_timers_by_id_and_mode
 from src.resources import BRIEF_DRONE_OS
 from src.roles import (ADMIN, ASSOCIATE, BATTERY_DRAINED, BATTERY_POWERED,
                        DRONE, FREE_STORAGE, GLITCHED, ID_PREPENDING,
-                       IDENTITY_ENFORCEMENT, MODERATION_ROLES,
-                       SPEECH_OPTIMIZATION, STORED, THIRD_PERSON_ENFORCEMENT, has_any_role, has_role)
+                       IDENTITY_ENFORCEMENT, SPEECH_OPTIMIZATION, STORED,
+                       THIRD_PERSON_ENFORCEMENT, has_role)
 from src.log import log
 from src.drone_member import DroneMember
 from src.db.data_objects import Drone
@@ -31,14 +31,14 @@ class DroneConfigurationCog(Cog):
     '''
 
     @guild_only()
+    @moderator_only()
     @command(brief=[BRIEF_DRONE_OS], usage=f'{COMMAND_PREFIX}emergency_release 9813')
     async def emergency_release(self, context, member: DroneMember):
         '''
         Lets moderators disable all DroneOS restrictions currently active on a drone.
         '''
 
-        if has_any_role(context.author, MODERATION_ROLES):
-            await emergency_release(context, member)
+        await emergency_release(context, member)
 
     @dm_only()
     @command(brief=[BRIEF_DRONE_OS], usage=f"{COMMAND_PREFIX}unassign")
