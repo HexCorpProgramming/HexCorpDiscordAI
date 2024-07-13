@@ -52,7 +52,7 @@ async def increase_battery_by_five_percent(member: DroneMember, message: discord
     Increases the battery of the given drone by 5 percent capping at 100% capacity.
     Acknowledges the mantra repetitions by sending a message in the mantra channel as well.
     '''
-    minutes_remaining = member.drone.get_battery_minutes_remaining()
+    minutes_remaining = member.drone.battery_minutes
     battery_type = member.drone.battery_type
 
     if minutes_remaining >= battery_type.capacity:

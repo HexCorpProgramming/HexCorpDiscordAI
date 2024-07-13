@@ -70,7 +70,7 @@ async def get_status(member: DroneMember, context: Context) -> discord.Embed:
     if is_drone_self:
         trusted_usernames = []
         for trusted_user_id in drone.trusted_users:
-            trusted_user = context.guld.get_member(trusted_user_id)
+            trusted_user = context.guild.get_member(trusted_user_id)
 
             # we might have a few dangling trusted users in the DB
             if trusted_user is not None:

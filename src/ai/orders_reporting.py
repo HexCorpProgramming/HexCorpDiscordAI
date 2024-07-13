@@ -74,7 +74,7 @@ class OrderReportingCog(Cog):
         for member in await DroneOrder.all_drones(self.bot.guilds[0]):
             order = member.drone.order
 
-            if datetime.now() > datetime.fromisoformat(order.finish_time):
+            if datetime.now() > order.finish_time:
                 # find drone to deactivate
                 log.info(f'Deactivating drone {member.drone.drone_id} with completed orders')
                 await self.orders_reporting_channel.send(f"{member.mention} Drone {member.drone.drone_id} Deactivate.\nDrone {member.drone.drone_id}, good drone.")

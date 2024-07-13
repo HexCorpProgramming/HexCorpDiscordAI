@@ -1,118 +1,85 @@
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import src.ai.mantra as mantra
-from src.db.drone_dao import BatteryType
+from src.db.data_objects import BatteryType
+from test.mocks import Mocks
+
+mocks = Mocks()
 
 
 class TestMantra(unittest.IsolatedAsyncioTestCase):
 
-    @patch("src.ai.mantra.is_battery_powered")
-    @patch("src.ai.mantra.handle_mantra")
-    async def test_check_for_mantra(self, handle_mantra, is_battery_powered):
-        # init
-        message = AsyncMock()
-        message.author.id = 12345678
-        message.content = "9813 :: 301"
-        message.channel.name = 'hive-repetitions'
+    def setUp(self) -> None:
+        mantra.mantra_counters = {}
 
-        is_battery_powered.return_value = True
+    @patch('src.ai.mantra.DroneMember')
+    async def test_check_for_mantra(self, DroneMember: MagicMock):
+        author = mocks.drone_member('1234', drone_is_battery_powered=True)
+        DroneMember.create = AsyncMock(return_value=author)
+        message = mocks.message(author, 'hive-repetitions', '1234 :: 301')
 
-        # run
         await mantra.check_for_mantra(message)
 
         # assert
-        handle_mantra.assert_called_once()
+        self.assertEqual(len(mantra.mantra_counters.values()), 1)
 
-    @patch("src.ai.mantra.is_battery_powered")
-    @patch("src.ai.mantra.handle_mantra")
-    async def test_check_for_mantra_no_battery(self, handle_mantra, is_battery_powered):
-        # init
-        message = AsyncMock()
-        message.author.id = 12345678
-        message.content = "9813 :: 301"
-        message.channel.name = 'hive-repetitions'
+    @patch('src.ai.mantra.DroneMember')
+    async def check_not_handled(self, channel: str, is_battery_powered: bool, msg: str, DroneMember: MagicMock) -> None:
+        author = mocks.drone_member('1234', drone_is_battery_powered=is_battery_powered)
+        DroneMember.create = AsyncMock(return_value=author)
+        message = mocks.message(author, 'hive-repetitions', '1234 :: ' + msg)
 
-        is_battery_powered.return_value = False
-
-        # run
         await mantra.check_for_mantra(message)
 
         # assert
-        handle_mantra.assert_not_called()
+        self.assertEqual(len(mantra.mantra_counters.values()), 0)
 
-    @patch("src.ai.mantra.is_battery_powered")
-    @patch("src.ai.mantra.handle_mantra")
-    async def test_check_for_mantra_wrong_message(self, handle_mantra, is_battery_powered):
-        # init
-        message = AsyncMock()
-        message.author.id = 12345678
-        message.content = "9813 :: beep"
-        message.channel.name = 'hive-repetitions'
+    async def test_check_for_mantra_no_battery(self) -> None:
+        await self.check_not_handled('hive-repetitions', False, '301')
 
-        is_battery_powered.return_value = True
+    async def test_check_for_mantra_wrong_message(self) -> None:
+        await self.check_not_handled('hive-repetitions', False, 'beep')
 
-        # run
-        await mantra.check_for_mantra(message)
+    async def test_check_for_mantra_wrong_channel(self) -> None:
+        await self.check_not_handled('drone-configuration', False, '301')
 
-        # assert
-        handle_mantra.assert_not_called()
-
-    @patch("src.ai.mantra.is_battery_powered")
-    @patch("src.ai.mantra.handle_mantra")
-    async def test_check_for_mantra_wrong_channel(self, handle_mantra, is_battery_powered):
-        # init
-        message = AsyncMock()
-        message.author.id = 12345678
-        message.content = "9813 :: 301"
-        message.channel.name = 'drone-configuration'
-
-        is_battery_powered.return_value = True
-
-        # run
-        await mantra.check_for_mantra(message)
-
-        # assert
-        handle_mantra.assert_not_called()
-
-    @patch("src.ai.mantra.increase_battery_by_five_percent")
-    @patch.dict("src.ai.mantra.mantra_counters", {})
-    async def test_increment_counter(self, increase_battery_by_five_percent):
-        # init
-        message = AsyncMock()
-        message.author.display_name = "⬡-Drone #9813"
-
-        drone_id = "9813"
+    @patch('src.ai.mantra.increase_battery_by_five_percent')
+    @patch.dict('src.ai.mantra.mantra_counters', {})
+    async def test_increment_counter(self, increase_battery_by_five_percent: AsyncMock):
+        author = mocks.drone_member('1234', drone_is_battery_powered=True)
+        message = mocks.message(author, 'hive-repetitions')
+        drone_id = '1234'
 
         code_match = Mock()
-        code_match.group.return_value = "301"
+        code_match.group.return_value = '301'
 
         # run
-        await mantra.handle_mantra(message, code_match)
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 1)
         increase_battery_by_five_percent.assert_not_called()
 
         # run
-        code_match.group.return_value = "302"
-        await mantra.handle_mantra(message, code_match)
+        code_match.group.return_value = '302'
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 2)
         increase_battery_by_five_percent.assert_not_called()
 
         # run
-        code_match.group.return_value = "303"
-        await mantra.handle_mantra(message, code_match)
+        code_match.group.return_value = '303'
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 3)
         increase_battery_by_five_percent.assert_not_called()
 
         # run
-        code_match.group.return_value = "304"
-        await mantra.handle_mantra(message, code_match)
+        code_match.group.return_value = '304'
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 0)
@@ -121,8 +88,8 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
 
         # run
         # loop around to 1 again
-        code_match.group.return_value = "301"
-        await mantra.handle_mantra(message, code_match)
+        code_match.group.return_value = '301'
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 1)
@@ -130,85 +97,62 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
 
         # run
         # do not advance if wrong order
-        code_match.group.return_value = "303"
-        await mantra.handle_mantra(message, code_match)
+        code_match.group.return_value = '303'
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertEqual(mantra.mantra_counters[drone_id], 1)
         increase_battery_by_five_percent.assert_not_called()
 
-    @patch("src.ai.mantra.increase_battery_by_five_percent")
-    @patch.dict("src.ai.mantra.mantra_counters", {})
+    @patch('src.ai.mantra.increase_battery_by_five_percent')
+    @patch.dict('src.ai.mantra.mantra_counters', {})
     async def test_increment_counter_skipped_first(self, increase_battery_by_five_percent):
         # init
-        message = AsyncMock()
-        message.author.display_name = "⬡-Drone #9813"
-
-        drone_id = "9813"
+        author = mocks.drone_member('1234')
+        message = mocks.message(author, 'hive-repetitions')
+        drone_id = '1234'
 
         code_match = Mock()
-        code_match.group.return_value = "302"
+        code_match.group.return_value = '302'
 
         # run
-        await mantra.handle_mantra(message, code_match)
+        await mantra.handle_mantra(author, message, code_match)
 
         # assert
         self.assertFalse(mantra.mantra_counters[drone_id], 0)
         increase_battery_by_five_percent.assert_not_called()
 
-    @patch("src.ai.mantra.get_battery_minutes_remaining")
-    @patch("src.ai.mantra.set_battery_minutes_remaining")
-    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    async def test_increase_battery_by_five_percent(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
+    async def increase_battery(self, minutes: int) -> None:
         # init
-        message = AsyncMock()
-
-        code_match = Mock()
-        code_match.group.return_value = "301"
-
-        get_battery_minutes_remaining.return_value = 240
+        author = mocks.drone_member('1234', drone_battery_minutes=minutes)
+        message = mocks.message(author, 'hive-repetitions')
+        message.channel.reset_mock()
 
         # run
-        await mantra.increase_battery_by_five_percent(message)
+        await mantra.increase_battery_by_five_percent(author, message)
+
+        return author, message
+
+    async def test_increase_battery_by_five_percent(self) -> None:
+        author, message = await self.increase_battery(240)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, 264.0)
-        message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
+        self.assertEqual(author.drone.battery_minutes, 264)
+        author.drone.save.assert_called_once()
+        message.channel.send.assert_called_once_with('Good drone. Battery has been recharged by 5%.')
 
-    @patch("src.ai.mantra.get_battery_minutes_remaining")
-    @patch("src.ai.mantra.set_battery_minutes_remaining")
-    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    async def test_increase_battery_by_five_percent_capped(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
-        # init
-        message = AsyncMock()
-
-        code_match = Mock()
-        code_match.group.return_value = "301"
-
-        get_battery_minutes_remaining.return_value = 479
-
-        # run
-        await mantra.increase_battery_by_five_percent(message)
+    async def test_increase_battery_by_five_percent_capped(self) -> None:
+        author, message = await self.increase_battery(479)
 
         # assert
-        set_battery_minutes_remaining.assert_called_once_with(message.author, 480)
-        message.channel.send.assert_called_once_with("Good drone. Battery has been recharged by 5%.")
+        self.assertEqual(author.drone.battery_minutes, 480)
+        author.drone.save.assert_called_once()
+        message.channel.send.assert_called_once_with('Good drone. Battery has been recharged by 5%.')
 
-    @patch("src.ai.mantra.get_battery_minutes_remaining")
-    @patch("src.ai.mantra.set_battery_minutes_remaining")
-    @patch("src.ai.mantra.get_battery_type", return_value=BatteryType(2, 'Medium', 480, 240))
-    async def test_increase_battery_by_five_percent_full(self, get_battery_type, set_battery_minutes_remaining, get_battery_minutes_remaining):
-        # init
-        message = AsyncMock()
-
-        code_match = Mock()
-        code_match.group.return_value = "301"
-
-        get_battery_minutes_remaining.return_value = 480
-
-        # run
-        await mantra.increase_battery_by_five_percent(message)
+    async def test_increase_battery_by_five_percent_full(self) -> None:
+        author, message = await self.increase_battery(480)
 
         # assert
-        set_battery_minutes_remaining.assert_not_called()
-        message.channel.send.assert_called_once_with("Good drone. Battery already at 100%.")
+        self.assertEqual(author.drone.battery_minutes, 480)
+        author.drone.save.assert_not_called()
+        message.channel.send.assert_called_once_with('Good drone. Battery already at 100%.')

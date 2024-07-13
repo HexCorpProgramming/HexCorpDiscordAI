@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, List, Self
-from discord import Member, TextChannel
+from discord import Guild, Member, TextChannel
 from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.roles import has_role, HIVE_MXTRESS
 from src.db.record import Record
@@ -120,6 +120,24 @@ class DroneOrder(Record):
     '''
     The time at which the order will be completed.
     '''
+
+    async def all_drones(self, guild: Guild) -> List['src.drone_member.DroneMember']:
+        # Import DroneMember here to avoid a circular reference.
+        from src.drone_member import DroneMember
+
+        rows = await self.all()
+        drone_members = []
+
+        for row in rows:
+            drone_members.append(await DroneMember.load(row.discord_id))
+
+        return drone_members
+
+    @classmethod
+    async def cast(cls, data: dict) -> dict:
+        data['finish_time'] = datetime.fromisoformat(data['finish_time'])
+
+        return data
 
 
 @dataclass(eq=True, frozen=True)
