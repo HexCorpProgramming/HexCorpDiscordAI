@@ -92,19 +92,17 @@ async def report_order(context, protocol_name, protocol_time: int):
 
     # No non-drones allowed.
     if member.drone is None:
-        return
+        raise UserInputError('This command is only available to drones.')
 
     if member.drone.order is not None:
-        await context.send(f"HexDrone #{member.drone.drone_id} is already undertaking the {member.drone.order.protocol} protocol.")
-        return
+        raise UserInputError(f"HexDrone #{member.drone.drone_id} is already undertaking the {member.drone.order.protocol} protocol.")
 
     if protocol_time > 120 or protocol_time < 1:
-        await context.send("Drones are not authorized to activate a specific protocol for that length of time. The maximum is 120 minutes.")
-        return
+        raise UserInputError("Drones are not authorized to activate a specific protocol for that length of time. The maximum is 120 minutes.")
 
     await context.send(f"If safe and willing to do so, Drone {member.drone.drone_id} Activate.\nDrone {member.drone.drone_id} will elaborate on its exact tasks before proceeding with them.")
     finish_time = str(datetime.now() + timedelta(minutes=protocol_time))
     created_order = DroneOrder(str(uuid4()), context.author.id, protocol_name, finish_time)
-    log.info("ActiveOrder object created. Inserting order.")
+
     await created_order.insert()
     log.info("Active order inserted and committed to DB.")

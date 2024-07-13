@@ -106,7 +106,7 @@ class DroneOrder(Record):
     The order's unique ID.
     '''
 
-    discord_id: str
+    discord_id: int
     '''
     The Discord ID of the drone carrying out the order.
     '''
@@ -135,6 +135,7 @@ class DroneOrder(Record):
 
     @classmethod
     async def cast(cls, data: dict) -> dict:
+        data['discord_id'] = int(data['discord_id'])
         data['finish_time'] = datetime.fromisoformat(data['finish_time'])
 
         return data
