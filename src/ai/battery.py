@@ -38,13 +38,14 @@ class BatteryCog(commands.Cog):
         if drone is None:
             raise UserInputError('Member ' + member.display_name + ' is not a drone')
 
-        type = BatteryType.find(name=type_name)
+        type = await BatteryType.find(name=type_name)
 
         if type is None:
-            all = BatteryType.all()
+            all = await BatteryType.all()
             raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in all]))
 
         member.drone.battery_type_id = type.id
+        member.drone.battery_minutes = min(member.drone.battery_minutes, type.capacity)
         await member.drone.save()
         await context.send('Battery type for drone ' + drone.drone_id + ' is now: ' + type.name)
 
@@ -196,7 +197,10 @@ class BatteryCog(commands.Cog):
             if drone.get_battery_percent_remaining() < 30:
                 if drone.drone_id not in self.low_battery_drones:
                     log.info(f"Warning drone {drone.drone_id} of low battery.")
-                    await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+
+                    if not member.bot:
+                        await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+
                     self.low_battery_drones.append(drone.drone_id)
             else:
                 # Attempt to remove them from the list of warned users.

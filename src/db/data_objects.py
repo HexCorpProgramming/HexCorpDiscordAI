@@ -64,7 +64,7 @@ class Storage(Record):
     The reason for which the drone was stored.
     '''
 
-    roles: str
+    roles: List[str]
     '''
     The roles that the drone had prior to being stored, separated by pipes.
     '''
@@ -75,21 +75,12 @@ class Storage(Record):
     '''
 
     @classmethod
-    def cast(cls, row: dict) -> dict:
-        row['stored_by'] = int(row['stored_by'])
-        row['target_id'] = int(row['target_id'])
-        row['release_time'] = datetime.fromisoformat(row['release_time'])
-
-        return row
-
-    @classmethod
     async def all_elapsed(cls) -> List[Self]:
         ids = await fetchcolumn(f'SELECT {cls.get_id_column()} FROM {cls.table} WHERE release_time <= datetime("now")')
         records = []
 
         for id in ids:
-            args = {cls.get_id_column(): id}
-            records.append(cls.load(**args))
+            records.append(await cls.load(id))
 
         return records
 
@@ -121,28 +112,31 @@ class DroneOrder(Record):
     The time at which the order will be completed.
     '''
 
-    async def all_drones(self, guild: Guild) -> List['src.drone_member.DroneMember']:
+    @classmethod
+    async def all_drones(cls, guild: Guild) -> List['src.drone_member.DroneMember']:
+        '''
+        Fetch all the drones with outstanding orders as DroneMember objects.
+        '''
+
         # Import DroneMember here to avoid a circular reference.
         from src.drone_member import DroneMember
 
-        rows = await self.all()
+        rows = await cls.all()
         drone_members = []
 
         for row in rows:
-            drone_members.append(await DroneMember.load(row.discord_id))
+            drone_members.append(await DroneMember.load(guild, row.discord_id))
 
         return drone_members
-
-    @classmethod
-    async def cast(cls, data: dict) -> dict:
-        data['discord_id'] = int(data['discord_id'])
-        data['finish_time'] = datetime.fromisoformat(data['finish_time'])
-
-        return data
 
 
 @dataclass(eq=True, frozen=True)
 class ForbiddenWord(Record):
+    table = 'forbidden_word'
+    '''
+    The database table name.
+    '''
+
     id: str
     '''
     The unique ID by which the record is accessed.
@@ -161,17 +155,17 @@ class Drone(Record):
     The database table name.
     '''
 
-    ignore_properties = ['battery_type', 'storage', 'order']
+    ignore_properties = ['battery_type', 'storage', 'order', 'timer']
     '''
     These properties should not be saved to the database.
     '''
 
-    id_column = 'discord_id'
+    id_column: str = 'discord_id'
     '''
     The name of the primary key for this table.
     '''
 
-    discord_id: str = ''
+    discord_id: int = 0
     '''
     The user's unique Discord ID.
     '''
@@ -191,7 +185,7 @@ class Drone(Record):
     True when speech is being glitched.
     '''
 
-    trusted_users: str | List[int] = field(default_factory=list)
+    trusted_users: List[int] = field(default_factory=list)
     '''
     Trusted users, as Discord IDs separated by pipes.
     '''
@@ -288,9 +282,9 @@ class Drone(Record):
 
         super_args = {}
 
-        if discord_id:
+        if discord_id is not None:
             super_args['discord_id'] = discord_id
-        elif kwargs.get('drone_id', None):
+        elif kwargs.get('drone_id', None) is not None:
             super_args['drone_id'] = kwargs['drone_id']
         else:
             raise Exception('Supply either discord_id or drone_id as a function argument')
@@ -298,15 +292,11 @@ class Drone(Record):
         drone = await super().find(**super_args)
 
         if drone:
-            # Parse trusted users.
-            trusted_users = drone.trusted_users.split('|') if drone.trusted_users else []
-            drone.trusted_users = [int(id) for id in trusted_users]
-
             # Load the battery type record.
             drone.battery_type = await BatteryType.load(id=drone.battery_type_id)
 
             # Load the storage record.
-            drone.storage = await Storage.find(discord_id=drone.discord_id)
+            drone.storage = await Storage.find(target_id=drone.discord_id)
 
             # Load the order record.
             drone.order = await DroneOrder.find(discord_id=drone.discord_id)
@@ -315,18 +305,6 @@ class Drone(Record):
             drone.timer = await Timer.find(discord_id=drone.discord_id)
 
         return drone
-
-    async def save(self) -> None:
-        '''
-        Save the record to the database.
-
-        Serializes the trusted users before saving.
-        '''
-
-        temp = self.trusted_users
-        self.trusted_users = '|'.join(self.trusted_users)
-        await super().save()
-        self.trusted_users = temp
 
     def allows_configuration_by(self, member: Member) -> bool:
         '''
@@ -390,9 +368,23 @@ class Drone(Record):
 
         return int(100.0 * self.battery_minutes / self.battery_type.capacity)
 
-    def third_person_enforcable(self, channel: TextChannel) -> bool:
+    def enforcable_channel(self, channel: TextChannel | None, non_hive_channels: bool) -> bool:
         '''
-        Takes a context or channel object and uses it to check if the identity of a user should be enforced.
+        Determine if identity or third person enforcement applies to the given channel.
         '''
 
-        return (channel.name in DRONE_HIVE_CHANNELS or self.third_person_enforcement) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        return channel is not None and (channel.name in DRONE_HIVE_CHANNELS or non_hive_channels) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+
+    def third_person_enforcable(self, channel: TextChannel | None) -> bool:
+        '''
+        Takes a channel object and uses it to check if the third person pronouns of a user should be enforced.
+        '''
+
+        return self.enforcable_channel(channel, self.third_person_enforcement)
+
+    def identity_enforcable(self, channel: TextChannel | None) -> bool:
+        '''
+        Takes a channel object and uses it to check if the identity of a user should be enforced.
+        '''
+
+        return self.enforcable_channel(channel, self.identity_enforcement)

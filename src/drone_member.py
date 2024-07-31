@@ -22,7 +22,7 @@ def proxy(proxied, prop: str):
         '''
 
         # Iterate over every property and method of the class to be proxied.
-        for attr, value in proxied.__dict__.items():
+        for attr in dir(proxied):
 
             # Ignore private members.
             if attr.startswith('_'):
@@ -95,7 +95,7 @@ class DroneMember:
                 member = context.guild.get_member(drone.discord_id)
 
         if member is None:
-            raise BadArgument
+            raise BadArgument('Could not find member ' + argument)
 
         # Combine the Drone and Member.
         return await DroneMember.create(member)
@@ -108,7 +108,7 @@ class DroneMember:
         Raises an exception if no member is found.
         '''
 
-        drone_member = cls.find(guild, discord_id=discord_id, drone_id=drone_id)
+        drone_member = await cls.find(guild, discord_id=discord_id, drone_id=drone_id)
 
         if drone_member is None:
             raise Exception('Could not find guild member by Discord ID ' + discord_id)

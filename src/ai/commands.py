@@ -12,7 +12,7 @@ class NamedParameterConverter(Converter):
         Parses the given value to see if it fits the flag parameter pattern and if so returns the given value in the specified type.
         '''
         if not argument.startswith(f"-{self.argument_name}="):
-            raise BadArgument
+            raise BadArgument(f'Expected -{self.argument_name}=')
 
         argument_value = argument.split('=')[1]
 

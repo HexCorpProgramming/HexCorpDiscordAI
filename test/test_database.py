@@ -20,6 +20,9 @@ class TestDatabase(IsolatedAsyncioTestCase):
 
         prepare()
 
+        # Delete any existing data.
+        await change('DELETE FROM drone')
+
         # Insert some test data.
         drones = [
             {'discord_id': 11, 'drone_id': 1111},

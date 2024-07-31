@@ -4,7 +4,6 @@ from typing import List
 import discord
 
 from src.db.data_objects import Drone
-from src.db.record import map_to_objects
 from src.db.database import change, fetchall, fetchone, fetchcolumn
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
@@ -22,7 +21,7 @@ async def add_new_drone_members(members: List[discord.Member]):
                 drone_id = get_id(member.display_name)
 
                 if drone_id:
-                    new_drone = Drone(member.id, drone_id, False, False, '', datetime.now(), associate_name=member.display_name)
+                    new_drone = Drone(discord_id=member.id, drone_id=drone_id, last_activity=datetime.now(), associate_name=member.display_name)
                     await new_drone.insert()
 
 
@@ -38,7 +37,8 @@ async def fetch_all_elapsed_temporary_dronification() -> List[Drone]:
     '''
     Finds all drones, whose temporary dronification timer is up.
     '''
-    return map_to_objects(await fetchall('SELECT * FROM drone WHERE temporary_until < :now', {'now': datetime.now()}), Drone)
+
+    return [Drone(**row) for row in await fetchall('SELECT * FROM drone WHERE temporary_until < :now', {'now': datetime.now()})]
 
 
 async def remove_trusted_user_on_all(trusted_user_id: int):

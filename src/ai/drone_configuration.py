@@ -267,7 +267,7 @@ async def toggle_parameter(context,
             await delete_timers_by_id_and_mode(member.id, toggle_column)
 
         else:
-            setattr(member.drone, toggle_column, False)
+            setattr(member.drone, toggle_column, True)
             await member.add_roles(role)
             message = toggle_on_message()
 
@@ -292,7 +292,7 @@ async def toggle_parameter(context,
 
         await webhook.proxy_message_by_webhook(message_content=f'{member.drone.drone_id} :: {message}',
                                                message_username=member.display_name,
-                                               message_avatar=member.avatar_url(),
+                                               message_avatar=member.avatar_url(context.channel),
                                                webhook=channel_webhook)
 
 

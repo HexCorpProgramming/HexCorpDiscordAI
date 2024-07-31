@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from discord import Emoji, Member, Message, Role, TextChannel
+from discord.channel import CategoryChannel
 from discord.ext.commands import Bot, Cog, Context
 from discord.utils import get
 from functools import partial
@@ -15,6 +16,7 @@ from src.db.timer import Timer
 from src.drone_member import DroneMember
 from src.bot_utils import COMMAND_PREFIX
 from src.db.record import Record
+import src.channels as channels
 
 unique_id = 1
 
@@ -219,6 +221,8 @@ class Mocks():
         drone.is_configured.side_effect = partial(Drone.is_configured, drone)
         drone.get_battery_percent_remaining.side_effect = partial(Drone.get_battery_percent_remaining, drone)
         drone.third_person_enforcable.side_effect = partial(Drone.third_person_enforcable, drone)
+        drone.identity_enforcable.side_effect = partial(Drone.identity_enforcable, drone)
+        drone.enforcable_channel.side_effect = partial(Drone.enforcable_channel, drone)
 
         self.set_props(drone, kwargs)
 
@@ -255,7 +259,32 @@ class Mocks():
         self._guild.channels.append(channel)
         self._guild.text_channels.append(channel)
 
+        # Assign pre-defined channels to the correct category.
+        categories = {
+            channels.OFFICE: channels.HEXCORP_CONTROL_TOWER_CATEGORY,
+            channels.MODERATION_CHANNEL: channels.HEXCORP_CONTROL_TOWER_CATEGORY,
+            channels.MODERATION_LOG: channels.MODERATION_CATEGORY,
+        }
+
+        channel.category = self.category_channel(categories.get(name, ''))
+
         return channel
+
+    def category_channel(self, name: str, **kwargs) -> MagicMock:
+        '''
+        Create a mock channel category.
+        '''
+
+        category = create_autospec(CategoryChannel)
+        category.name = name
+        category.guild = self.guild
+        category.id = self.get_unique_id()
+        category.nsfw = False
+        category.is_nsfw = lambda: category.nsfw
+
+        self.set_props(category, kwargs)
+
+        return category
 
     def role(self, name: str) -> MagicMock:
         '''

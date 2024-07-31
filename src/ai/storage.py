@@ -81,12 +81,12 @@ class StorageCog(Cog):
     async def release_timed(self):
         guild = self.bot.guilds[0]
 
-        for storage in await Storage.all_elapsed(guild):
+        for storage in await Storage.all_elapsed():
             member = await DroneMember.load(guild, storage.target_id)
 
             # restore roles to release from storage
             await member.remove_roles(self.stored_role)
-            await member.add_roles(*get_roles_for_names(guild, storage.roles.split('|')))
+            await member.add_roles(*get_roles_for_names(guild, storage.roles))
             await storage.delete()
 
     @release_timed.before_loop
@@ -139,7 +139,7 @@ async def store_drone(message: discord.Message, message_copy=None):
         initiator = await DroneMember.find(message.guild, drone_id=initiator_id)
 
     # find target drone
-    target = await DroneMember.find(drone_id=target_id)
+    target = await DroneMember.find(message.guild, drone_id=target_id)
 
     # check if target evaluates to a valid drone
     if target is None or target.drone is None:
@@ -175,7 +175,7 @@ async def initiate_drone_storage(drone_to_store: DroneMember, initiator: DroneMe
     await drone_to_store.remove_roles(*former_roles)
     await drone_to_store.add_roles(stored_role)
     stored_until = str(datetime.now() + timedelta(hours=time))
-    storage = Storage(str(uuid4()), initiator.id, drone_to_store.id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
+    storage = Storage(str(uuid4()), initiator.id if initiator.drone else None, drone_to_store.id, purpose, get_names_for_roles(former_roles), stored_until)
     await storage.insert()
 
     # Inform the drone that they have been stored.
@@ -211,7 +211,7 @@ async def release(context, member: DroneMember):
     if storage is not None:
         stored_role = get(context.guild.roles, name=roles.STORED)
         await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(context.guild, storage.roles.split('|')))
+        await member.add_roles(*get_roles_for_names(context.guild, storage.roles))
         await storage.delete()
         log.debug(f"Drone {member.display_name} released from storage.")
         await context.send(f"{member.display_name} has been released from storage.")
@@ -231,19 +231,23 @@ def get_names_for_roles(roles: List[discord.Role]) -> List[str]:
     '''
     Convert a list of Roles into a list of names of these Roles.
     '''
-    role_names = []
-    for role in roles:
-        role_names.append(role.name)
-    return role_names
+
+    return [role.name for role in roles]
 
 
 def get_roles_for_names(guild: discord.Guild, role_names: List[str]) -> List[discord.Role]:
     '''
     Convert a list of names of Roles into these Roles.
     '''
+
     roles = []
+
     for role_name in role_names:
-        roles.append(get(guild.roles, name=role_name))
+        role = get(guild.roles, name=role_name)
+
+        if role is not None:
+            roles.append(role)
+
     return roles
 
 

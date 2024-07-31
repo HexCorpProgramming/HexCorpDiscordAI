@@ -141,7 +141,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inserted[1], initiator.id)
         self.assertEqual(inserted[2], target.id)
         self.assertEqual(inserted[3], "recharge")
-        self.assertEqual(inserted[4], f"{roles.DRONE}|{roles.DEVELOPMENT}")
+        self.assertEqual(inserted[4], [roles.DRONE, roles.DEVELOPMENT])
 
         if fixed_now is not None:
             self.assertEqual(inserted[5], str(fixed_now + timedelta(hours=8.45)))
@@ -310,7 +310,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that a drone is released once the storage time has elapsed.
         '''
 
-        storage = self.mocks.storage(release_time=datetime.now() + timedelta(hours=4), roles=f"{roles.DRONE}|{roles.DEVELOPMENT}")
+        storage = self.mocks.storage(release_time=datetime.now() + timedelta(hours=4), roles=[roles.DRONE, roles.DEVELOPMENT])
         stored = self.mocks.member('Stored Drone')
         Storage.all_elapsed = AsyncMock(return_value=[storage])
         cog = self.mocks.get_cog()

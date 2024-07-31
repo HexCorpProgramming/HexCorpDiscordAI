@@ -48,6 +48,7 @@ class ForbiddenWordCog(Cog):
         Lets the Hive Mxtress add a word to the list of forbidden words. The pattern is a regular expression.
         '''
 
+        log.info(f'Adding forbidden word "{id}" matching /{pattern}/')
         word = ForbiddenWord(id, pattern)
         await word.insert()
         await context.send(f"Successfully added forbidden word `{id}` with pattern `{pattern}`.")
@@ -74,5 +75,11 @@ class ForbiddenWordCog(Cog):
         Remove one of the forbidden words.
         '''
 
-        await ForbiddenWord.load(id).delete()
-        await context.send(f"Successfully removed forbidden word with name `{id}`.")
+        word = await ForbiddenWord.find(id)
+
+        if word is not None:
+            await word.delete()
+            log.info(f"Removed forbidden word name '{id}'.")
+            await context.send(f"Successfully removed forbidden word with name `{id}`.")
+        else:
+            await context.send(f"No such forbidden word `{id}`.")

@@ -34,13 +34,6 @@ class Timer(Record):
     '''
 
     @classmethod
-    def cast(cls, row: dict) -> dict:
-        row['discord_id'] = int(row['discord_id'])
-        row['end_time'] = datetime.fromisoformat(row['end_time'])
-
-        return row
-
-    @classmethod
     async def all_elapsed(cls, guild: Guild) -> List['src.drone_member.DroneMember']:
         '''
         Fetch all the DroneMembers whose timer has expired.
@@ -53,6 +46,6 @@ class Timer(Record):
         records = []
 
         for id in ids:
-            records.append(DroneMember.load(guild, discord_id=id))
+            records.append(await DroneMember.load(guild, discord_id=id))
 
         return records
