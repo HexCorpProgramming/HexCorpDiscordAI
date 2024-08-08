@@ -7,6 +7,7 @@ import discord
 from discord.ext.commands import Bot, Context
 from discord.ext.commands.errors import CommandError, CommandInvokeError
 from src.db.database import connect
+from src.roles import has_role, TEST_BOT
 
 import logging
 from logging import handlers
@@ -241,7 +242,7 @@ async def on_message(message: discord.Message):
     with LogContext('on_message(from=' + message.author.name + ', content=' + message.content + ')'):
         # Don't ignore messages from the testing bot.
         # Usually process_commands() will ignore messages from bots.
-        if message.author.name == 'TestBot':
+        if getattr(message.author, 'guild') is not None and has_role(message.author, TEST_BOT):
             message.author.bot = False
 
         message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
