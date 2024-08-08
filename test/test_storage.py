@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 from datetime import datetime, timedelta
 
 import src.roles as roles

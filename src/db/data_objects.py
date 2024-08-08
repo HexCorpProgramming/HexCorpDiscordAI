@@ -113,7 +113,7 @@ class DroneOrder(Record):
     '''
 
     @classmethod
-    async def all_drones(cls, guild: Guild) -> List['src.drone_member.DroneMember']:
+    async def all_drones(cls, guild: Guild) -> List[Any]:
         '''
         Fetch all the drones with outstanding orders as DroneMember objects.
         '''

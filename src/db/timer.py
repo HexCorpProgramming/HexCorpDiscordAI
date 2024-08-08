@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import Any, List
 from discord import Guild
 from src.db.record import Record
 from src.db.database import fetchcolumn
@@ -34,7 +34,7 @@ class Timer(Record):
     '''
 
     @classmethod
-    async def all_elapsed(cls, guild: Guild) -> List['src.drone_member.DroneMember']:
+    async def all_elapsed(cls, guild: Guild) -> List[Any]:
         '''
         Fetch all the DroneMembers whose timer has expired.
         '''

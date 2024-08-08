@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import src.ai.mantra as mantra
-from src.db.data_objects import BatteryType
 from test.mocks import Mocks
 
 mocks = Mocks()
