@@ -355,6 +355,7 @@ async def on_command_error(context, error):
             # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
             await report_error(context, str(error) if str(error) else type(error).__name__)
         else:
+            await context.reply(glitch_message.glitch_text('Command processing failure'))
             log.error(f"!!! Exception caught in {context.command} command !!!")
             log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 

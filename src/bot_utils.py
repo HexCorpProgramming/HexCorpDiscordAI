@@ -89,7 +89,9 @@ def moderator_only() -> Callable[[T], T]:
 
 def dm_only() -> Callable[[T], T]:
     '''
-    Only allow a command to be used in a direct message
+    Only allow a command to be used in a direct message.
+
+    This has an exception for TestBot because bots cannot DM each other.
     '''
 
     def predicate(ctx: Context) -> bool:

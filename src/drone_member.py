@@ -3,7 +3,6 @@ from src.db.data_objects import Drone
 from discord.ext.commands import BadArgument, Context, MemberConverter, MemberNotFound
 from typing import Self
 from src.resources import DRONE_AVATAR
-from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
 from src.log import log
 from operator import attrgetter
 
@@ -143,7 +142,7 @@ class DroneMember:
         Determine if a member's drone identity should be enforced in the given channel.
         '''
 
-        return self.drone and (channel.name in DRONE_HIVE_CHANNELS or self.drone.identity_enforcement) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        return self.drone and self.drone.identity_enforcable(channel)
 
     def avatar_url(self, channel: discord.TextChannel) -> str:
         '''

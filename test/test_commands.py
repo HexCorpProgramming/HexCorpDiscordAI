@@ -1,10 +1,10 @@
-import unittest
+from unittest import IsolatedAsyncioTestCase
 from discord.ext.commands import BadArgument
 
 import src.ai.commands as commands
 
 
-class NamedParameterConverterTest(unittest.IsolatedAsyncioTestCase):
+class NamedParameterConverterTest(IsolatedAsyncioTestCase):
 
     async def testConvertToInt(self):
         # init

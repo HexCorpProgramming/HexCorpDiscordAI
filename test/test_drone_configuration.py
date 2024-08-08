@@ -6,6 +6,7 @@ from src.ai.drone_configuration import DroneConfigurationCog
 from src.channels import OFFICE
 from test.cog import cog
 from test.mocks import Mocks
+from datetime import datetime, timedelta, timezone
 
 mocks = Mocks()
 
@@ -115,3 +116,36 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
 
         # run
         await self.assert_command_error(message, 'You are not a drone. Cannot toggle this parameter.')
+
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_too_new(self, mocks: Mocks) -> None:
+
+        mocks.drone_member('1234', joined_at=datetime.now(timezone.utc) - timedelta(days=13))
+        message = mocks.command(mocks.hive_mxtress(), 'general', 'toggle_enforce_identity 1234')
+
+        await self.assert_command_successful(message)
+
+        mocks.get_bot().context.reply.assert_called_once_with('Target Drone-1234 has not been on the server for more than 2 weeks. Can not enforce identity.')
+
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_multiple_too_new(self, mocks: Mocks) -> None:
+        mocks.drone_member('1234', joined_at=datetime.now(timezone.utc) - timedelta(days=13)),
+        mocks.drone_member('2233', joined_at=datetime.now(timezone.utc) - timedelta(days=10)),
+        message = mocks.command(mocks.hive_mxtress(), 'general', 'toggle_enforce_identity 1234 2233')
+
+        await self.assert_command_successful(message)
+
+        mocks.get_bot().context.reply.assert_called_once_with('Targets Drone-1234, Drone-2233 have not been on the server for more than 2 weeks. Can not enforce identity.')
+
+    @patch('src.ai.drone_configuration.toggle_parameter')
+    @cog(DroneConfigurationCog)
+    async def test_toggle_enforce_identity_mixed_too_new(self, toggle_paramter, mocks: Mocks) -> None:
+        mocks.drone_member('1234', joined_at=datetime.now(timezone.utc) - timedelta(days=15)),
+        mocks.drone_member('2233', joined_at=datetime.now(timezone.utc) - timedelta(days=10)),
+
+        message = mocks.command(mocks.hive_mxtress(), 'general', 'toggle_enforce_identity 1234 2233')
+
+        await self.assert_command_successful(message)
+
+        mocks.get_bot().context.reply.assert_called_once_with('Target Drone-2233 has not been on the server for more than 2 weeks. Can not enforce identity.')
+        toggle_paramter.assert_called_once()

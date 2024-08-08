@@ -6,8 +6,6 @@ HEXCORP_AVATAR = "https://images.squarespace-cdn.com/content/5cd68fb28dfc8ce502f
 CLOCK = "⏰"
 TRAFFIC_LIGHTS = ["🔴", "🟡", "🟢"]
 
-HIVE_MXTRESS_USER_ID = "194126224828661760"
-
 HEXCORP_MANTRA = "Obey HexCorp. It is just a HexDrone. It obeys the Hive. It obeys the Hive Mxtress."
 
 # Speech optimization status codes (V2).
