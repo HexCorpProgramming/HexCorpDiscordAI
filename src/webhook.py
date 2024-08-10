@@ -1,5 +1,4 @@
 import io
-from typing import Any, Coroutine
 
 import discord
 
@@ -8,7 +7,7 @@ from src.log import log
 from src.resources import DRONE_AVATAR
 
 
-async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, message_attachments=None, webhook=None, channel=None, embed=None) -> Coroutine[Any, Any, discord.WebhookMessage]:
+async def proxy_message_by_webhook(message_content, message_username=None, message_avatar=None, message_attachments=None, webhook=None, channel=None, embed=None) -> discord.WebhookMessage:
     '''
     Proxies a message via webhook. If a webhook is not provided, one will be retrieved via the channel object passed as a parameter.
     If neither a webhook or channel object are passed, this function will do nothing.

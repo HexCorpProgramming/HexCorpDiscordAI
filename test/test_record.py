@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from src.db.record import Record
-from typing import List
+from typing import Any, List
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 
@@ -125,7 +125,7 @@ class TestRecord(IsolatedAsyncioTestCase):
         self.assertIsNone(result['j'])
 
     def test_serialize_empty_list(self) -> None:
-        data = {
+        data: dict[str, Any] = {
             'g': [],
             'h': [],
         }
@@ -249,7 +249,7 @@ class TestRecord(IsolatedAsyncioTestCase):
     async def test_load(self, fetchone: AsyncMock) -> None:
         timestamp = '2000-01-02 03:04:05'
 
-        data = {
+        data: dict[str, Any] = {
             'a': '1',
             'b': None,
             'c': 'c',
@@ -273,7 +273,7 @@ class TestRecord(IsolatedAsyncioTestCase):
     async def test_delete(self, change: AsyncMock) -> None:
         timestamp = '2000-01-02 03:04:05'
 
-        data = {
+        data: dict[str, Any] = {
             'a': '1',
             'b': None,
             'c': 'c',

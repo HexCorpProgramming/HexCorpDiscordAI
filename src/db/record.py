@@ -194,7 +194,7 @@ class Record:
 
         return records
 
-    def build_sets(self) -> None:
+    def build_sets(self) -> str:
         '''
         Build a string of "column = :column" for UPDATE statements.
         '''
@@ -205,7 +205,7 @@ class Record:
         # Build a string of "col_1 = :col_1, col_2 = :col2" etc.
         return ', '.join([f'{col} = :{col}' for col in columns if col not in ignore_properties])
 
-    def build_insert_values(self) -> None:
+    def build_insert_values(self) -> str:
         '''
         Build a string of "(column, ...) VALUES (:column, ...)" for INSERT statements.
         '''

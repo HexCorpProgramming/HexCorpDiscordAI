@@ -125,7 +125,7 @@ class DroneOrder(Record):
         drone_members = []
 
         for row in rows:
-            drone_members.append(await DroneMember.load(guild, row.discord_id))
+            drone_members.append(await DroneMember.load(guild, discord_id=row.discord_id))
 
         return drone_members
 
@@ -266,7 +266,7 @@ class Drone(Record):
     '''
 
     @classmethod
-    async def find(cls, **kwargs: Any) -> Self | None:
+    async def find(cls, id: Any = None, **kwargs: Any) -> Self | None:
         '''
         Load a drone record.
 
@@ -274,6 +274,10 @@ class Drone(Record):
 
         Returns None if the record is not found.
         '''
+
+        # Forbid using 'id' because it's ambiguous as to whether it should be a drone ID or a Discord ID.
+        # Specifiy one of: discord_id=, drone_id=, member=.
+        assert id is None
 
         discord_id = kwargs.get('discord_id', None)
 

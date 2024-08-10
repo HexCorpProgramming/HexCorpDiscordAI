@@ -120,7 +120,7 @@ class TestMantra(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(mantra.mantra_counters[drone_id], 0)
         increase_battery_by_five_percent.assert_not_called()
 
-    async def increase_battery(self, minutes: int) -> None:
+    async def increase_battery(self, minutes: int) -> tuple[MagicMock, MagicMock]:
         # init
         author = mocks.drone_member('1234', drone_battery_minutes=minutes)
         message = mocks.message(author, 'hive-repetitions')

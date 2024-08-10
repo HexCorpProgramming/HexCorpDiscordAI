@@ -1,7 +1,7 @@
 import glob
 import sqlite3
 from hashlib import sha256
-from typing import List
+from typing import Any, List
 from src.db.connection import cursor, transactions
 from src.db.transaction import Transaction
 from inspect import iscoroutinefunction
@@ -166,7 +166,7 @@ async def change(query: str, params=()):
 
 
 @retry_loop
-async def fetchall(query: str, params=()) -> dict:
+async def fetchall(query: str, params=()) -> List[dict[Any, Any]]:
     '''
     Executes a given query and retrieves the result. Does not change data.
     '''
