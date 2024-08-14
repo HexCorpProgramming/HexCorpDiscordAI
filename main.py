@@ -242,7 +242,7 @@ async def on_message(message: discord.Message):
     with LogContext('on_message(from=' + message.author.name + ', content=' + message.content + ')'):
         # Don't ignore messages from the testing bot.
         # Usually process_commands() will ignore messages from bots.
-        if getattr(message.author, 'guild') is not None and has_role(message.author, TEST_BOT):
+        if getattr(message.author, 'guild', None) is not None and has_role(message.author, TEST_BOT):
             message.author.bot = False
 
         message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
