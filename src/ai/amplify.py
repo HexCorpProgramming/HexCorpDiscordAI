@@ -11,7 +11,6 @@ from src.ai.identity_enforcement import identity_enforcable
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
 from src.channels import OFFICE
 from src.resources import DRONE_AVATAR
-from src.db.drone_dao import fetch_drone_with_id
 from src.roles import has_role, HIVE_VOICE
 from random import sample
 import logging
@@ -41,11 +40,11 @@ class AmplificationCog(Cog):
 
         for member in members:
 
-            formatted_message = f"{get_id(drone.display_name)} :: {message}"
+            formatted_message = f"{get_id(member.display_name)} :: {message}"
 
-            formatted_message = await generate_battery_message(drone, formatted_message)
+            formatted_message = await generate_battery_message(member, formatted_message)
 
-            glitch_amount = calc_glitch_amount(drone)
+            glitch_amount = calc_glitch_amount(member)
 
             if glitch_amount > 0:
                 formatted_message = glitch_text(formatted_message)
