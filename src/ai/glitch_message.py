@@ -123,7 +123,7 @@ async def glitch_images(attachments: List[discord.Attachment], glitch_amount=45)
     return processed_attachments
 
 
-def async calc_glitch_amount(drone: discord.Member) -> int:
+async def calc_glitch_amount(drone: discord.Member) -> int:
     if await is_glitched(drone):
         return MAX_GLITCH_AMOUNT * 2
     elif await is_battery_powered(drone) and await get_battery_percent_remaining(drone) < 30:
