@@ -6,6 +6,7 @@ from typing import Optional, Union
 from src.ai.commands import DroneMemberConverter, NamedParameterConverter
 from src.ai.battery import generate_battery_message
 from src.ai.glitch_message import calc_glitch_amount, glitch_text
+from src.bot_utils import get_id
 import src.webhook as webhook
 from src.ai.identity_enforcement import identity_enforcable
 from src.bot_utils import channels_only, COMMAND_PREFIX, hive_mxtress_only
