@@ -242,7 +242,6 @@ class Mocks():
         if existing:
             return existing
 
-        # channel = MagicMock(spec=TextChannel)
         channel = create_autospec(TextChannel)
         channel.id = self.get_unique_id()
         channel.name = name
@@ -292,7 +291,6 @@ class Mocks():
         if existing:
             return existing
 
-        # role = MagicMock(spec=Role)
         role = create_autospec(Role)
         role.id = self.get_unique_id()
         role.name = name
@@ -310,7 +308,6 @@ class Mocks():
         if nick is None:
             nick = 'User' + str(self.get_unique_id())
 
-        # member = MagicMock(spec=Member)
         member = create_autospec(Member)
 
         member.id = int(kwargs.get('id', '111111111111111' + str(self.get_unique_id())))
@@ -352,7 +349,6 @@ class Mocks():
         Any additional keyword parameters are set as properties on the message.
         '''
 
-        # message = AsyncMock(spec=Message, mentions=[], author=author or self.member())
         message = create_autospec(Message)
         message.mentions = []
         message.author = author or self.member()
@@ -593,7 +589,6 @@ class Mocks():
         if existing:
             return existing
 
-        # emoji = MagicMock(spec=Emoji)
         emoji = create_autospec(Emoji)
         emoji.id = self.get_unique_id()
         emoji.name = name
