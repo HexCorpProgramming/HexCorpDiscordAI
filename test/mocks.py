@@ -181,15 +181,11 @@ class Mocks():
 
         return record
 
-    def drone(self, drone_id: str | int, **kwargs) -> MagicMock:
+    def drone(self, drone_id: str, **kwargs) -> MagicMock:
         '''
         Create a mock drone record.
         '''
 
-        if len(str(drone_id)) != 4:
-            raise RuntimeError('Drone IDs should be 4 digits.')
-
-        drone_id = str(drone_id)
         drone = create_autospec(Drone, table='drone')
 
         drone.drone_id = drone_id

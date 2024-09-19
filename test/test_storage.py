@@ -276,8 +276,8 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Storage.all = AsyncMock(return_value=[stored])
         cog = self.mocks.get_cog()
 
-        initiator = self.mocks.drone(1234)
-        stored = self.mocks.drone(5678)
+        initiator = self.mocks.drone('1234')
+        stored = self.mocks.drone('5678')
 
         Drone.load.side_effect = [stored, initiator]
 
@@ -296,7 +296,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Storage.all = AsyncMock(return_value=[stored])
         cog = self.mocks.get_cog()
 
-        Drone.load.side_effect = [self.mocks.drone(5678)]
+        Drone.load.side_effect = [self.mocks.drone('5678')]
 
         await start_and_await_loop(cog.report_storage)
 

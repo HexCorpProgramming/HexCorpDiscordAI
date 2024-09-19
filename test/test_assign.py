@@ -42,7 +42,7 @@ class AssignmentTest(unittest.IsolatedAsyncioTestCase):
         message = mocks.message(author, ASSIGNMENT_CHANNEL, assign.ASSIGNMENT_MESSAGE)
 
         get_used_drone_ids.return_value = []
-        Drone.return_value = mocks.drone(1234)
+        Drone.return_value = mocks.drone('1234')
         BatteryType.load.return_value = mocks.battery_type()
 
         self.assertTrue(await assign.check_for_assignment_message(message))

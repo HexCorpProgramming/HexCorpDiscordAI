@@ -48,7 +48,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         set_battery_minutes_remaining with more than the maximum capacity (480)
         '''
 
-        drone = mocks.drone(1234, battery_minutes=470)
+        drone = mocks.drone('1234', battery_minutes=470)
         await battery.recharge_battery(drone)
         self.assertEqual(drone.battery_minutes, 480)
 
@@ -95,7 +95,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drained_role = mocks.role(BATTERY_DRAINED)
 
         member = mocks.member('1234', roles=[BATTERY_POWERED])
-        drone = mocks.drone(1234, battery_minutes=0, discord_id=member.id)
+        drone = mocks.drone('1234', battery_minutes=0, discord_id=member.id)
         Drone.all.return_value = [drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
@@ -113,7 +113,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         drained_role = mocks.role(BATTERY_DRAINED)
 
         member = mocks.member('1234', roles=[BATTERY_POWERED, BATTERY_DRAINED])
-        drone = mocks.drone(1234, discord_id=member.id)
+        drone = mocks.drone('1234', discord_id=member.id)
         Drone.all.return_value = [drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().track_drained_batteries)
@@ -146,7 +146,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         above 30% battery again.
         '''
 
-        drone = mocks.drone(1234)
+        drone = mocks.drone('1234')
         drone.get_battery_percent_remaining = Mock(return_value=30)
         member = mocks.member('1234', roles=[BATTERY_POWERED])
         Drone.all.return_value = [drone]
@@ -167,7 +167,7 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         '''
 
         member = mocks.member('1234', roles=[BATTERY_POWERED])
-        drone = mocks.drone(1234, discord_id=member.id)
+        drone = mocks.drone('1234', discord_id=member.id)
         drone.get_battery_percent_remaining = Mock(return_value=50)
         Drone.all.return_value = [drone]
 
