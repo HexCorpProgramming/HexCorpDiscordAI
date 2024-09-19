@@ -5,7 +5,7 @@ from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
-from src.bot_utils import channels_only, COMMAND_PREFIX
+from src.bot_utils import COMMAND_PREFIX
 from src.log import log
 
 valid_characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
@@ -17,12 +17,14 @@ exceptional_characters = {' ': 'blank', '/': 'hex_slash', '.': 'hex_dot',
 class EmoteCog(Cog):
 
     @guild_only()
-    @channels_only(*DRONE_HIVE_CHANNELS)
     @command(usage=f'{COMMAND_PREFIX}emote "beep boop"', aliases=['big', 'emote'])
     async def bigtext(self, context, *, sentence: str):
         '''
         Let the AI say things using emotes.
         '''
+
+        if context.channel.name not in DRONE_HIVE_CHANNELS:
+            raise UserInputError('This command cannot be used in drone hive channels.')
 
         reply = generate_big_text(context.channel, sentence)
 
