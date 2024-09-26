@@ -1,15 +1,12 @@
-import logging
 import re
 
 import discord
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
 from src.channels import DRONE_HIVE_CHANNELS
 from src.bot_utils import COMMAND_PREFIX
-from src.validation_error import ValidationError
-
-LOGGER = logging.getLogger('ai')
+from src.log import log
 
 valid_characters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
                     'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -27,17 +24,20 @@ class EmoteCog(Cog):
         '''
 
         if context.channel.name not in DRONE_HIVE_CHANNELS:
-            reply = generate_big_text(context.channel, sentence)
+            raise UserInputError('This command cannot be used in drone hive channels.')
 
-            message_length = len(reply)
+        reply = generate_big_text(context.channel, sentence)
 
-            if message_length > 2000:
-                raise ValidationError('Message is too long.')
+        message_length = len(reply)
 
-            if message_length == 0:
-                raise ValidationError('Message contained no acceptable content.')
+        if message_length > 2000:
+            raise UserInputError('Message is too long.')
 
-            await context.send('> ' + reply)
+        if message_length == 0:
+            raise UserInputError('Message contained no acceptable content.')
+
+        log.info('Emoting: ' + sentence)
+        await context.send('> ' + reply)
 
 
 def clean_sentence(sentence):

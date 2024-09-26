@@ -86,6 +86,44 @@ In the event of database corruption, simply remove the `ai.db` file; the
 database will be recreated with the `res/db/migrate/` schema files the next time
 the bot is started.
 
+### Logging
+
+The global `log` object provides functions for each of the standard log levels:
+
+- debug
+- info
+- warning
+- error
+- critical
+
+They accept an error message as the first parameter, followed by arbitrary positional and keyword arguments to be
+appended to the log message.
+
+Internally the logger maintains a per-execution-context stack of logging contexts.  Entering a new logging context
+will cause all subsequent log messages within that context to be prefixed with the context's description.
+
+Logging contexts are stored per execution context, and so are safe to use with async functions.
+
+Basic usage is:
+
+```py
+# Import the global logging instance.
+import log from src.Log
+
+# Log a basic message with associated data.
+log.error('Something went wrong', example_data='test')
+```
+
+To add additional context information use:
+
+```py
+import LoggingContext from src.Log
+
+# Start a new logging context with additional information.
+with LoggingContext('Doing a thing...'):
+    do_thing()
+```
+
 ### Linting and syntax highlighting
 
 The Python tool `flake8` is used to lint the codebase.  To perform linting

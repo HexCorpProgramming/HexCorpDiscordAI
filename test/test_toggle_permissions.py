@@ -1,70 +1,53 @@
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from test.mocks import Mocks
 
-from src.ai.drone_configuration import can_toggle_permissions_for
-from src.roles import HIVE_MXTRESS
+mocks = Mocks()
 
 
 class TestTogglePermissions(unittest.IsolatedAsyncioTestCase):
     '''
-    The can_toggle_permissions_for function...
+    The Drone.allows_configuration_by function...
     '''
 
     def setUp(self):
-        self.hive_mxtress = AsyncMock()
-        self.hive_mxtress.id = 1
-        self.hive_mxtress.display_name = "Hive Mxtress"
-        hive_mxtress_role = Mock()
-        hive_mxtress_role.name = HIVE_MXTRESS
-        self.hive_mxtress.roles = [hive_mxtress_role]
-
-        self.drone_member = AsyncMock()
-        self.drone_member.id = "7214376142"
-        self.drone_member.display_name = "⬡-Drone #3287"
-
-        self.trusted_user_member = AsyncMock()
-        self.trusted_user_member.id = "872635821"
-        self.trusted_user_member.display_name = "⬡-Drone #9813"
-
-        self.random_user_member = AsyncMock()
-        self.random_user_member.id = "123456789"
-        self.random_user_member.display_name = "random"
-
-        self.get_trusted_users_patch = patch('src.ai.drone_configuration.get_trusted_users')
-        self.get_trusted_users = self.get_trusted_users_patch.start()
-        self.get_trusted_users.return_value = [self.trusted_user_member.id]
-
-    def tearDown(self):
-        self.get_trusted_users_patch.stop()
+        self.hive_mxtress = mocks.hive_mxtress()
+        self.trusted_member = mocks.drone_member('5678')
+        self.member = mocks.drone_member('1234', drone_trusted_users=[self.trusted_member.id])
+        self.untrusted_member = mocks.drone_member('9999')
 
     async def test_mxtress_can_toggle(self):
         '''
-        should return true if the toggling user is Hive Mxtress.
+        Should return true if the toggling user is Hive Mxtress.
         '''
-        self.assertTrue(await can_toggle_permissions_for(self.hive_mxtress, self.drone_member))
+
+        self.assertTrue(self.member.drone.allows_configuration_by(self.hive_mxtress))
 
     async def test_trusted_users_can_toggle(self):
         '''
-        should return true if the toggling user is trusted by the toggled user.
+        Should return true if the toggling user is trusted by the toggled user.
         '''
-        self.assertTrue(await can_toggle_permissions_for(self.trusted_user_member, self.drone_member))
 
-    @patch("src.ai.drone_configuration.can_self_configure", return_value=True)
-    async def test_self_can_toggle_if_not_otherwise_controlled(self, can_self_configure):
-        '''
-        should return true if the toggling user is the toggled user and no one else has toggled anything.
-        '''
-        self.assertTrue(await can_toggle_permissions_for(self.drone_member, self.drone_member))
+        self.assertTrue(self.member.drone.allows_configuration_by(self.trusted_member))
 
-    @patch("src.ai.drone_configuration.can_self_configure", return_value=False)
-    async def test_self_cannot_toggle_if_otherwise_controlled(self, can_self_configure):
+    async def test_self_can_toggle_if_not_otherwise_controlled(self):
         '''
-        should return false if the toggling user is the toggled user and someone else has toggled something.
+        Should return true if the toggling user is the toggled user and no one else has toggled anything.
         '''
-        self.assertFalse(await can_toggle_permissions_for(self.drone_member, self.drone_member))
+
+        self.member.drone.can_self_configure = True
+        self.assertTrue(self.member.drone.allows_configuration_by(self.member))
+
+    async def test_self_cannot_toggle_if_otherwise_controlled(self):
+        '''
+        Should return false if the toggling user is the toggled user and someone else has toggled something.
+        '''
+
+        self.member.drone.can_self_configure = False
+        self.assertFalse(self.member.drone.allows_configuration_by(self.member))
 
     async def test_randoms_cannot_toggle(self):
         '''
-        should return false if the toggling user is not Hive Mxtress, a trusted user, or the toggled user.
+        Should return false if the toggling user is not Hive Mxtress, a trusted user, or the toggled user.
         '''
-        self.assertFalse(await can_toggle_permissions_for(self.random_user_member, self.drone_member))
+
+        self.assertFalse(self.member.drone.allows_configuration_by(self.untrusted_member))

@@ -8,9 +8,11 @@ from discord.utils import get
 import src.messages as messages
 import src.roles as roles
 from src.channels import ASSIGNMENT_CHANNEL
-from src.db.drone_dao import insert_drone, get_used_drone_ids
+from src.db.drone_dao import get_used_drone_ids
 from src.db.data_objects import Drone
 from src.bot_utils import get_id
+from src.log import log
+from src.db.data_objects import BatteryType
 
 ASSIGNMENT_MESSAGE = 'I submit myself to the HexCorp Drone Hive.'
 ASSIGNMENT_ANSWER = 'Assigned.'
@@ -29,13 +31,14 @@ async def check_for_assignment_message(message: discord.Message, message_copy=No
     if message.channel.name != ASSIGNMENT_CHANNEL:
         return False
 
-    # member has not been on the server for the required period
-    if message.author.joined_at > datetime.now(timezone.utc) - timedelta(hours=24):
-        await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
-        return False
-
     # if the message is correct for being added, yay! if not, delete the message and let them know its bad
     if message.content == ASSIGNMENT_MESSAGE:
+        # member has not been on the server for the required period
+        if message.author.joined_at > datetime.now(timezone.utc) - timedelta(hours=24):
+            log.info('Denying drone assignment. User has not existed for 24 hours.')
+            await message.channel.send("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
+            return False
+
         await create_drone(message.guild, message.author, message.channel)
     else:
         await messages.delete_request(message, ASSIGNMENT_REJECT)
@@ -58,6 +61,7 @@ async def create_drone(guild: discord.Guild,
     assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
     if assigned_id is not None:
         if assigned_id in used_ids:  # make sure display name number doesnt conflict
+            log.info('Drone creation failed: ID {assigned_id} is already assigned.')
             await feedback_channel.send(f'{target.mention}: ID {assigned_id} present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
             return True
     elif is_hive_mxtress:
@@ -81,7 +85,23 @@ async def create_drone(guild: discord.Guild,
     if target.id in trusted_users:
         trusted_users.remove(target.id)
 
+    # Load the default battery type.
+    battery_type = await BatteryType.load(2)
+
     # add new drone to DB
-    new_drone = Drone(target.id, assigned_id, False, False, '|'.join(trusted_users), datetime.now(), temporary_until=temporary_until, can_self_configure=True, associate_name=associate_name)
-    await insert_drone(new_drone)
+    new_drone = Drone(
+        discord_id=target.id,
+        drone_id=assigned_id,
+        trusted_users=trusted_users,
+        last_activity=datetime.now(),
+        temporary_until=temporary_until,
+        can_self_configure=True,
+        associate_name=associate_name,
+        battery_type_id=battery_type.id,
+        battery_minutes=battery_type.capacity
+    )
+
+    await new_drone.insert()
     await feedback_channel.send(f'{target.mention}: {ASSIGNMENT_ANSWER}')
+
+    log.info(f'Created drone {assigned_id}')

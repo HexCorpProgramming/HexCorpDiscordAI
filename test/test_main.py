@@ -23,6 +23,7 @@ class MainTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "beep boop"
         message.author.bot = False
+        message.author.name = 'Unit Test'
 
         # run
         await main.on_message(message)

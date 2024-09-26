@@ -11,13 +11,17 @@ class TestDatabase(IsolatedAsyncioTestCase):
     def setUpClass(cls):
         asyncio.run(TestDatabase.setUpDatabase())
 
+    @classmethod
     @connect()
-    async def setUpDatabase():
+    async def setUpDatabase(cls):
         '''
         Initialize the database schema in "test.db" before running the tests.
         '''
 
         prepare()
+
+        # Delete any existing data.
+        await change('DELETE FROM drone')
 
         # Insert some test data.
         drones = [

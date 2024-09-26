@@ -4,9 +4,10 @@ import asyncio
 from datetime import datetime, timedelta
 
 import discord
-from discord.ext.commands import Bot, MissingRequiredArgument
-from discord.ext.commands.errors import PrivateMessageOnly
+from discord.ext.commands import Bot, Context
+from discord.ext.commands.errors import CommandError, CommandInvokeError
 from src.db.database import connect
+from src.roles import has_role, TEST_BOT
 
 import logging
 from logging import handlers
@@ -14,7 +15,6 @@ from logging import handlers
 import sys
 
 from traceback import TracebackException
-from src.validation_error import ValidationError
 
 
 # Modules
@@ -47,6 +47,7 @@ import src.ai.temporary_dronification as temporary_dronification
 import src.webhook as webhook
 # Utils
 from src.bot_utils import COMMAND_PREFIX
+from src.log import log, LogContext
 
 # Database
 from src.db import database
@@ -57,8 +58,7 @@ from src.db import maintenance
 from src.resources import DRONE_AVATAR, HIVE_MXTRESS_AVATAR, HEXCORP_AVATAR
 # Data objects
 from src.ai.data_objects import MessageCopy
-
-LOGGER = logging.getLogger('ai')
+from src.drone_member import DroneMember
 
 
 def set_up_logger():
@@ -221,7 +221,7 @@ def ignore_self(func):
     to the database connection decorator.
     '''
 
-    async def wrapper(message: discord.message):
+    async def wrapper(message: discord.Message):
         # Ignore messages from self.
         if message.author.id == bot.user.id:
             return
@@ -239,36 +239,39 @@ def ignore_self(func):
 @ignore_self
 @connect()
 async def on_message(message: discord.Message):
-    # Don't ignore messages from the testing bot.
-    # Usually process_commands() will ignore messages from bots.
-    if message.author.name == 'TestBot':
-        message.author.bot = False
+    with LogContext('on_message(from=' + message.author.name + ', content=' + message.content + ')'):
+        # Don't ignore messages from the testing bot.
+        # Usually process_commands() will ignore messages from bots.
+        if getattr(message.author, 'guild', None) is not None and has_role(message.author, TEST_BOT):
+            message.author.bot = False
 
-    message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
+        message_copy = MessageCopy(content=message.content, display_name=message.author.display_name, avatar=message.author.display_avatar, attachments=message.attachments, reactions=message.reactions)
+        error = None
 
-    # handle DMs
-    if isinstance(message.channel, discord.DMChannel):
-        LOGGER.info("Beginning DM listener stack execution.")
-        for listener in direct_message_listeners:
-            if await listener(message, message_copy):
-                return
+        # Select the message listeners to execute.
+        if isinstance(message.channel, discord.DMChannel):
+            listeners = direct_message_listeners
+        else:
+            listeners = bot_message_listeners if message.author.bot else message_listeners
+
+        for listener in listeners:
+            with LogContext(listener.__name__):
+                try:
+                    if await listener(message, message_copy):
+                        return
+                except CommandError as err:
+                    error = err
+
+        # Replace the original message if it was altered by a listener.
+        if not isinstance(message.channel, discord.DMChannel):
+            await webhook.webhook_if_message_altered(message, message_copy)
+
+        # Report the error after the webhook so that the error message always follows the command,
+        # even if the original command message was deleted and replaced by the webhook.
+        if error:
+            await report_error(message.channel, str(error))
+
         await bot.process_commands(message)
-        return
-
-    LOGGER.info("Beginning message listener stack execution.")
-    # use the listeners for bot messages or user messages
-    applicable_listeners = bot_message_listeners if message.author.bot else message_listeners
-    for listener in applicable_listeners:
-        LOGGER.info(f"Executing: {listener}")
-        if await listener(message, message_copy):  # Return early if any listeners return true.
-            return
-    LOGGER.info("End of message listener stack.")
-
-    LOGGER.info("Checking for need to webhook.")
-    await webhook.webhook_if_message_altered(message, message_copy)
-
-    LOGGER.info("Processing additional commands.")
-    await bot.process_commands(message)
 
 
 @bot.event
@@ -281,54 +284,64 @@ async def on_member_join(member: discord.Member):
 @connect()
 async def on_member_remove(member: discord.Member):
     # remove entry from DB if member was drone
-    drone = await drone_dao.fetch_drone_with_id(member.id)
-    if drone:
-        await drone_dao.delete_drone_by_drone_id(drone.drone_id)
+    drone_member = await DroneMember.create(member)
+
+    if drone_member.drone:
+        await drone_member.drone.delete()
 
     # remove the user from all trusted user lists
-    await trusted_user.remove_trusted_user_on_all(member.id)
+    await drone_dao.remove_trusted_user_on_all(member.id)
+
+
+async def report_error(target: discord.Member | discord.TextChannel | Context, message: str) -> None:
+    '''
+    Send an error message to the user.
+    '''
+
+    log.info(message)
+    await target.send(message)
 
 
 @bot.event
 async def on_ready():
-    LOGGER.info("Hive Mxtress AI online.")
+    log.info("Hive Mxtress AI online.")
 
-    LOGGER.info("Performing startup maintenance.")
-    LOGGER.info("Syncing drones between Discord and DB.")
+    log.info("Performing startup maintenance.")
+    log.info("Syncing drones between Discord and DB.")
     await maintenance.sync_drones(bot.guilds[0].members)
-    LOGGER.info("Trimming trusted users not in the guild anymore.")
+    log.info("Trimming trusted users not in the guild anymore.")
     await maintenance.trusted_user_cleanup(bot.guilds[0].members)
 
-    LOGGER.info("Starting timing agnostic tasks.")
+    log.info("Starting timing agnostic tasks.")
     for task in timing_agnostic_tasks:
         if not task.is_running():
             task.start()
         elif task.failed():
             task.restart()
 
-    LOGGER.info("Awaiting start of next minute to begin every-minute tasks.")
+    log.info("Awaiting start of next minute to begin every-minute tasks.")
     current_time = datetime.now()
     target_time = current_time + timedelta(minutes=1)
     target_time = target_time.replace(second=0)
-    LOGGER.info(f"Scheduled to start minutely tasks at {target_time}")
+    log.info(f"Scheduled to start minutely tasks at {target_time}")
     await asyncio.sleep((target_time - current_time).total_seconds())
 
-    LOGGER.info("Starting all every-minute tasks.")
+    log.info("Starting all every-minute tasks.")
     for task in minute_tasks:
         if not task.is_running():
             task.start()
         elif task.failed():
             task.restart()
 
-    LOGGER.info("Awaiting start of next hour to begin every-hour tasks.")
+    log.info("Awaiting start of next hour to begin every-hour tasks.")
     current_time = datetime.now()
     if current_time.minute != 0:
         target_time = current_time + timedelta(hours=1)
         target_time = target_time.replace(minute=0, second=0)
-        LOGGER.info(f"Scheduled to start hourly tasks at {target_time}")
+        log.info(f"Scheduled to start hourly tasks at {target_time}")
         await asyncio.sleep((target_time - current_time).total_seconds())
 
-    LOGGER.info("Starting all every-hour tasks.")
+    log.info("Starting all every-hour tasks.")
     for task in hour_tasks:
         if not task.is_running():
             task.start()
@@ -338,25 +351,21 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(context, error):
-    if isinstance(error, MissingRequiredArgument):
-        # missing arguments should not be that noisy and can be reported to the user
-        LOGGER.info(f"Missing parameter {error.param.name} reported to user.")
-        await context.reply(f"`{error.param.name}` is a required argument that is missing.")
-    elif isinstance(error, PrivateMessageOnly):
-        await context.send("This message can only be used in DMs with the AI. Please consult the help for more information.")
-    elif isinstance(getattr(error, 'original', None), ValidationError):
-        await context.send(str(error.original))
-    else:
-        await context.reply(glitch_message.glitch_text('Command processing failure'))
-        LOGGER.error(f"!!! Exception caught in {context.command} command !!!")
-        LOGGER.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
+    with LogContext('Error from ' + context.command.cog_name + '.' + context.command.name + '()'):
+        if isinstance(error, CommandError) and not isinstance(error, CommandInvokeError):
+            # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
+            await report_error(context, str(error) if str(error) else type(error).__name__)
+        else:
+            await context.reply(glitch_message.glitch_text('Command processing failure'))
+            log.error(f"!!! Exception caught in {context.command} command !!!")
+            log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    LOGGER.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
+    log.error(f'!!! EXCEPTION CAUGHT IN {event} !!!')
     error, value, tb = sys.exc_info()
-    LOGGER.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
+    log.info("".join(TracebackException(type(value), value, tb, limit=None).format(chain=True)))
 
 
 @bot.event

@@ -1,189 +1,104 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, patch, MagicMock
 from src.ai.temporary_dronification import TemporaryDronificationCog, DronificationRequest
-from src.roles import HIVE_MXTRESS
 import test.test_utils as test_utils
-from src.db.drone_dao import Drone
+from test.cog import cog
+from test.mocks import Mocks
 
 
-class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
+class TestTemporaryDronification(unittest.IsolatedAsyncioTestCase):
 
-    bot = AsyncMock()
-    bot.add_command = Mock()
-    cog = TemporaryDronificationCog(bot)
-    cog = cog._inject(bot)
+    initiator: MagicMock
+    mocks: Mocks
 
-    def setUp(self):
-        self.bot.reset_mock()
-        self.cog.dronfication_requests = []
+    @cog(TemporaryDronificationCog)
+    async def asyncSetUp(self, mocks: Mocks) -> None:
+        self.mocks = mocks
+        mocks.get_cog().dronification_requests = []
+        self.initiator = self.mocks.drone_member('1234')
 
-    @patch("src.ai.temporary_dronification.is_drone")
-    async def test_request_dronification(self, is_drone):
-        # init
-        question_message = AsyncMock()
+    async def test_request_dronification(self) -> None:
+        target = self.mocks.drone_member('5678', drone=None)
+        message = self.mocks.command(self.initiator, '', f'temporarily_dronify {target.mention} 4')
 
-        context = AsyncMock()
-        context.reply.return_value = question_message
+        await self.assert_command_successful(message)
 
-        target = AsyncMock()
-        target.mention = "Target Associate"
-        target.joined_at = datetime.now(timezone.utc) - timedelta(hours=48)
+        self.mocks.get_bot().context.reply.assert_called_once_with(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
+        requests = self.mocks.get_cog().dronification_requests
+        self.assertEqual(1, len(requests), "There must be exactly one dronification request.")
+        self.assertEqual(target, requests[0].target)
+        self.assertEqual(self.initiator, requests[0].issuer)
+        self.assertEqual(4, requests[0].hours)
 
-        hours = 4
+    async def expect_error(self, target: MagicMock, error: str, hours: int = 4) -> None:
+        message = self.mocks.command(self.initiator, '', f'temporarily_dronify {target.mention} ' + str(hours))
 
-        is_drone.return_value = False
+        await self.assert_command_error(message, error)
 
-        # run
-        await self.cog.temporarily_dronify(context, target, hours)
+        self.assertEqual(0, len(self.mocks.get_cog().dronification_requests), "There must be no dronification requests.")
 
-        # assert
-        is_drone.assert_called_once_with(target)
-        context.reply.assert_called_once_with(f"Target identified and locked on. Commencing temporary dronification procedure. {target.mention} you have 5 minutes to comply by replying to this message. Do you consent? (y/n)")
-        self.assertEqual(1, len(self.cog.dronfication_requests), "There must be exactly one dronification request.")
-        self.assertEqual(target, self.cog.dronfication_requests[0].target)
-        self.assertEqual(context.author, self.cog.dronfication_requests[0].issuer)
-        self.assertEqual(hours, self.cog.dronfication_requests[0].hours)
-        self.assertEqual(question_message, self.cog.dronfication_requests[0].question_message)
+    async def test_request_dronification_already_drone(self) -> None:
+        target = self.mocks.drone_member('5678')
+        await self.expect_error(target, 'Drone-5678 is already a drone.')
 
-    @patch("src.ai.temporary_dronification.is_drone")
-    async def test_request_dronification_already_drone(self, is_drone):
-        # init
-        question_message = AsyncMock()
+    async def test_request_dronification_hive_mxtress(self) -> None:
+        target = self.mocks.hive_mxtress()
+        await self.expect_error(target, 'The Hive Mxtress is not a valid target for temporary dronification.')
 
-        context = AsyncMock()
-        context.reply.return_value = question_message
+    async def test_request_dronification_hours_negative(self) -> None:
+        target = self.mocks.drone_member('5678', drone=None)
+        await self.expect_error(target, 'Hours must be greater than 0.', -4)
 
-        target = AsyncMock()
-        target.mention = "Target Associate"
-
-        hours = 4
-
-        is_drone.return_value = True
-
-        # run
-        await self.cog.temporarily_dronify(context, target, hours)
-
-        # assert
-        is_drone.assert_called_once_with(target)
-        context.reply.assert_called_once_with(f"{target.display_name} is already a drone.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification requests.")
-
-    @patch("src.ai.temporary_dronification.is_drone")
-    async def test_request_dronification_hive_mxtress(self, is_drone):
-        # init
-        question_message = AsyncMock()
-
-        context = AsyncMock()
-        context.reply.return_value = question_message
-
-        target = AsyncMock()
-        target.mention = "Target Associate"
-
-        hive_mxtress_role = Mock()
-        hive_mxtress_role.name = HIVE_MXTRESS
-        target.roles = [hive_mxtress_role]
-        hours = 4
-        is_drone.return_value = False
-        # run
-        await self.cog.temporarily_dronify(context, target, hours)
-
-        # assert
-        is_drone.assert_called_once_with(target)
-        context.reply.assert_called_once_with("The Hive Mxtress is not a valid target for temporary dronification.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
-
-    @patch("src.ai.temporary_dronification.is_drone")
-    async def test_request_dronification_hours_negative(self, is_drone):
-        # init
-        question_message = AsyncMock()
-
-        context = AsyncMock()
-        context.reply.return_value = question_message
-
-        target = AsyncMock()
-        target.mention = "Target Associate"
-
-        hours = -4
-
-        is_drone.return_value = False
-
-        # run
-        await self.cog.temporarily_dronify(context, target, hours)
-
-        # assert
-        context.reply.assert_called_once_with("Hours must be greater than 0.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
-
-    @patch("src.ai.temporary_dronification.is_drone")
-    async def test_request_not_24_hours(self, is_drone):
-        # init
-        question_message = AsyncMock()
-
-        context = AsyncMock()
-        context.reply.return_value = question_message
-
-        target = AsyncMock()
-        target.mention = "Target Associate"
-        target.joined_at = datetime.now(timezone.utc) - timedelta(hours=16)
-
-        hours = 4
-
-        is_drone.return_value = False
-
-        # run
-        await self.cog.temporarily_dronify(context, target, hours)
-
-        # assert
-        is_drone.assert_called_once_with(target)
-        context.reply.assert_called_once_with("Target has not been on the server for more than 24 hours. Can not temporarily dronify.")
-        self.assertEqual(0, len(self.cog.dronfication_requests), "There must be no dronification request.")
+    async def test_request_not_24_hours(self) -> None:
+        target = self.mocks.drone_member('5678', drone=None, joined_at=datetime.now(timezone.utc) - timedelta(hours=16))
+        await self.expect_error(target, 'Target has not been on the server for more than 24 hours. Can not temporarily dronify.')
 
     @patch("src.ai.temporary_dronification.create_drone")
-    async def test_temporary_dronification_response(self, create_drone):
-        # init
-        question_message = AsyncMock()
+    async def test_temporary_dronification_response(self, create_drone: AsyncMock) -> None:
+        # Inject a pending request.
+        hours = 4
+        target = self.mocks.drone_member('5678', drone=None)
+        question_message = self.mocks.message()
+        request = DronificationRequest(target, self.initiator, hours, question_message)
+        self.mocks.get_cog().dronification_requests.append(request)
 
-        target = AsyncMock()
-        issuer = AsyncMock()
-
-        hours = 5
-        request = DronificationRequest(target, issuer, hours, question_message)
-
-        self.cog.dronfication_requests.append(request)
-
-        message = AsyncMock()
-        message.content = "y"
+        message = self.mocks.message(target, '', 'y')
         message.reference.resolved = question_message
-        message.author = target
-        message.guild = AsyncMock()
 
-        # run
-        await self.cog.temporary_dronification_response(message, None)
+        await self.mocks.get_cog().temporary_dronification_response(message)
 
-        # assert
         create_drone.assert_called_once()
         self.assertEqual(message.guild, create_drone.call_args.args[0])
         self.assertEqual(message.author, create_drone.call_args.args[1])
         self.assertEqual(message.channel, create_drone.call_args.args[2])
-        self.assertEqual([str(issuer.id)], create_drone.call_args.args[3])
+        self.assertEqual([str(self.initiator.id)], create_drone.call_args.args[3])
         self.assertAlmostEqual((datetime.now() + timedelta(hours=hours)).timestamp(), create_drone.call_args.args[4].timestamp(), delta=1)
-        self.assertEqual(0, len(self.cog.dronfication_requests))
+        self.assertEqual(0, len(self.mocks.get_cog().dronification_requests))
         message.reply.assert_called_once_with(f"Consent noted. HexCorp dronification suite engaged for the next {hours} hours.")
 
+    @patch("src.ai.temporary_dronification.create_drone")
+    async def test_temporary_dronification_declined(self, create_drone: AsyncMock) -> None:
+        target = self.mocks.drone_member('5678', drone=None)
+
+        # Inject a pending request.
+        hours = 4
+        question_message = self.mocks.message()
+        request = DronificationRequest(target, self.initiator, hours, question_message)
+        self.mocks.get_cog().dronification_requests.append(request)
+
+        message = self.mocks.message(target, '', 'n')
+        message.reference.resolved = question_message
+
+        await self.mocks.get_cog().temporary_dronification_response(message)
+
+        create_drone.assert_not_called()
+
     @patch('src.ai.temporary_dronification.fetch_all_elapsed_temporary_dronification')
-    @patch('src.ai.drone_configuration.fetch_drone_with_id', return_value=Drone('1234snowflake', '1234'))
-    @patch('src.ai.drone_configuration.delete_drone_by_drone_id')
-    async def test_release_temporary_drones(self, delete_drone_by_drone_id, fetch_drone_with_id, fetch_all_elapsed_temporary_dronification):
-        fetch_all_elapsed_temporary_dronification.return_value = [Drone('1234snowflake', 1234)]
+    async def test_release_temporary_drones(self, fetch_all_elapsed_temporary_dronification) -> None:
+        member = self.mocks.drone_member('5555')
+        fetch_all_elapsed_temporary_dronification.return_value = [member.drone]
 
-        member = AsyncMock()
-        member.id = '1234snowflake'
-        member.guild = self.bot.guilds[0]
-        self.bot.guilds[0].get_member.return_value = member
+        await test_utils.start_and_await_loop(self.mocks.get_cog().release_temporary_drones)
 
-        cog = TemporaryDronificationCog(self.bot)
-
-        await test_utils.start_and_await_loop(cog.release_temporary_drones)
-
-        member.send.assert_called_once_with('Drone with ID 1234 unassigned.')
+        member.drone.delete.assert_called_once()

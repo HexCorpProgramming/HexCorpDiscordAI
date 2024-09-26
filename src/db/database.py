@@ -1,14 +1,13 @@
 import glob
-import logging
 import sqlite3
 from hashlib import sha256
-from typing import List
+from typing import Any, List
 from src.db.connection import cursor, transactions
 from src.db.transaction import Transaction
 from inspect import iscoroutinefunction
 from asyncio import create_task, Lock, sleep
+from src.log import log
 
-LOGGER = logging.getLogger('ai')
 db_lock = Lock()
 
 
@@ -133,7 +132,7 @@ def prepare():
             c.executescript(create_schema_version.read())
 
     c.execute("SELECT * from schema_version")
-    LOGGER.info(f'DB schema before migration {c.fetchall()}')
+    log.info(f'DB schema before migration {c.fetchall()}')
 
     for script_file in sorted(glob.glob("res/db/migrate/*.sql")):
         with open(script_file) as script:
@@ -153,7 +152,7 @@ def prepare():
                     f"Bad migration. For script {script_file} expected has {saved_hash[0]} but got {script_hash}")
 
     c.execute("SELECT * from schema_version")
-    LOGGER.info(f'DB schema after migration {c.fetchall()}')
+    log.info(f'DB schema after migration {c.fetchall()}')
 
 
 @retry_loop
@@ -167,7 +166,7 @@ async def change(query: str, params=()):
 
 
 @retry_loop
-async def fetchall(query: str, params=()) -> dict:
+async def fetchall(query: str, params=()) -> List[dict[Any, Any]]:
     '''
     Executes a given query and retrieves the result. Does not change data.
     '''

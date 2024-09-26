@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, patch, Mock
+from test.mocks import Mocks
 
 from datetime import datetime, timedelta, timezone
 
@@ -19,94 +20,72 @@ hive_mxtress_role.name = roles.HIVE_MXTRESS
 class AssignmentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_request_reject(self):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
+        mocks = Mocks()
+        message = mocks.message(None, ASSIGNMENT_CHANNEL, 'Beep Boop want to be drone!')
 
-        test_message.content = "Beep Boop want to be drone!"
-
-        self.assertTrue(await assign.check_for_assignment_message(test_message))
-        test_message.delete.assert_called_once()
+        self.assertTrue(await assign.check_for_assignment_message(message))
+        message.delete.assert_called_once()
 
     async def test_wrong_channel(self):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
-        test_message.channel.name = "some other channel"
+        mocks = Mocks()
+        message = mocks.message(None, 'general', assign.ASSIGNMENT_MESSAGE)
 
-        self.assertFalse(await assign.check_for_assignment_message(test_message))
-        test_message.delete.assert_not_called()
+        self.assertFalse(await assign.check_for_assignment_message(message))
+        message.delete.assert_not_called()
 
-    @patch("src.ai.assign.insert_drone")
-    @patch("src.ai.assign.get_used_drone_ids")
-    async def test_request_approve(self, get_used_drone_ids, insert_drone):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
+    @patch("src.ai.assign.get_used_drone_ids", new_callable=AsyncMock)
+    @patch("src.ai.assign.BatteryType", new_callable=AsyncMock)
+    @patch("src.ai.assign.Drone")
+    async def test_request_approve(self, Drone: Mock, BatteryType: AsyncMock, get_used_drone_ids: AsyncMock):
+        mocks = Mocks()
+        author = mocks.member('User 1234')
+        message = mocks.message(author, ASSIGNMENT_CHANNEL, assign.ASSIGNMENT_MESSAGE)
 
-        self.assertTrue(await assign.check_for_assignment_message(test_message))
-        insert_drone.assert_called_once()
-        self.assertEqual(insert_drone.call_args.args[0].drone_id, "1234")
-        self.assertEqual(insert_drone.call_args.args[0].associate_name, "Future Drone 1234")
-        test_message.author.remove_roles.assert_called_once_with(associate_role)
-        test_message.author.add_roles.assert_called_once_with(drone_role)
-        test_message.author.edit.assert_called_once_with(nick="⬡-Drone #1234")
+        get_used_drone_ids.return_value = []
+        Drone.return_value = mocks.drone('1234')
+        BatteryType.load.return_value = mocks.battery_type()
 
-    @patch("src.ai.assign.insert_drone")
-    @patch("src.ai.assign.get_used_drone_ids")
-    async def test_assign_hive_mxtress(self, get_used_drone_ids, insert_drone):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
-        test_message.author.roles = [hive_mxtress_role]
-        test_message.author.display_name = "Hive Mxtress"
+        self.assertTrue(await assign.check_for_assignment_message(message))
+        Drone.return_value.insert.assert_called_once()
 
-        self.assertTrue(await assign.check_for_assignment_message(test_message))
+        author.remove_roles.assert_called_once_with(mocks.role(roles.ASSOCIATE))
+        author.add_roles.assert_called_once_with(mocks.role(roles.DRONE))
+        author.edit.assert_called_once_with(nick="⬡-Drone #1234")
 
-        insert_drone.assert_called_once()
-        self.assertEqual(insert_drone.call_args.args[0].drone_id, "0006")
+    @patch("src.ai.assign.get_used_drone_ids", new_callable=AsyncMock)
+    @patch("src.ai.assign.BatteryType", new_callable=AsyncMock)
+    @patch("src.ai.assign.Drone")
+    async def test_assign_hive_mxtress(self, Drone: Mock, BatteryType: AsyncMock, get_used_drone_ids: AsyncMock):
+        mocks = Mocks()
+        author = mocks.member('Hive Mxtress', roles=[roles.HIVE_MXTRESS])
+        message = mocks.message(author, ASSIGNMENT_CHANNEL, assign.ASSIGNMENT_MESSAGE)
 
-        test_message.author.remove_roles.assert_called_once_with(associate_role)
-        test_message.author.add_roles.assert_called_once_with(drone_role)
+        get_used_drone_ids.return_value = []
+        drone = mocks.drone('0006')
+        Drone.return_value = drone
+        BatteryType.load.return_value = mocks.battery_type()
 
-    @patch("src.ai.assign.get_used_drone_ids", return_value=["1234"])
-    async def test_id_already_used(self, get_used_drone_ids):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
+        self.assertTrue(await assign.check_for_assignment_message(message))
 
-        self.assertTrue(await assign.check_for_assignment_message(test_message))
-        test_message.channel.send.assert_called_once_with(f'{test_message.author.mention}: ID 1234 present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
+        drone.insert.assert_called_once()
+        self.assertEqual(drone.drone_id, '0006')
+
+        author.remove_roles.assert_called_once_with(mocks.role(roles.ASSOCIATE))
+        author.add_roles.assert_called_once_with(mocks.role(roles.DRONE))
+
+    @patch("src.ai.assign.get_used_drone_ids", new=AsyncMock(return_value=["1234"]))
+    async def test_id_already_used2(self):
+        mocks = Mocks()
+        author = mocks.member('User 1234')
+        message = mocks.message(author, ASSIGNMENT_CHANNEL, assign.ASSIGNMENT_MESSAGE)
+
+        self.assertTrue(await assign.check_for_assignment_message(message))
+        message.channel.send.assert_called_once_with(f'{author.mention}: ID 1234 present in current nickname is already assigned to a drone. Please choose a different ID or contact Hive Mxtress.')
 
     async def test_too_early(self):
-        test_message = AsyncMock()
-        test_message.content = assign.ASSIGNMENT_MESSAGE
-        test_message.channel.name = ASSIGNMENT_CHANNEL
-        test_message.author.display_name = "Future Drone 1234"
-        test_message.author.mention = "<mention_placeholder>"
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(weeks=2)
-        test_message.guild.roles = [associate_role, drone_role, hive_mxtress_role]
-        test_message.author.joined_at = datetime.now(timezone.utc) - timedelta(hours=20)
+        mocks = Mocks()
+        author = mocks.member('User 1234', joined_at=datetime.now(timezone.utc) - timedelta(hours=20))
+        message = mocks.message(author, ASSIGNMENT_CHANNEL, assign.ASSIGNMENT_MESSAGE)
 
-        self.assertFalse(await assign.check_for_assignment_message(test_message))
-        test_message.channel.send.assert_called_once_with("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")
+        self.assertFalse(await assign.check_for_assignment_message(message))
+        message.channel.send.assert_called_once_with("Invalid request, associate must have existed on the server for at least 24 hours before dronification.")

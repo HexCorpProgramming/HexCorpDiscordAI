@@ -1,36 +1,21 @@
-import logging
 import re
-from typing import Union
 from copy import deepcopy
 from typing import Dict, List
 from src.ai.data_objects import MessageCopy
 from src.db.database import connect
 
-from discord import Emoji, Guild, Member, Message
+from discord import Emoji, Guild, Message
 from discord.ext import commands, tasks
-from discord.ext.commands import command
+from discord.ext.commands import command, Greedy, UserInputError
 from discord.utils import get
 
 import src.emoji as emoji
 import src.webhook as webhook
-from src.ai.identity_enforcement import identity_enforcable
-from src.id_converter import convert_ids_to_members
-from src.resources import DRONE_AVATAR
+from src.log import log
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED, has_role
-from src.bot_utils import COMMAND_PREFIX, get_id, hive_mxtress_only
-from src.ai.commands import DroneMemberConverter
-from src.db.drone_dao import (deincrement_battery_minutes_remaining,
-                              fetch_drone_with_id,
-                              get_all_drone_batteries,
-                              get_battery_minutes_remaining,
-                              get_battery_percent_remaining,
-                              get_battery_type,
-                              get_battery_types,
-                              is_battery_powered, is_drone,
-                              set_battery_minutes_remaining,
-                              set_battery_type)
-
-LOGGER = logging.getLogger('ai')
+from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
+from src.drone_member import DroneMember
+from src.db.data_objects import BatteryType, Drone
 
 
 class BatteryCog(commands.Cog):
@@ -42,77 +27,85 @@ class BatteryCog(commands.Cog):
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
-    async def set_battery_type(self, context, member: Union[Member, DroneMemberConverter], type_name: str):
+    async def set_battery_type(self, context, member: DroneMember, type_name: str):
         '''
         Hive Mxtress only command.
         Changes the drone's battery capacity and recharge rate.
         '''
 
-        drone = await fetch_drone_with_id(member.id)
+        drone = member.drone
 
         if drone is None:
-            # TODO: Throw a ValidationError once that PR is merged.
-            await context.send('Member ' + member.display_name + ' is not a drone')
-            return
+            raise UserInputError('Member ' + member.display_name + ' is not a drone')
 
-        battery_types = await get_battery_types()
-        type = next((t for t in battery_types if t.name.lower() == type_name.lower()), None)
+        type = await BatteryType.find(name=type_name)
 
         if type is None:
-            # TODO: Throw a ValidationError once that PR is merged.
-            await context.send('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in battery_types]))
-            return
+            all = await BatteryType.all()
+            raise UserInputError('Invalid battery type "' + type_name + '". Valid battery types are: ' + ', '.join([t.name for t in all]))
 
-        await set_battery_type(member, type)
+        member.drone.battery_type_id = type.id
+        member.drone.battery_minutes = min(member.drone.battery_minutes, type.capacity)
+        await member.drone.save()
         await context.send('Battery type for drone ' + drone.drone_id + ' is now: ' + type.name)
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}energize 3287")
-    async def energize(self, context, *drone_ids):
+    async def energize(self, context, members: Greedy[DroneMember]):
         '''
         Hive Mxtress only command.
         Recharges a drone to 100% battery.
         '''
 
-        LOGGER.info("Energize command envoked.")
+        log.info("Energize command envoked.")
 
-        for member in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
+        for member in members:
 
-            LOGGER.info(f"Energizing {member.display_name}")
+            log.info(f"Energizing {member.display_name}")
 
-            battery_type = await get_battery_type(member.id)
+            if member.drone is None:
+                continue
 
-            await set_battery_minutes_remaining(member.id, battery_type.capacity)
+            member.drone.battery_minutes = member.drone.battery_type.capacity
+            await member.drone.save()
+
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(member.display_name)} :: This unit is fully recharged. Thank you Hive Mxtress.',
+            await webhook.proxy_message_by_webhook(message_content=f'{member.drone.drone_id} :: This unit is fully recharged. Thank you Hive Mxtress.',
                                                    message_username=member.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(member, channel=context.message.channel) else (member.avatar.url if member.avatar else None),
+                                                   message_avatar=member.avatar_url(context.message.channel),
                                                    webhook=channel_webhook)
 
     @hive_mxtress_only()
     @command(usage=f"{COMMAND_PREFIX}drain 3287")
-    async def drain(self, context, *drone_ids):
+    async def drain(self, context, members: Greedy[DroneMember]):
         '''
         Hive Mxtress only command.
         Drains a drone's battery by 10%.
         '''
 
-        LOGGER.info("Drain command envoked.")
+        log.info("Drain command envoked.")
 
-        for drone in set(context.message.mentions) | await convert_ids_to_members(context.guild, drone_ids):
+        for member in members:
+            drone = member.drone
 
-            if not await is_battery_powered(drone):
-                await context.send(f"{drone.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
+            if drone is None:
                 continue
 
-            LOGGER.info(f"Draining {drone.display_name}")
+            if not drone.is_battery_powered:
+                await context.send(f"{member.nick} cannot be drained, it is currently connected to the HexCorp power grid.")
+                continue
 
-            await drain_battery(member=drone)
-            percentage_remaining = await get_battery_percent_remaining(drone)
+            log.info(f"Draining {member.display_name}")
+
+            # Reduces the battery charge of a drone by 10%.
+            drone.battery_minutes = max(0, drone.battery_minutes - drone.battery_type.capacity / 10)
+            await drone.save()
+
+            percentage_remaining = drone.get_battery_percent_remaining()
             channel_webhook = await webhook.get_webhook_for_channel(context.message.channel)
-            await webhook.proxy_message_by_webhook(message_content=f'{get_id(drone.display_name)} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
-                                                   message_username=drone.display_name,
-                                                   message_avatar=DRONE_AVATAR if await identity_enforcable(drone, channel=context.message.channel) or drone.avatar is None else drone.avatar.url,
+            await webhook.proxy_message_by_webhook(message_content=f'{drone.drone_id} :: Drone battery has been forcibly drained. Remaining battery now at {percentage_remaining}%',
+                                                   message_username=member.display_name,
+                                                   message_avatar=member.avatar_url(context.message.channel),
                                                    webhook=channel_webhook)
 
     async def start_battery_drain(self, message, message_copy=None):
@@ -121,16 +114,17 @@ class BatteryCog(commands.Cog):
         tracking them for 15 minutes worth of battery drain per message sent.
         '''
 
-        if not await is_drone(message.author) or not await is_battery_powered(message.author):
+        member = await DroneMember.create(message.author)
+
+        if not member.drone or not member.drone.is_battery_powered:
             return False
 
-        drone_id = get_id(message.author.display_name)
-        self.draining_batteries[drone_id] = 15
+        self.draining_batteries[member.drone.drone_id] = 15
 
     @tasks.loop(minutes=1)
     @connect()
     async def track_active_battery_drain(self):
-        LOGGER.info("Draining battery from active drones.")
+        log.info("Draining battery from active drones.")
 
         inactive_drones = []
         # make a copy in case there is simultaneous modification
@@ -138,20 +132,22 @@ class BatteryCog(commands.Cog):
 
         for drone, remaining_minutes in draining_batteries.items():
             if drone is None:
-                LOGGER.warn("drone is None; skipping")
+                log.warn("drone is None; skipping")
                 continue
 
             if remaining_minutes <= 0:
-                LOGGER.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
+                log.info(f"Drone {drone} has been idle for 15 minutes. No longer draining power.")
                 # Cannot alter list while iterating, so add drone to list of drones to pop after the loop.
                 inactive_drones.append(drone)
             else:
-                LOGGER.info(f"Draining 1 minute worth of charge from {drone}")
+                log.info(f"Draining 1 minute worth of charge from {drone}")
                 draining_batteries[drone] = remaining_minutes - 1
-                await deincrement_battery_minutes_remaining(drone_id=drone)
+                drone = await Drone.load(drone_id=drone)
+                drone.battery_minutes = max(0, drone.battery_minutes - 1)
+                await drone.save()
 
         for inactive_drone in inactive_drones:
-            LOGGER.info(f"Removing {inactive_drone} from drain list.")
+            log.info(f"Removing {inactive_drone} from drain list.")
             draining_batteries.pop(inactive_drone)
 
         self.draining_batteries = draining_batteries
@@ -163,21 +159,21 @@ class BatteryCog(commands.Cog):
         # If battery_minutes > 0 and it has the Drained role, remove it.
         # Since this is independent of having the Battery role, this should work even if the config is disabled.
 
-        LOGGER.info("Checking for drones with drained battery.")
+        log.info("Checking for drones with drained battery.")
 
-        for drone in await get_all_drone_batteries():
+        for drone in await Drone.all():
             # Intentionally different math to that in DAO b/c it always rounds down.
             member_drone = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member_drone is None:
-                LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
+                log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
             if drone.battery_minutes <= 0 and has_role(member_drone, BATTERY_POWERED):
-                LOGGER.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
+                log.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
                 await member_drone.add_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
             elif drone.battery_minutes > 0 and has_role(member_drone, BATTERY_DRAINED):
-                LOGGER.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
+                log.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
 
     @tasks.loop(minutes=1)
@@ -189,24 +185,27 @@ class BatteryCog(commands.Cog):
         Drones will be removed from the list once their battery is greater than 30% again.
         '''
 
-        LOGGER.info("Scanning for low battery drones.")
+        log.info("Scanning for low battery drones.")
 
-        for drone in await get_all_drone_batteries():
+        for drone in await Drone.all():
             member = self.bot.guilds[0].get_member(drone.discord_id)
 
             if member is None:
-                LOGGER.warn(f"Drone {drone.drone_id} not found in server but present in database.")
+                log.warn(f"Drone {drone.drone_id} not found in server but present in database.")
                 continue
 
-            if await get_battery_percent_remaining(member) < 30:
+            if drone.get_battery_percent_remaining() < 30:
                 if drone.drone_id not in self.low_battery_drones:
-                    LOGGER.info(f"Warning drone {drone.drone_id} of low battery.")
-                    await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+                    log.info(f"Warning drone {drone.drone_id} of low battery.")
+
+                    if not member.bot:
+                        await member.send("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+
                     self.low_battery_drones.append(drone.drone_id)
             else:
                 # Attempt to remove them from the list of warned users.
                 if drone.drone_id in self.low_battery_drones:
-                    LOGGER.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
+                    log.info(f"Drone {drone.drone_id} has recharged above 30%. Good drone.")
                     try:
                         self.low_battery_drones.remove(drone.drone_id)
                     except ValueError:
@@ -219,21 +218,21 @@ async def add_battery_indicator_to_copy(message: Message, message_copy: MessageC
     which sent the original message is battery powered.
     The indicator is placed after the ID prepend if the message includes it.
     '''
-    message_copy.content = await generate_battery_message(message.author, message_copy.content)
+    message_copy.content = await generate_battery_message(await DroneMember.create(message.author), message_copy.content)
 
     return False
 
 
-async def generate_battery_message(member: Member, original_content: str) -> str:
+async def generate_battery_message(member: DroneMember, original_content: str) -> str:
     '''
     Assembles a message content with a battery emoji for a given Guild Member.
     Returns the original content if the drone is not battery powered.
     '''
 
-    if not await is_battery_powered(member):
+    if not member.drone or not member.drone.is_battery_powered:
         return original_content
 
-    battery_percentage = await get_battery_percent_remaining(member)
+    battery_percentage = member.drone.get_battery_percent_remaining()
     battery_emoji = determine_battery_emoji(battery_percentage, member.guild)
 
     id_prepending_regex = re.compile(r'(\d{4} ::)(.+)', re.DOTALL)
@@ -263,22 +262,10 @@ def determine_battery_emoji(battery_percentage: int, guild: Guild) -> Emoji | st
         return "[BATTERY ERROR]"
 
 
-async def recharge_battery(discord_id: int) -> None:
+async def recharge_battery(drone: Drone) -> None:
     '''
-    Fills the battery of a drone in storage up to max.
-    '''
-
-    current_minutes_remaining = await get_battery_minutes_remaining(discord_id)
-    battery_type = await get_battery_type(discord_id)
-    await set_battery_minutes_remaining(discord_id, min(battery_type.capacity, current_minutes_remaining + battery_type.recharge_rate))
-
-
-async def drain_battery(member: Member):
-    '''
-    Reduces the battery charge of a drone by 10%.
+    Adds one hour of charge to the drone's battery.
     '''
 
-    minutes_remaining = await get_battery_minutes_remaining(member.id)
-    battery_type = await get_battery_type(member.id)
-
-    await set_battery_minutes_remaining(member.id, minutes_remaining - battery_type.capacity / 10)
+    drone.battery_minutes = min(drone.battery_type.capacity, drone.battery_minutes + drone.battery_type.recharge_rate)
+    await drone.save()

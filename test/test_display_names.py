@@ -1,65 +1,52 @@
 from unittest import IsolatedAsyncioTestCase
-from src.display_names import update_display_name
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
+from src.drone_member import DroneMember
+from test.mocks import Mocks
+
+mocks = Mocks()
 
 
 class TestDisplayNames(IsolatedAsyncioTestCase):
 
-    @patch("src.display_names.is_battery_powered", return_value=False)
-    @patch("src.display_names.is_identity_enforced", return_value=False)
-    @patch("src.display_names.is_glitched", return_value=False)
-    @patch("src.display_names.is_optimized", return_value=False)
-    @patch("src.display_names.is_prepending_id", return_value=False)
-    @patch("src.display_names.is_third_person_enforced", return_value=False)
-    async def test_display_name_returns_false_when_unoptimized_drone_require_no_updates(self, third_person, glitched, optimized, prepending, identity_enforced, battery_powered):
+    async def test_display_name_when_unoptimized_drone_requires_no_updates(self) -> None:
+        dm = await DroneMember.create(mocks.member(), mocks.drone('1234'))
+        dm.display_name = '⬡-Drone #1234'
+        dm.drone.optimized = False
 
-        mock_user = AsyncMock()
-        mock_user.display_name = "⬡-Drone #5890"
-        self.assertFalse(await update_display_name(mock_user))
-        mock_user.edit.assert_not_called()
+        await dm.update_display_name()
 
-    @patch("src.display_names.is_battery_powered", return_value=False)
-    @patch("src.display_names.is_identity_enforced", return_value=False)
-    @patch("src.display_names.is_glitched", return_value=False)
-    @patch("src.display_names.is_optimized", return_value=True)
-    @patch("src.display_names.is_prepending_id", return_value=False)
-    @patch("src.display_names.is_third_person_enforced", return_value=False)
-    async def test_display_name_returns_false_when_optimized_drone_require_no_updates(self, third_person, prepending, optimized, glitched, identity_enforced, battery_powered):
+        dm.edit.assert_not_called()
 
-        mock_user = AsyncMock()
-        mock_user.display_name = "⬢-Drone #5890"
-        self.assertFalse(await update_display_name(mock_user))
-        mock_user.edit.assert_not_called()
+    async def test_display_name_when_optimized_drone_requires_no_updates(self) -> None:
+        dm = await DroneMember.create(mocks.member(), mocks.drone('1234'))
+        dm.display_name = '⬢-Drone #1234'
+        dm.drone.optimized = True
 
-    @patch("src.display_names.is_battery_powered", return_value=False)
-    @patch("src.display_names.is_identity_enforced", return_value=False)
-    @patch("src.display_names.is_glitched", return_value=False)
-    @patch("src.display_names.is_optimized", return_value=True)
-    @patch("src.display_names.is_prepending_id", return_value=False)
-    @patch("src.display_names.is_third_person_enforced", return_value=False)
-    async def test_display_name_returns_true_and_edits_nick_of_unoptimized_drone_when_updates_required(self, third_person, glitched, optimized, prepending, identity_enforced, battery_powered):
-        options = third_person, glitched, optimized, prepending, identity_enforced, battery_powered
+        await dm.update_display_name()
+
+        dm.edit.assert_not_called()
+
+    async def test_display_name_edits_nick_of_unoptimized_drone_when_updates_required(self):
+        options = 'third_person_enforcement', 'glitched', 'optimized', 'id_prepending', 'identity_enforcement', 'is_battery_powered'
+        dm = await DroneMember.create(mocks.member(), mocks.drone('1234'))
 
         # Test each option individually.
         for option in options:
+
             # Set all options to False except one.
             for o in options:
-                o.return_value = o == option
+                setattr(dm.drone, o, o == option)
 
-            mock_user = AsyncMock()
-            mock_user.display_name = "⬡-Drone #5890"
-            self.assertTrue(await update_display_name(mock_user))
-            mock_user.edit.assert_called_with(nick="⬢-Drone #5890")
+            dm.display_name = '⬡-Drone #1234'
+            dm.edit = AsyncMock()
+            await dm.update_display_name()
 
-    @patch("src.display_names.is_battery_powered", return_value=False)
-    @patch("src.display_names.is_identity_enforced", return_value=False)
-    @patch("src.display_names.is_glitched", return_value=False)
-    @patch("src.display_names.is_optimized", return_value=False)
-    @patch("src.display_names.is_prepending_id", return_value=False)
-    @patch("src.display_names.is_third_person_enforced", return_value=False)
-    async def test_display_name_returns_true_and_edits_nick_of_optimized_drone_when_updates_required(self, third_person, glitched, optimized, prepending, identity_enforced, battery_powered):
+            dm.edit.assert_called_with(nick='⬢-Drone #1234')
 
-        mock_user = AsyncMock()
-        mock_user.display_name = "⬢-Drone #5890"
-        self.assertTrue(await update_display_name(mock_user))
-        mock_user.edit.assert_called_with(nick="⬡-Drone #5890")
+    async def test_display_name_edits_nick_of_optimized_drone_when_updates_required(self):
+        dm = await DroneMember.create(mocks.member(), mocks.drone('1234'))
+        dm.display_name = '⬢-Drone #1234'
+
+        await dm.update_display_name()
+
+        dm.edit.assert_called_with(nick='⬡-Drone #1234')

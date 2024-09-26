@@ -1,9 +1,22 @@
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from src.ai.third_person_enforcement import enforce_third_person, replace_third_person
+from test.mocks import Mocks
+from src.channels import CASUAL_CHANNEL
+
+mocks = Mocks()
 
 
 class ThirdPersonEnforcementTest(IsolatedAsyncioTestCase):
+
+    @patch('src.ai.third_person_enforcement.DroneMember')
+    async def send(self, msg: str, enforcement: bool, DroneMember: MagicMock) -> None:
+        author = mocks.drone_member('1234', drone_third_person_enforcement=enforcement)
+        DroneMember.create = AsyncMock(return_value=author)
+        self.message = mocks.message(author, CASUAL_CHANNEL, msg)
+        self.message_copy = mocks.message(author, CASUAL_CHANNEL, msg)
+
+        await enforce_third_person(self.message, self.message_copy)
 
     async def test_replace_third_person(self) -> None:
         '''
@@ -37,28 +50,18 @@ class ThirdPersonEnforcementTest(IsolatedAsyncioTestCase):
         for text, expected in cases:
             self.assertEqual(replace_third_person(text), expected)
 
-    @patch('src.ai.third_person_enforcement.third_person_enforcable', return_value=True)
-    async def test_enforce_third_person(self, third_person_enforcable) -> None:
+    async def test_enforce_third_person(self) -> None:
         '''
         Ensure that messages are altered if enforcement is enabled.
         '''
 
-        message = Mock()
-        message_copy = Mock(content='I am a drone')
+        await self.send('I am a drone', True)
+        self.assertEqual('It is a drone', self.message_copy.content)
 
-        await enforce_third_person(message, message_copy)
-
-        self.assertEqual('It is a drone', message_copy.content)
-
-    @patch('src.ai.third_person_enforcement.third_person_enforcable', return_value=False)
-    async def test_enforce_third_person_off(self, third_person_enforcable) -> None:
+    async def test_enforce_third_person_off(self) -> None:
         '''
         Ensure that messages are not altered if enforcement is disabled.
         '''
 
-        message = Mock()
-        message_copy = Mock(content='I am a drone')
-
-        await enforce_third_person(message, message_copy)
-
-        self.assertEqual('I am a drone', message_copy.content)
+        await self.send('I am a drone', False)
+        self.assertEqual('I am a drone', self.message_copy.content)

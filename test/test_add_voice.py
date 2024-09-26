@@ -1,100 +1,52 @@
 import unittest
-import src.ai.add_voice as add_voice
-from unittest.mock import Mock, AsyncMock
+from src.ai.add_voice import AddVoiceCog, NOT_A_MEMBER, ACCESS_DENIED, ACCESS_ALREADY_GRANTED, ACCESS_GRANTED
 from datetime import datetime, timedelta, timezone
 from src.roles import VOICE
-
-
-voice_role = Mock()
-voice_role.name = VOICE
+from test.cog import cog
+from test.mocks import Mocks
 
 
 class AddVoiceTest(unittest.IsolatedAsyncioTestCase):
 
-    async def test_not_long_enough(self):
-        # setup
-        context = AsyncMock()
-        context.message.author.id = 1234
+    @cog(AddVoiceCog)
+    async def test_not_long_enough(self, mocks: Mocks):
+        member = mocks.member('a', joined_at=datetime.now(timezone.utc) - timedelta(weeks=1))
+        message = mocks.direct_command(member, 'request_voice_role')
 
-        member = AsyncMock()
-        member.id = 1234
-        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=1)
-        member.roles = []
+        await self.assert_command_successful(message)
 
-        guild = Mock()
-        guild.roles = [voice_role]
-        guild.get_member.return_value = member
-
-        # run
-        await add_voice.add_voice(context, guild)
-
-        # assert
-        guild.get_member.assert_called_once_with(member.id)
         member.add_roles.assert_not_called()
-        context.channel.send.assert_called_once_with(add_voice.ACCESS_DENIED)
+        message.channel.send.assert_called_once_with(ACCESS_DENIED)
 
-    async def test_already_granted(self):
-        # setup
-        context = AsyncMock()
-        context.message.author.id = 1234
+    @cog(AddVoiceCog)
+    async def test_already_granted(self, mocks: Mocks):
+        member = mocks.member('a', joined_at=datetime.now(timezone.utc) - timedelta(weeks=13), roles=[VOICE])
+        message = mocks.direct_command(member, 'request_voice_role')
 
-        member = AsyncMock()
-        member.id = 1234
-        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
-        member.roles = [voice_role]
+        await self.assert_command_successful(message)
 
-        guild = Mock()
-        guild.roles = [voice_role]
-        guild.get_member.return_value = member
-
-        # run
-        await add_voice.add_voice(context, guild)
-
-        # assert
-        guild.get_member.assert_called_once_with(member.id)
         member.add_roles.assert_not_called()
-        context.channel.send.assert_called_once_with(add_voice.ACCESS_ALREADY_GRANTED)
+        message.channel.send.assert_called_once_with(ACCESS_ALREADY_GRANTED)
 
-    async def test_granted(self):
-        # setup
-        context = AsyncMock()
-        context.message.author.id = 1234
+    @cog(AddVoiceCog)
+    async def test_granted(self, mocks: Mocks):
+        member = mocks.member('a', joined_at=datetime.now(timezone.utc) - timedelta(weeks=13))
+        message = mocks.direct_command(member, 'request_voice_role')
 
-        member = AsyncMock()
-        member.id = 1234
-        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
-        member.roles = []
+        await self.assert_command_successful(message)
 
-        guild = Mock()
-        guild.roles = [voice_role]
-        guild.get_member.return_value = member
+        member.add_roles.assert_called_once_with(mocks.role(VOICE))
+        message.channel.send.assert_called_once_with(ACCESS_GRANTED)
 
-        # run
-        await add_voice.add_voice(context, guild)
+    @cog(AddVoiceCog)
+    async def test_not_a_member(self, mocks: Mocks):
+        member = mocks.member('a', joined_at=datetime.now(timezone.utc) - timedelta(weeks=13))
+        message = mocks.direct_command(member, 'request_voice_role')
 
-        # assert
-        guild.get_member.assert_called_once_with(member.id)
-        context.channel.send.assert_called_once_with(add_voice.ACCESS_GRANTED)
-        member.add_roles.assert_called_once_with(voice_role)
+        # Remove the member from the guild.
+        mocks.get_guild()._members = []
 
-    async def test_not_a_member(self):
-        # setup
-        context = AsyncMock()
-        context.message.author.id = 1234
+        await self.assert_command_successful(message)
 
-        member = AsyncMock()
-        member.id = 1234
-        member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=13)
-        member.roles = []
-
-        guild = Mock()
-        guild.roles = [voice_role]
-        guild.get_member.return_value = None
-
-        # run
-        await add_voice.add_voice(context, guild)
-
-        # assert
-        guild.get_member.assert_called_once_with(member.id)
         member.add_roles.assert_not_called()
-        context.channel.send.assert_called_once_with(add_voice.NOT_A_MEMBER)
+        message.channel.send.assert_called_once_with(NOT_A_MEMBER)

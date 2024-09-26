@@ -1,4 +1,3 @@
-import logging
 import re
 from datetime import datetime, timedelta
 from typing import List
@@ -6,24 +5,17 @@ from uuid import uuid4
 
 import discord
 from discord.ext import tasks
-from discord.ext.commands import Cog, command, guild_only
+from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
 import src.roles as roles
 from src.ai.battery import recharge_battery
-from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
+from src.bot_utils import COMMAND_PREFIX, moderator_only
 from src.channels import STORAGE_CHAMBERS, STORAGE_FACILITY
 from src.db.database import connect
-from src.db.data_objects import Drone
-from src.db.data_objects import Storage as Storage
-from src.db.drone_dao import (fetch_drone_with_drone_id, fetch_drone_with_id, get_trusted_users, is_free_storage)
-from src.db.storage_dao import (delete_storage, fetch_all_elapsed_storage,
-                                fetch_all_storage, fetch_storage_by_target_id,
-                                insert_storage)
-from src.ai.commands import DroneMemberConverter
-from typing import Union
-
-LOGGER = logging.getLogger('ai')
+from src.db.data_objects import Drone, Storage
+from src.log import log
+from src.drone_member import DroneMember
 
 # currently 1 hour
 REPORT_INTERVAL_SECONDS = 60 * 60
@@ -45,9 +37,9 @@ class StorageCog(Cog):
         self.stored_role = None
 
     @guild_only()
-    @hive_mxtress_only()
+    @moderator_only()
     @command(usage=f'{COMMAND_PREFIX}release 9813')
-    async def release(self, context, member: Union[discord.Member, DroneMemberConverter]):
+    async def release(self, context, member: DroneMember):
         '''
         Allows the Hive Mxtress to release a drone from storage.
         '''
@@ -57,28 +49,28 @@ class StorageCog(Cog):
     @connect()
     async def report_storage(self):
 
-        LOGGER.info("Reporting storage.")
+        log.info("Reporting storage.")
 
-        stored_drones = await fetch_all_storage()
-        if len(stored_drones) == 0:
+        storages = await Storage.all()
+
+        if len(storages) == 0:
             await self.storage_channel.send('No drones in storage.')
         else:
-            for stored in stored_drones:
+            for storage in storages:
                 # calculate remaining hours
-                remaining_hours = hours_from_now(datetime.fromisoformat(stored.release_time))
-                initiator_drone = await fetch_drone_with_id(stored.stored_by)
-                stored_drone = await fetch_drone_with_id(stored.target_id)
+                remaining_hours = hours_from_now(storage.release_time)
+                stored_drone = await Drone.load(discord_id=storage.target_id)
 
-                if stored.stored_by is None:
+                if storage.stored_by is None:
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by the Hive Mxtress. Remaining time in storage: {round(remaining_hours, 2)} hours')
                 else:
+                    initiator_drone = await Drone.load(discord_id=storage.stored_by)
                     await self.storage_channel.send(f'`Drone #{stored_drone.drone_id}`, stored away by `Drone #{initiator_drone.drone_id}`. Remaining time in storage: {round(remaining_hours, 2)} hours')
 
-                await recharge_battery(stored.target_id)
+                await recharge_battery(stored_drone)
 
     @report_storage.before_loop
     async def get_storage_channel(self):
-        LOGGER.info("Getting storage channel")
         if self.storage_channel is None:
             self.storage_channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
         if self.storage_channel is None:
@@ -87,16 +79,15 @@ class StorageCog(Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def release_timed(self):
+        guild = self.bot.guilds[0]
 
-        LOGGER.info("Releasing drones in storage.")
-
-        for elapsed_storage in await fetch_all_elapsed_storage():
-            member = self.bot.guilds[0].get_member(elapsed_storage.target_id)
+        for storage in await Storage.all_elapsed():
+            member = await DroneMember.load(guild, storage.target_id)
 
             # restore roles to release from storage
             await member.remove_roles(self.stored_role)
-            await member.add_roles(*get_roles_for_names(self.bot.guilds[0], elapsed_storage.roles.split('|')))
-            await delete_storage(elapsed_storage.id)
+            await member.add_roles(*get_roles_for_names(guild, storage.roles))
+            await storage.delete()
 
     @release_timed.before_loop
     async def get_stored_role(self):
@@ -127,118 +118,102 @@ async def store_drone(message: discord.Message, message_copy=None):
     if not re.match(MESSAGE_FORMAT, message.content):
         if roles.has_any_role(message.author, roles.MODERATION_ROLES):
             return False
-        await message.channel.send(REJECT_MESSAGE)
-        return False
+
+        raise UserInputError(REJECT_MESSAGE)
 
     [(initiator_id, target_id, time, purpose)] = re.findall(MESSAGE_FORMAT, message.content)
 
     time = round(float(time), 2)
 
     if target_id == '0006':
-        await message.channel.send('You cannot store the Hive Mxtress, silly drone.')
-        return False
+        raise UserInputError('You cannot store the Hive Mxtress, silly drone.')
 
     # validate time
     if not 0 < time <= 24:
-        await message.channel.send(f'{format_time(time)} is not between 0 and 24.')
-        return False
+        raise UserInputError(f'{format_time(time)} is not between 0 and 24.')
 
-    # find initiator
+    # Find initiator. Hive Mxtress must be loaded by Discord ID because they do not have a drone record.
     if initiator_id == '0006' and roles.has_role(message.author, roles.HIVE_MXTRESS):
-        # Hive Mxtress does not have a drone record, so synthesize one.
-        initiator = Drone(message.author.id, '0006')
+        initiator = await DroneMember.load(message.guild, discord_id=message.author.id)
     else:
-        initiator = await fetch_drone_with_drone_id(initiator_id)
+        initiator = await DroneMember.find(message.guild, drone_id=initiator_id)
 
     # find target drone
-    target = await fetch_drone_with_drone_id(target_id)
+    target = await DroneMember.find(message.guild, drone_id=target_id)
 
-    # check if target is the Hive Mxtress
     # check if target evaluates to a valid drone
-    if target is None:
-        await message.channel.send(f'Target drone with ID {target_id} could not be found.')
-        return False
+    if target is None or target.drone is None:
+        raise UserInputError(f'Target drone with ID {target_id} could not be found.')
 
     # check if drone is already in storage
-    if await fetch_storage_by_target_id(target.discord_id) is not None:
-        await message.channel.send(f'{target.drone_id} is already in storage.')
-        return False
+    if target.drone.storage is not None:
+        raise UserInputError(f'{target.drone.drone_id} is already in storage.')
 
     # check if initiator evaluates to a valid drone.
     if initiator is None:
-        await message.channel.send(f'Initiator drone with ID {initiator_id} could not be found.')
-        return False
+        raise UserInputError(f'Initiator drone with ID {initiator_id} could not be found.')
 
     # validate specified initiator is message sender
-    if message.author.id != initiator.discord_id:
-        await message.channel.send(f'You are not {initiator_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
-        return False
+    if message.author.id != initiator.id:
+        raise UserInputError(f'You are not {initiator_id}. Yes, we can indeed tell identical faceless drones apart from each other.')
 
-    if await is_free_storage(target):
-        await initiate_drone_storage(target, initiator, time, purpose, message)
-    else:
-        # check if initiator is allowed to store drone
-        trusted_users = await get_trusted_users(target.discord_id)
+    if not target.drone.allows_storage_by(initiator):
+        raise UserInputError(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
 
-        # proceed if allowed, send error message if not
-        if roles.has_role(message.author, roles.HIVE_MXTRESS) or (initiator.discord_id in [target.discord_id] + trusted_users):  # another band-aid fix since the Hive Mxtress doesn't have a valid drone entry in the DB
-            await initiate_drone_storage(target, initiator, time, purpose, message)
-        else:
-            await message.channel.send(f"Drone {target_id} can only be stored by its trusted users or the Hive Mxtress. It has not been stored.")
+    await initiate_drone_storage(target, initiator, time, purpose, message)
 
     return False
 
 
-async def initiate_drone_storage(drone_to_store: Drone, initiator: Drone, time: float, purpose, message: discord.Message, message_copy=None):
+async def initiate_drone_storage(drone_to_store: DroneMember, initiator: DroneMember, time: float, purpose, message: discord.Message, message_copy=None):
     '''
     Initate storage process on drone. Assumes target is already valid and can be freely stored.
     '''
     # store it
     stored_role = get(message.guild.roles, name=roles.STORED)
-    member = message.guild.get_member(drone_to_store.discord_id)
-    former_roles = filter_out_non_removable_roles(member.roles)
-    await member.remove_roles(*former_roles)
-    await member.add_roles(stored_role)
+    former_roles = filter_out_non_removable_roles(drone_to_store.roles)
+    await drone_to_store.remove_roles(*former_roles)
+    await drone_to_store.add_roles(stored_role)
     stored_until = str(datetime.now() + timedelta(hours=time))
-    storage = Storage(str(uuid4()), initiator.discord_id if initiator.drone_id != '0006' else None, drone_to_store.discord_id, purpose, '|'.join(get_names_for_roles(former_roles)), stored_until)
-    await insert_storage(storage)
+    storage = Storage(str(uuid4()), initiator.id if initiator.drone else None, drone_to_store.id, purpose, get_names_for_roles(former_roles), stored_until)
+    await storage.insert()
 
     # Inform the drone that they have been stored.
     storage_chambers = get(message.guild.channels, name=STORAGE_CHAMBERS)
     plural = "hour" if time == 1 else "hours"
 
-    if initiator.discord_id == drone_to_store.discord_id:
+    if initiator.id == drone_to_store.id:
         initiator_name = "yourself"
         initiator_name_thirdperson = "itself"
-    elif initiator.drone_id == '0006':
+    elif not initiator.drone:
         initiator_name = "the Hive Mxtress"
         initiator_name_thirdperson = initiator_name
     else:
-        initiator_name = initiator.drone_id
-        initiator_name_thirdperson = initiator.drone_id
+        initiator_name = initiator.drone.drone_id
+        initiator_name_thirdperson = initiator.drone.drone_id
 
-    await storage_chambers.send(f"Greetings {member.mention}. You have been stored away in the Hive Storage Chambers by {initiator_name} for {format_time(time)} {plural} and for the following reason: {purpose}")
-    await message.channel.send(f"Drone {drone_to_store.drone_id} has been stored away in the Hive Storage Chambers by {initiator_name_thirdperson} for {format_time(time)} {plural} and for the following reason: {purpose}")
+    await storage_chambers.send(f"Greetings {drone_to_store.mention}. You have been stored away in the Hive Storage Chambers by {initiator_name} for {format_time(time)} {plural} and for the following reason: {purpose}")
+    await message.channel.send(f"Drone {drone_to_store.drone.drone_id} has been stored away in the Hive Storage Chambers by {initiator_name_thirdperson} for {format_time(time)} {plural} and for the following reason: {purpose}")
 
     return False
 
 
-async def release(context, member: discord.Member):
+async def release(context, member: DroneMember):
     '''
     Relase a drone from storage on command.
     '''
+
     if not roles.has_any_role(context.author, roles.MODERATION_ROLES):
         return False
 
-    # Find the storage record.
-    storage = await fetch_storage_by_target_id(member.id)
+    storage = member.drone.storage
 
     if storage is not None:
         stored_role = get(context.guild.roles, name=roles.STORED)
         await member.remove_roles(stored_role)
-        await member.add_roles(*get_roles_for_names(context.guild, storage.roles.split('|')))
-        await delete_storage(storage.id)
-        LOGGER.debug(f"Drone {member.display_name} released from storage.")
+        await member.add_roles(*get_roles_for_names(context.guild, storage.roles))
+        await storage.delete()
+        log.debug(f"Drone {member.display_name} released from storage.")
         await context.send(f"{member.display_name} has been released from storage.")
 
     return True
@@ -256,19 +231,23 @@ def get_names_for_roles(roles: List[discord.Role]) -> List[str]:
     '''
     Convert a list of Roles into a list of names of these Roles.
     '''
-    role_names = []
-    for role in roles:
-        role_names.append(role.name)
-    return role_names
+
+    return [role.name for role in roles]
 
 
 def get_roles_for_names(guild: discord.Guild, role_names: List[str]) -> List[discord.Role]:
     '''
     Convert a list of names of Roles into these Roles.
     '''
+
     roles = []
+
     for role_name in role_names:
-        roles.append(get(guild.roles, name=role_name))
+        role = get(guild.roles, name=role_name)
+
+        if role is not None:
+            roles.append(role)
+
     return roles
 
 

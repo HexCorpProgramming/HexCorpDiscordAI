@@ -1,9 +1,8 @@
 import re
 import logging
-from discord import Member, Message
+from discord import Message
 from src.ai.data_objects import MessageCopy
-from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
-from src.db.drone_dao import is_drone, is_third_person_enforced
+from src.drone_member import DroneMember
 
 LOGGER = logging.getLogger('ai')
 
@@ -13,20 +12,11 @@ async def enforce_third_person(message: Message, message_copy: MessageCopy) -> N
     Replace first person pronounds if third person enforcement is enabled.
     '''
 
-    if await third_person_enforcable(message.author, channel=message.channel):
+    member = await DroneMember.create(message.author)
+
+    if member.drone and member.drone.third_person_enforcable(message.channel):
         message_copy.third_person_enforced = True
         message_copy.content = replace_third_person(message_copy.content)
-
-
-async def third_person_enforcable(member: Member, channel=None) -> bool:
-    '''
-    Takes a context or channel object and uses it to check if the identity of a user should be enforced.
-    '''
-
-    if channel is None:
-        raise ValueError("identity_enforceable must be provided a context or channel object.")
-
-    return await is_drone(member) and (channel.name in DRONE_HIVE_CHANNELS or await is_third_person_enforced(member)) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
 
 
 def replace_third_person(text: str) -> str:

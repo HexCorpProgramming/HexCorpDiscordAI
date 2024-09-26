@@ -3,6 +3,7 @@ import src.roles as roles
 from discord.utils import get
 from typing import List
 import random
+from src.log import log
 
 # 1 hour is 60 seconds times 60 minutes
 DELETE_TIMEOUT = 60 * 60
@@ -21,4 +22,5 @@ async def delete_request(message: discord.Message, reject_message=None):
 
 async def answer(channel: discord.TextChannel, recipient: discord.Member, category: List[str]):
     response = random.choice(category)
+    log.info('Answering with ' + response)
     await channel.send(f'{recipient.mention}: {response}')

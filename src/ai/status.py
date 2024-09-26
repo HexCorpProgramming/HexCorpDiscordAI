@@ -1,16 +1,14 @@
-import logging
 from pathlib import Path
 from collections.abc import Callable, Coroutine
 from typing import Any, List
 from discord import Embed, Message
 from discord.ext.commands import Cog, command, Context
 from src.bot_utils import channels_only
+from src.log import log
 
 from src.bot_utils import COMMAND_PREFIX
 from src.channels import BOT_DEV_COMMS
 from src.resources import DRONE_AVATAR
-
-LOGGER = logging.getLogger('ai')
 
 ListenerType = Callable[[Message, Any | None], Coroutine[Any, Any, bool]]
 
@@ -29,6 +27,8 @@ class StatusCog(Cog):
         '''
         A debug command, that displays information about the AI.
         '''
+
+        log.info('Reporting bot status')
 
         await report_status(context, self.message_listeners)
 
