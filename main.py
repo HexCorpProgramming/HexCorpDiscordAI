@@ -159,6 +159,29 @@ hour_tasks = [
     trusted_user_cog.clean_trusted_user_requests]
 timing_agnostic_tasks = [status_message_cog.change_status]
 
+# Configure error handling for tasks.
+for task in minute_tasks + hour_tasks + timing_agnostic_tasks:
+    # Reconnect on DiscordServerError (503 Service Unavailable).
+    task.add_exception_type(discord.errors.DiscordServerError)
+
+    # Restart on any other error.
+    # The factory function is to close around the loop variable.
+    def make_after_loop(t):
+        async def after_loop(*args) -> None:
+            if (t.failed() and not t.is_being_cancelled()):
+                log.warning('Task ' + t.coro.__name__ + ' failed, restarting soon...')
+
+                async def restart_with_delay() -> None:
+                    await asyncio.sleep(20)
+                    log.warning('Restarting failed task ' + t.coro.__name__)
+                    t.start()
+
+                asyncio.create_task(restart_with_delay())
+
+        return after_loop
+
+    task.after_loop(make_after_loop(task))
+
 
 @bot.command(usage=f'{bot.command_prefix}help')
 async def help(context):
