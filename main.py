@@ -174,7 +174,7 @@ for task in minute_tasks + hour_tasks + timing_agnostic_tasks:
                 async def restart_with_delay() -> None:
                     await asyncio.sleep(20)
                     log.warning('Restarting failed task ' + t.coro.__name__)
-                    t.restart()
+                    t.start()
 
                 asyncio.create_task(restart_with_delay())
 
