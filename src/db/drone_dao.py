@@ -22,6 +22,7 @@ async def add_new_drone_members(members: List[discord.Member]):
 
                 if drone_id:
                     new_drone = Drone(discord_id=member.id, drone_id=drone_id, last_activity=datetime.now(), associate_name=member.display_name)
+                    new_drone.battery_minutes = new_drone.battery_type.capacity
                     await new_drone.insert()
 
 
