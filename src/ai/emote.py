@@ -23,7 +23,7 @@ class EmoteCog(Cog):
         Let the AI say things using emotes.
         '''
 
-        if context.channel.name not in DRONE_HIVE_CHANNELS:
+        if context.channel.name in DRONE_HIVE_CHANNELS:
             raise UserInputError('This command cannot be used in drone hive channels.')
 
         reply = generate_big_text(context.channel, sentence)
