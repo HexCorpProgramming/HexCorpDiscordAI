@@ -82,7 +82,8 @@ class StorageCog(Cog):
         guild = self.bot.guilds[0]
 
         for storage in await Storage.all_elapsed():
-            member = await DroneMember.load(guild, storage.target_id)
+            member = await DroneMember.load(guild, discord_id=storage.target_id)
+            log.info(f'Releasing drone {member.drone.drone_id} from storage')
 
             # restore roles to release from storage
             await member.remove_roles(self.stored_role)
