@@ -44,7 +44,7 @@ async def handle_mantra(member: DroneMember, message: discord.Message, code_matc
         mantra_counters[drone_id] = 3
     elif mantra_counters[drone_id] == 3 and code_match.group(3) == "304":
         mantra_counters[drone_id] = 0
-        await increase_battery_by_five_percent(message)
+        await increase_battery_by_five_percent(member, message)
 
 
 async def increase_battery_by_five_percent(member: DroneMember, message: discord.Message):
