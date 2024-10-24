@@ -91,7 +91,8 @@ class DroneMember:
             drone = await Drone.find(drone_id=argument)
 
             if drone:
-                member = context.guild.get_member(drone.discord_id)
+                guild = context.guild if context.guild else context.bot.guilds[0]
+                member = guild.get_member(drone.discord_id)
 
         if member is None:
             raise BadArgument('Could not find member ' + argument)
