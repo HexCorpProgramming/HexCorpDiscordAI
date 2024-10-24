@@ -112,7 +112,7 @@ async def optimize_speech(message: discord.Message, message_copy):
     message_id = code_match.group(2)
 
     if message_id != member.drone.drone_id:
-        log.info("Status {message_id} did not match drone ID {drone_id}.")
+        log.info(f"Status {message_id} did not match drone ID {member.drone.drone_id}.")
         await message.delete()
         return True
 

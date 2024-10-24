@@ -110,7 +110,7 @@ class DroneMember:
         drone_member = await cls.find(guild, discord_id=discord_id, drone_id=drone_id)
 
         if drone_member is None:
-            raise Exception('Could not find guild member by Discord ID ' + discord_id)
+            raise Exception('Could not find guild member by Discord ID ' + str(discord_id))
 
         return drone_member
 

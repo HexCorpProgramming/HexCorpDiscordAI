@@ -42,7 +42,7 @@ class Timer(Record):
         # Import here to avoid a circular import.
         from src.drone_member import DroneMember
 
-        ids = await fetchcolumn('SELECT discord_id FROM timer WHERE end_time >= datetime("now")')
+        ids = await fetchcolumn('SELECT discord_id FROM timer WHERE end_time <= datetime("now")')
         records = []
 
         for id in ids:
