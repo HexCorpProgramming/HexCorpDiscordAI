@@ -59,7 +59,8 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
         cog.trusted_user_requests = [request]
 
         # The response saying that the user agrees to become trusted.
-        response = self.mocks.direct_message(self.target, message)
+        author = self.mocks.member(id=self.target.id)
+        response = self.mocks.direct_message(author, message)
         response.reference.message_id = question_message_id
         response.reference.resolved.id = question_message_id
 
