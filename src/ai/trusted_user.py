@@ -15,7 +15,7 @@ REQUEST_TIMEOUT = timedelta(hours=24)
 
 class TrustedUserRequest:
 
-    def __init__(self, target: discord.Member, issuer: DroneMember, question_message_id: int):
+    def __init__(self, target: DroneMember, issuer: DroneMember, question_message_id: int):
         self.target = target
         self.issuer = issuer
         self.question_message_id = question_message_id
@@ -90,7 +90,7 @@ class TrustedUserCog(Cog):
     async def trusted_user_response(self, message: discord.Message, message_copy=None):
         matching_request = None
         for request in self.trusted_user_requests:
-            if request.target == message.author:
+            if request.target.id == message.author.id:
                 matching_request = request
                 break
 
