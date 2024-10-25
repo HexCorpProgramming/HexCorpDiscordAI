@@ -26,7 +26,7 @@ class BatteryCog(commands.Cog):
         self.low_battery_drones: List[str] = []  # [drone_id]
 
     @hive_mxtress_only()
-    @command(usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
+    @command(aliases=['sbt'], usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
     async def set_battery_type(self, context, member: DroneMember, type_name: str):
         '''
         Hive Mxtress only command.
