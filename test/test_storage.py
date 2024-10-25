@@ -310,7 +310,7 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         '''
 
         storage = self.mocks.storage(release_time=datetime.now() + timedelta(hours=4), roles=[roles.DRONE, roles.DEVELOPMENT])
-        stored = self.mocks.member('Stored Drone')
+        stored = self.mocks.drone_member('1234')
         Storage.all_elapsed = AsyncMock(return_value=[storage])
         cog = self.mocks.get_cog()
 
