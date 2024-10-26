@@ -4,7 +4,7 @@ from src.db.data_objects import Drone
 from unittest import IsolatedAsyncioTestCase
 import asyncio
 from test.mocks import Mocks
-from src.channels import CASUAL_CHANNEL, DRONE_HIVE_CHANNELS, MODERATION_CHANNEL, MODERATION_LOG, OFFICE
+from src.channels import CASUAL_CHANNEL, DRONE_HIVE_CATEGORY, MODERATION_CHANNEL, MODERATION_LOG, OFFICE
 
 mocks = Mocks()
 
@@ -350,8 +350,9 @@ class TestDrone(IsolatedAsyncioTestCase):
 
         self.drone.third_person_enforcement = False
 
-        for channel in DRONE_HIVE_CHANNELS:
-            self.assertTrue(self.drone.third_person_enforcable(mocks.channel(channel)))
+        channel = mocks.channel('test')
+        channel.category.name = DRONE_HIVE_CATEGORY
+        self.assertTrue(self.drone.third_person_enforcable(channel))
 
     def test_identity_enforcable_no_channel(self) -> None:
         '''
@@ -395,5 +396,6 @@ class TestDrone(IsolatedAsyncioTestCase):
 
         self.drone.identity_enforcement = False
 
-        for channel in DRONE_HIVE_CHANNELS:
-            self.assertTrue(self.drone.identity_enforcable(mocks.channel(channel)))
+        channel = mocks.channel('test')
+        channel.category.name = DRONE_HIVE_CATEGORY
+        self.assertTrue(self.drone.identity_enforcable(channel))

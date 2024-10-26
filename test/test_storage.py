@@ -24,12 +24,8 @@ class StorageTest(unittest.IsolatedAsyncioTestCase):
         Ensure that messages are rejected if sent via a channel other than STORAGE_FACILITY.
         '''
 
-        channels_to_test = (channels.DRONE_HIVE_CHANNELS + channels.DRONE_DEV_CHANNELS)
-        channels_to_test.remove(channels.STORAGE_FACILITY)
-
-        for channel in channels_to_test:
-            message = self.mocks.message(self.initiator, channel, 'test')
-            self.assertFalse(await store_drone(message))
+        message = self.mocks.message(self.initiator, channels.DRONETALK, 'test')
+        self.assertFalse(await store_drone(message))
 
     async def test_storage_message_invalid(self):
         '''

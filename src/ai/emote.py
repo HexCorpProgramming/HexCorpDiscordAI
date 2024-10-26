@@ -4,7 +4,7 @@ import discord
 from discord.ext.commands import Cog, command, guild_only, UserInputError
 from discord.utils import get
 
-from src.channels import DRONE_HIVE_CHANNELS
+from src.channels import DRONE_HIVE_CATEGORY
 from src.bot_utils import COMMAND_PREFIX
 from src.log import log
 
@@ -23,7 +23,7 @@ class EmoteCog(Cog):
         Let the AI say things using emotes.
         '''
 
-        if context.channel.name in DRONE_HIVE_CHANNELS:
+        if context.channel.category.name == DRONE_HIVE_CATEGORY:
             raise UserInputError('This command cannot be used in drone hive channels.')
 
         reply = generate_big_text(context.channel, sentence)

@@ -1,5 +1,5 @@
 import unittest
-from src.channels import DRONETALK
+from src.channels import DRONETALK, DRONE_HIVE_CATEGORY
 from src.ai.emote import EmoteCog
 from test.cog import cog
 from test.mocks import Mocks
@@ -27,6 +27,7 @@ class TestEmote(unittest.IsolatedAsyncioTestCase):
 
     @cog(EmoteCog)
     async def test_reject_drone_hive_channels(self, mocks: Mocks):
+        mocks.channel(DRONETALK).category.name = DRONE_HIVE_CATEGORY
         message = mocks.command(None, DRONETALK, 'emote beep')
         await self.assert_command_error(message, 'This command cannot be used in drone hive channels.')
 
