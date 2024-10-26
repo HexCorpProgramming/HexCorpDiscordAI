@@ -3,11 +3,12 @@ from typing import List
 
 import discord
 
-from src.db.data_objects import Drone
+from src.db.data_objects import BatteryType, Drone
 from src.db.database import change, fetchall, fetchone, fetchcolumn
 from src.bot_utils import get_id
 from src.roles import DRONE, STORED, has_any_role
 from src.drone_member import DroneMember
+from src.log import log
 
 
 async def add_new_drone_members(members: List[discord.Member]):
@@ -22,6 +23,9 @@ async def add_new_drone_members(members: List[discord.Member]):
 
                 if drone_id:
                     new_drone = Drone(discord_id=member.id, drone_id=drone_id, last_activity=datetime.now(), associate_name=member.display_name)
+                    battery_type = await BatteryType.load(new_drone.battery_type_id)
+                    new_drone.battery_minutes = battery_type.capacity
+                    log.info('Inserting missing drone ' + drone_id)
                     await new_drone.insert()
 
 
