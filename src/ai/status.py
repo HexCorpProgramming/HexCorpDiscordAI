@@ -87,9 +87,6 @@ async def report_drones(context: Context) -> None:
     Send status information about drones in the database.
     '''
 
-    embed = Embed(title='Drone status report', description='Registered Entities', color=0xff66ff)
-    embed.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
-
     drones = await Drone.all()
     status_columns = {
         'optimized': 'Optimized',
@@ -102,6 +99,8 @@ async def report_drones(context: Context) -> None:
         'free_storage': 'Free Storage',
     }
 
+    statuses = []
+
     for drone in drones:
         status: List[str] = []
 
@@ -113,11 +112,29 @@ async def report_drones(context: Context) -> None:
                     status.append(status_columns[column])
 
         member = context.guild.get_member(drone.discord_id)
-        embed.add_field(name='Name', value=member.display_name if member else f'[Missing: {drone.drone_id}]', inline=True)
-        embed.add_field(name='Discord ID', value=drone.discord_id, inline=True)
-        embed.add_field(name='Status', value=', '.join(status), inline=True)
 
-    await context.send(embed=embed)
+        data = {
+            'name': member.display_name if member else f'[Missing: {drone.drone_id}]',
+            'discord_id': drone.discord_id,
+            'status': ', '.join(status),
+        }
+
+        statuses.append(data)
+
+    # Send messages in chunks of drones due to limit of 25 embeds.
+    chunk_size = 8
+
+    for n in range(0, len(statuses), chunk_size):
+        embed = Embed(title='Drone status report', description='Registered Entities', color=0xff66ff)
+        embed.set_thumbnail(url=HIVE_MXTRESS_AVATAR)
+
+        for status in statuses[n:n + chunk_size]:
+
+            embed.add_field(name='Name', value=status['name'], inline=True)
+            embed.add_field(name='Discord ID', value=status['discord_id'], inline=True)
+            embed.add_field(name='Status', value=status['status'], inline=True)
+
+        await context.send(embed=embed)
 
 
 async def find_missing_members(guild: Guild) -> List[str]:
