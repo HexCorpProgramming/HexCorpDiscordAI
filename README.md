@@ -124,6 +124,95 @@ with LoggingContext('Doing a thing...'):
     do_thing()
 ```
 
+### Unit Testing
+
+Run tests using `./run_tests_with_coverage.sh`
+
+This project has a custom test harness called `Mocks` to mock interaction with Discord.
+
+The `Mocks` class creates a mock guild and mock bot. Additionally created mock objects
+will be automatically added to the guild where appropriate.
+
+#### The Mocks Class
+
+The `Mocks` class can create mocks of these objects:
+
+- Guild
+- Drone
+- Channel
+- CategoryChannel
+- Role
+- Member
+- Message
+- Battery Type
+- DroneMember
+- DroneOrder
+- Storage
+- Timer
+- Emoji
+
+All mock creation functions allow you to pass in arbitrary keyword parameters
+to set properties on the mock, for example:
+
+```py
+member = mocks.member(display_name='Test Member')
+```
+
+There are also helper functions:
+
+- `get_guild()`: Get the mock guild instance.
+- `get_bot()`: Get the testing bot instance.
+- `get_cog()`: Get the Cog command being tested.
+- `hive_mxtress()`: Create a DroneMember with the Hive Mxtress role.
+
+#### Testing Cogs
+
+To test a Cog:
+
+1. Use the `@cog()` decorator.
+2. Create a `Member` that is the author of the command message.
+2. Create a mock command message.
+3. Run the command using `assert_command_successful()`
+4. Perform assertions.
+
+Using `command()` instead of `message()` automatically adds `COMMAND_PREFIX`
+to the message text.
+
+The mock `context` exposed as `mocks.get_bot().context`. This allows you to
+check messages sent by `context.send()`.
+
+Note that there was no need to patch any functions.
+The `@cog` decorator patches the DroneMember parameter converter so that if
+the command references any members, they are loaded from the mock guild.
+
+```py
+import unittest
+from test.cog import cog
+from test.mocks import Mocks
+# from my_cog import MyCog
+
+class TestMyCog(unittest.IsolatedAsyncioTestCase):
+
+    @cog(MyCog)
+    async def test_my_cog(self, mocks: Mocks):
+        '''
+        Test the command "hc!do_something".
+        '''
+
+        # Create the mock author of the message.
+        author = mocks.member()
+
+        # Create the message that triggers the command.
+        message = mocks.command(author, 'general', 'do_something')
+
+        # Execute the command.
+        await self.assert_command_successful(message)
+
+        # Perform assertions.
+        # In this case, assert that a reply was sent.
+        mocks.get_bot().context.send.assert_called_once()
+```
+
 ### Linting and syntax highlighting
 
 The Python tool `flake8` is used to lint the codebase.  To perform linting
