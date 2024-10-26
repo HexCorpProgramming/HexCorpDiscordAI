@@ -46,6 +46,7 @@ GAME_DEV_GUIDE = 'game-dev-guide'
 GAME_DEV_FEATURES = 'game-dev-features'
 GAME_DEV_COMMS = 'game-dev-comms'
 BOT_DEV_GUIDE = 'bot-dev-guide'
+BOT_AI_STATUS = 'bot-ai-status'
 BOT_DEV_COMMS = 'bot-dev-comms'
 GENERAL_DEV_COMMS = 'general-dev-comms'
 

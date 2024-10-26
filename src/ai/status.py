@@ -10,7 +10,7 @@ from src.db.data_objects import Drone
 from src.roles import has_role, DRONE
 
 from src.bot_utils import COMMAND_PREFIX
-from src.channels import BOT_DEV_COMMS
+from src.channels import BOT_AI_STATUS
 from src.resources import DRONE_AVATAR, HEXCORP_AVATAR, HIVE_MXTRESS_AVATAR
 
 ListenerType = Callable[[Message, Any | None], Coroutine[Any, Any, bool]]
@@ -24,7 +24,7 @@ class StatusCog(Cog):
     def __init__(self, message_listeners: List[ListenerType]):
         self.message_listeners = message_listeners
 
-    @channels_only(BOT_DEV_COMMS)
+    @channels_only(BOT_AI_STATUS)
     @command(usage=f'{COMMAND_PREFIX}ai_status')
     async def ai_status(self, context: Context):
         '''
