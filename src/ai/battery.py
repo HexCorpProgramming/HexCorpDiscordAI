@@ -159,7 +159,7 @@ class BatteryCog(commands.Cog):
         # If battery_minutes > 0 and it has the Drained role, remove it.
         # Since this is independent of having the Battery role, this should work even if the config is disabled.
 
-        log.info("Checking for drones with drained battery.")
+        log.debug("Checking for drones with drained battery.")
 
         for drone in await Drone.all():
             # Intentionally different math to that in DAO b/c it always rounds down.
@@ -170,10 +170,10 @@ class BatteryCog(commands.Cog):
                 continue
 
             if drone.battery_minutes <= 0 and has_role(member_drone, BATTERY_POWERED):
-                log.debug(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
+                log.info(f"Drone {drone.drone_id} is out of battery. Adding drained role.")
                 await member_drone.add_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
             elif drone.battery_minutes > 0 and has_role(member_drone, BATTERY_DRAINED):
-                log.debug(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
+                log.info(f"Drone {drone.drone_id} has been recharged. Removing drained role.")
                 await member_drone.remove_roles(get(self.bot.guilds[0].roles, name=BATTERY_DRAINED))
 
     @tasks.loop(minutes=1)
@@ -185,7 +185,7 @@ class BatteryCog(commands.Cog):
         Drones will be removed from the list once their battery is greater than 30% again.
         '''
 
-        log.info("Scanning for low battery drones.")
+        log.debug("Scanning for low battery drones.")
 
         for drone in await Drone.all():
             member = self.bot.guilds[0].get_member(drone.discord_id)
