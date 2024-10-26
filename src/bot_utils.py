@@ -1,4 +1,5 @@
 import re
+from discord import Member
 from discord.ext.commands import check, command as bot_command, Context, CheckFailure, PrivateMessageOnly
 from src.roles import HIVE_MXTRESS, has_any_role, has_role, MODERATION_ROLES, TEST_BOT
 from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar
@@ -109,16 +110,25 @@ def dm_only() -> Callable[[T], T]:
     return check(predicate)
 
 
-def get_id(username: str) -> Optional[str]:
+def get_id(member: Member) -> Optional[str]:
     '''
     Find the four digit ID in a nickname or None if no such ID is found.
     '''
 
-    found = re.search(r"\d{4}", username)
-    if found is None:
-        return None
-    else:
-        return found.group()
+    # List the member's names in order of preference.
+    names = [member.nick, member.global_name, member.name]
+
+    # Filter out entries that are None.
+    names = [name for name in names if name is not None]
+
+    # Return the first four digit number found.
+    for name in names:
+        found = re.search(r"\d{4}", name)
+
+        if found is not None:
+            return found.group()
+
+    return None
 
 
 def command(*args, **kwargs):
