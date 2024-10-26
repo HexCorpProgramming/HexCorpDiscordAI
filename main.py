@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import discord
 from discord.ext.commands import Bot, Context
-from discord.ext.commands.errors import CommandError, CommandInvokeError
+from discord.ext.commands.errors import CommandError, CommandInvokeError, CommandNotFound
 from src.db.database import connect
 from src.roles import has_role, TEST_BOT
 
@@ -374,14 +374,17 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(context, error):
-    with LogContext('Error from ' + context.command.cog_name + '.' + context.command.name + '()'):
-        if isinstance(error, CommandError) and not isinstance(error, CommandInvokeError):
-            # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
-            await report_error(context, str(error) if str(error) else type(error).__name__)
-        else:
-            await context.reply(glitch_message.glitch_text('Command processing failure'))
-            log.error(f"!!! Exception caught in {context.command} command !!!")
-            log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
+    if isinstance(error, CommandNotFound):
+        await report_error(context, 'Error: ' + str(error))
+    else:
+        with LogContext('Error from ' + context.command.cog_name + '.' + context.command.name + '()'):
+            if isinstance(error, CommandError) and not isinstance(error, CommandInvokeError):
+                # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
+                await report_error(context, str(error) if str(error) else type(error).__name__)
+            else:
+                await context.reply(glitch_message.glitch_text('Command processing failure'))
+                log.error(f"!!! Exception caught in {context.command} command !!!")
+                log.info("".join(TracebackException(type(error), error, error.__traceback__, limit=None).format(chain=True)))
 
 
 @bot.event
