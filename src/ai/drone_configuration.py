@@ -46,7 +46,9 @@ class DroneConfigurationCog(Cog):
         '''
         Allows a drone to go back to the status of an Associate.
         '''
-        await unassign_drone(await DroneMember.load(context.message.guild, discord_id=context.author.id))
+
+        guild = context.message.guild if context.message.guild else context.bot.guilds[0]
+        await unassign_drone(await DroneMember.load(guild, discord_id=context.author.id))
 
     @dm_only()
     @command(aliases=['free_storage', 'tfs'], brief=[BRIEF_DRONE_OS], usage=f"{COMMAND_PREFIX}toggle_free_storage")
