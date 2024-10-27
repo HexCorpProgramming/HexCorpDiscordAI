@@ -1,4 +1,5 @@
 import re
+from math import ceil, floor, fmod
 from copy import deepcopy
 from typing import Dict, List
 from src.ai.data_objects import MessageCopy
@@ -16,6 +17,7 @@ from src.roles import BATTERY_DRAINED, BATTERY_POWERED, has_role
 from src.bot_utils import COMMAND_PREFIX, hive_mxtress_only
 from src.drone_member import DroneMember
 from src.db.data_objects import BatteryType, Drone
+from src.channels import STORAGE_CHAMBERS
 
 
 class BatteryCog(commands.Cog):
@@ -24,6 +26,7 @@ class BatteryCog(commands.Cog):
         self.bot = bot
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
+        self.battery_levels: Dict[str, float] = {}  # {drone_id: battery percentage}
 
     @hive_mxtress_only()
     @command(aliases=['sbt'], usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
@@ -120,6 +123,47 @@ class BatteryCog(commands.Cog):
             return False
 
         self.draining_batteries[member.drone.drone_id] = 15
+
+    @tasks.loop(seconds=1)
+    @connect()
+    async def report_battery_status(self) -> None:
+        '''
+        Report any drones that have changed battery level past a 10% increment.
+        '''
+
+        channel = get(self.bot.guilds[0].channels, name=STORAGE_CHAMBERS)
+        drones = await Drone.all()
+
+        for drone in drones:
+            percent = drone.get_battery_percent_remaining()
+
+            # If the drone has not had its level recorded, record it now.
+            if self.battery_levels.get(drone.drone_id) is None:
+                self.battery_levels[drone.drone_id] = percent
+
+            # Skip drones whose battery level has not changed.
+            if percent == self.battery_levels[drone.drone_id]:
+                continue
+
+            # Report if the drone is at or has passed a 10% increment.
+            if fmod(round(percent, 3), 10) == 0.0 or floor(percent / 10) != floor(self.battery_levels[drone.drone_id] / 10):
+                if percent == 100.0:
+                    await channel.send(f'Drone #{drone.drone_id} fully charged')
+                else:
+                    if percent < self.battery_levels[drone.drone_id]:
+                        direction = 'discharg'
+                        increment = ceil(percent / 10) * 10
+                    else:
+                        direction = 'charg'
+                        increment = floor(percent / 10) * 10
+
+                    if fmod(round(percent, 3), 10) == 0.0:
+                        await channel.send(f'Drone #{drone.drone_id} battery {direction}ed to {round(percent)}%')
+                    else:
+                        await channel.send(f'Drone #{drone.drone_id} battery {direction}ing through {increment}%, now at {round(percent)}%')
+
+            # Store the new battery level.
+            self.battery_levels[drone.drone_id] = percent
 
     @tasks.loop(minutes=1)
     @connect()

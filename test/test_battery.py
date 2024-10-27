@@ -6,6 +6,7 @@ import test.test_utils as test_utils
 from src.roles import BATTERY_DRAINED, BATTERY_POWERED
 from test.cog import cog
 from test.mocks import Mocks
+from src.channels import STORAGE_CHAMBERS
 
 
 class TestBattery(unittest.IsolatedAsyncioTestCase):
@@ -276,3 +277,95 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         DroneMember.create.return_value = mocks.drone_member(1234, drone_is_battery_powered=True)
         await cog.start_battery_drain(mocks.message(), mocks.message())
         self.assertEqual(cog.draining_batteries.get('1234', None), 15)
+
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def test_report_battery_status_initialization(self, Drone: AsyncMock, mocks: Mocks) -> None:
+        '''
+        Test that it initializes correctly
+        '''
+
+        drones = [
+            mocks.drone('1234', battery_minutes=120),
+            mocks.drone('5678', battery_minutes=480),
+        ]
+
+        Drone.all.return_value = drones
+
+        await test_utils.start_and_await_loop(mocks.get_cog().report_battery_status)
+
+        channel = mocks.channel(STORAGE_CHAMBERS)
+        channel.send.assert_not_called()
+        self.assertEqual(len(mocks.get_cog().battery_levels), 2)
+        self.assertEqual(mocks.get_cog().battery_levels['1234'], 25)
+        self.assertEqual(mocks.get_cog().battery_levels['5678'], 100)
+
+    @patch('src.ai.battery.Drone', new_callable=AsyncMock)
+    @cog(battery.BatteryCog)
+    async def try_report_battery_status(self, battery_level: float, battery_minutes: int, expected_message: str, Drone: AsyncMock, mocks: Mocks) -> None:
+        '''
+        Run report_battery_status() and assert that the message matches the expected value.
+        '''
+
+        mocks.get_cog().battery_levels = {
+            '1234': battery_level,
+            '5678': 100.0,
+        }
+
+        drones = [
+            mocks.drone('1234', battery_minutes=battery_minutes),
+            mocks.drone('5678', battery_minutes=480),
+        ]
+
+        Drone.all.return_value = drones
+
+        await test_utils.start_and_await_loop(mocks.get_cog().report_battery_status)
+
+        channel = mocks.channel(STORAGE_CHAMBERS)
+        channel.send.assert_called_once_with(expected_message)
+        self.assertEqual(len(mocks.get_cog().battery_levels), 2)
+        self.assertEqual(mocks.get_cog().battery_levels['1234'], drones[0].get_battery_percent_remaining())
+        self.assertEqual(mocks.get_cog().battery_levels['5678'], 100)
+
+    async def test_report_battery_status_drain(self) -> None:
+        '''
+        Check that #1234 is reported as passing 30% when drained from 35% to 25%.
+        '''
+
+        await self.try_report_battery_status(35, 120, 'Drone #1234 battery discharging through 30%, now at 25%')
+
+    async def test_report_battery_status_drain_exact_increment(self) -> None:
+        '''
+        Check that #1234 is reported as reaching 50% when drained from 55%.
+        '''
+
+        await self.try_report_battery_status(55, 240, 'Drone #1234 battery discharged to 50%')
+
+    async def test_report_battery_status_drain_empty(self) -> None:
+        '''
+        Check that #1234 is reported as reaching 0% when drained from 5%.
+        '''
+
+        await self.try_report_battery_status(5, 0, 'Drone #1234 battery discharged to 0%')
+
+    async def test_report_battery_status_charge(self) -> None:
+        '''
+        Check that #1234 is reported as passing 20% when charged from 15% to 25%.
+        '''
+
+        await self.try_report_battery_status(15, 120, 'Drone #1234 battery charging through 20%, now at 25%')
+
+    async def test_report_battery_status_charge_exact_increment(self) -> None:
+        '''
+        Check that #1234 is reported as reaching 50% when charged from 45%.
+        '''
+
+        await self.try_report_battery_status(45, 240, 'Drone #1234 battery charged to 50%')
+
+
+    async def test_report_battery_status_recharged(self) -> None:
+        '''
+        Check that #1234 is reported as reaching 100% charge.
+        '''
+
+        await self.try_report_battery_status(15, 480, 'Drone #1234 fully charged')
