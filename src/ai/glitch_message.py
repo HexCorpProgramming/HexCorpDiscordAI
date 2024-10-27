@@ -20,7 +20,7 @@ MAX_DIACRITICS_PER_MESSAGE = 60
 MAX_DIACRITICS_PER_CHAR = 1
 glitcher = glitch_this.ImageGlitcher()
 
-protected_text_regex = re.compile(r'(<:(.*?):\d{18}>)|(\|\|.*\|\|)|(https?://\S+)')
+protected_text_regex = re.compile(r'(<:(.*?):\d{18,20}>)|(\|\|.*\|\|)|(https?://\S+)')
 
 
 def escape_characters(message: str, characters_regex):
