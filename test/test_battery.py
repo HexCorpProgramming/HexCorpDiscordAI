@@ -362,7 +362,6 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
 
         await self.try_report_battery_status(45, 240, 'Drone #1234 battery charged to 50%')
 
-
     async def test_report_battery_status_recharged(self) -> None:
         '''
         Check that #1234 is reported as reaching 100% charge.
