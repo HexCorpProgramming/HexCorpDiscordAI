@@ -1,11 +1,11 @@
 from src.ai.speech_optimization import StatusType, get_status_type
-from src.channels import (MODERATION_CATEGORY, MODERATION_CHANNEL, MODERATION_LOG,
-                          ORDERS_COMPLETION, ORDERS_REPORTING, REPETITIONS)
+from src.channels import (OFFICE, MODERATION_CATEGORY, MODERATION_CHANNEL, MODERATION_LOG,
+                          ORDERS_COMPLETION, ORDERS_REPORTING, REPETITIONS, STORAGE_FACILITY)
 from src.resources import HEXCORP_MANTRA
 from src.log import log
 from src.drone_member import DroneMember
 
-CHANNEL_BLACKLIST = [ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG]
+CHANNEL_BLACKLIST = [OFFICE, ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG, REPETITIONS, STORAGE_FACILITY]
 CATEGORY_BLACKLIST = [MODERATION_CATEGORY]
 
 
@@ -27,8 +27,8 @@ async def enforce_speech_optimization(message, message_copy):
     acceptable_mantra = f"{member.drone.drone_id} :: {HEXCORP_MANTRA}"
     if any([
         (message.channel.name == REPETITIONS and message_copy.content == acceptable_mantra),
-        (message.channel.name in (ORDERS_REPORTING, ORDERS_COMPLETION, MODERATION_CHANNEL, MODERATION_LOG)),
-        (message.channel.category.name == MODERATION_CATEGORY)
+        (message.channel.name in CHANNEL_BLACKLIST),
+        (message.channel.category.name in CATEGORY_BLACKLIST)
     ]):
         log.debug("Skipping enforced optimization in blacklisted channel.")
         return False

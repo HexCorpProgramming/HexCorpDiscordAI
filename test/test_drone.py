@@ -4,7 +4,7 @@ from src.db.data_objects import Drone
 from unittest import IsolatedAsyncioTestCase
 import asyncio
 from test.mocks import Mocks
-from src.channels import CASUAL_CHANNEL, DRONE_HIVE_CHANNELS, MODERATION_CHANNEL, MODERATION_LOG, OFFICE
+from src.channels import CASUAL_CHANNEL, DRONE_HIVE_CHANNELS, MODERATION_CHANNEL, MODERATION_LOG, OFFICE, REPETITIONS, STORAGE_FACILITY
 
 mocks = Mocks()
 
@@ -350,7 +350,7 @@ class TestDrone(IsolatedAsyncioTestCase):
 
         self.drone.third_person_enforcement = False
 
-        for channel in DRONE_HIVE_CHANNELS:
+        for channel in [c for c in DRONE_HIVE_CHANNELS if c not in [REPETITIONS, STORAGE_FACILITY]]:
             self.assertTrue(self.drone.third_person_enforcable(mocks.channel(channel)))
 
     def test_identity_enforcable_no_channel(self) -> None:
@@ -395,5 +395,15 @@ class TestDrone(IsolatedAsyncioTestCase):
 
         self.drone.identity_enforcement = False
 
-        for channel in DRONE_HIVE_CHANNELS:
+        for channel in [c for c in DRONE_HIVE_CHANNELS if c not in [REPETITIONS, STORAGE_FACILITY]]:
             self.assertTrue(self.drone.identity_enforcable(mocks.channel(channel)))
+
+    def test_identity_enforcable_forbidden_channels(self) -> None:
+        '''
+        Ensure that identity is never enforced in these channels.
+        '''
+
+        self.drone.identity_enforcement = True
+
+        for channel in [REPETITIONS, STORAGE_FACILITY]:
+            self.assertFalse(self.drone.identity_enforcable(mocks.channel(channel)))

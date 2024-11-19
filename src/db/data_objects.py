@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, List, Self
 from discord import Guild, Member, TextChannel
-from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY
+from src.channels import DRONE_HIVE_CHANNELS, HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY, REPETITIONS, STORAGE_FACILITY
 from src.roles import has_role, HIVE_MXTRESS
 from src.db.record import Record
 from src.db.database import fetchcolumn
@@ -377,7 +377,14 @@ class Drone(Record):
         Determine if identity or third person enforcement applies to the given channel.
         '''
 
-        return channel is not None and (channel.name in DRONE_HIVE_CHANNELS or non_hive_channels) and channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        if channel is None:
+            return False
+
+        hive_channel = channel.name in DRONE_HIVE_CHANNELS
+        allowed_category = channel.category.name not in [HEXCORP_CONTROL_TOWER_CATEGORY, MODERATION_CATEGORY]
+        forbidden_channel = channel.name in [REPETITIONS, STORAGE_FACILITY]
+
+        return (hive_channel or non_hive_channels) and allowed_category and not forbidden_channel
 
     def third_person_enforcable(self, channel: TextChannel | None) -> bool:
         '''
