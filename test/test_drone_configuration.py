@@ -82,36 +82,44 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(target.drone.is_battery_powered)
         self.assertTrue(target.drone.can_self_configure)
 
+    @patch('src.ai.drone_configuration.DroneMember')
     @cog(DroneConfigurationCog)
-    async def test_toggle_free_storage_enable(self, mocks: Mocks) -> None:
+    async def test_toggle_free_storage_enable(self, DroneMember: MagicMock, mocks: Mocks) -> None:
         # setup
-        author = mocks.drone_member('1234')
+        drone_member = mocks.drone_member('1234')
+        DroneMember.create = AsyncMock(return_value=drone_member)
+        author = mocks.member('1234')
         message = mocks.direct_command(author, 'toggle_free_storage')
 
         # run
         await self.assert_command_successful(message)
 
         # assert
-        self.assertTrue(author.drone.free_storage)
-        author.drone.save.assert_called_once()
+        self.assertTrue(drone_member.drone.free_storage)
+        drone_member.drone.save.assert_called_once()
 
+    @patch('src.ai.drone_configuration.DroneMember')
     @cog(DroneConfigurationCog)
-    async def test_toggle_free_storage_disable(self, mocks: Mocks) -> None:
+    async def test_toggle_free_storage_disable(self, DroneMember: MagicMock, mocks: Mocks) -> None:
         # setup
-        author = mocks.drone_member('1234', drone_free_storage=True)
+        drone_member = mocks.drone_member('1234', drone_free_storage=True)
+        DroneMember.create = AsyncMock(return_value=drone_member)
+        author = mocks.member('1234')
         message = mocks.direct_command(author, 'toggle_free_storage')
 
         # run
         await self.assert_command_successful(message)
 
         # assert
-        self.assertFalse(author.drone.free_storage)
-        author.drone.save.assert_called_once()
+        self.assertFalse(drone_member.drone.free_storage)
+        drone_member.drone.save.assert_called_once()
 
+    @patch('src.ai.drone_configuration.DroneMember')
     @cog(DroneConfigurationCog)
-    async def test_toggle_free_storage_not_drone(self, mocks: Mocks) -> None:
+    async def test_toggle_free_storage_not_drone(self, DroneMember: MagicMock, mocks: Mocks) -> None:
         # setup
-        author = mocks.drone_member('1234', drone=None)
+        DroneMember.create = AsyncMock(return_value=mocks.drone_member('1234', drone=None))
+        author = mocks.member('1234')
         message = mocks.direct_command(author, 'toggle_free_storage')
 
         # run
