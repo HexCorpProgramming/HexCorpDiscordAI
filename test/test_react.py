@@ -111,7 +111,7 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
-        message.author.id = 123456789
+        message.author.id = 11112222
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
@@ -133,7 +133,7 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
         message = AsyncMock()
         message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
         message.author.display_name = '⬡-Drone #9813'
-        message.author.id = 123456789
+        message.author.id = 11112222
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
