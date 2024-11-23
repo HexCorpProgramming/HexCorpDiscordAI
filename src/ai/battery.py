@@ -25,11 +25,9 @@ class BatteryCog(commands.Cog):
         self.draining_batteries: Dict[str, int] = {}  # {drone_id: minutes of drain left}
         self.low_battery_drones: List[str] = []  # [drone_id]
 
-    @hive_mxtress_only()
     @command(aliases=['sbt'], usage=f"{COMMAND_PREFIX}set_battery_type 3287 low")
     async def set_battery_type(self, context, member: DroneMember, type_name: str):
         '''
-        Hive Mxtress only command.
         Changes the drone's battery capacity and recharge rate.
         '''
 
@@ -37,6 +35,9 @@ class BatteryCog(commands.Cog):
 
         if drone is None:
             raise UserInputError('Member ' + member.display_name + ' is not a drone')
+
+        if not drone.allows_configuration_by(context.message.author):
+            raise UserInputError(f'You are not permitted to configure drone {drone.drone_id}')
 
         type = await BatteryType.find(name=type_name)
 
