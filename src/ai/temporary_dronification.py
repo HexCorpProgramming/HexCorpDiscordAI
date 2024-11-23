@@ -79,7 +79,7 @@ class TemporaryDronificationCog(Cog):
     async def temporary_dronification_response(self, message: discord.Message, message_copy=None):
         matching_request = None
         for request in self.dronification_requests:
-            if request.target == message.author:
+            if request.target.id == message.author.id:
                 matching_request = request
                 break
 
