@@ -115,7 +115,7 @@ class DroneConfigurationCog(Cog):
             else:
                 text = 'Targets ' + ', '.join([m.display_name for m in forbidden_members]) + ' have'
 
-            await context.reply(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
+            await context.send(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
 
         if len(permitted_members):
             await toggle_parameter(
