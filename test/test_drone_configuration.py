@@ -133,7 +133,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
 
         await self.assert_command_successful(message)
 
-        mocks.get_bot().context.reply.assert_called_once_with('Target Drone-1234 has not been on the server for more than 2 weeks. Can not enforce identity.')
+        mocks.get_bot().context.send.assert_called_once_with('Target Drone-1234 has not been on the server for more than 2 weeks. Can not enforce identity.')
 
     @cog(DroneConfigurationCog)
     async def test_toggle_enforce_identity_multiple_too_new(self, mocks: Mocks) -> None:
@@ -143,7 +143,7 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
 
         await self.assert_command_successful(message)
 
-        mocks.get_bot().context.reply.assert_called_once_with('Targets Drone-1234, Drone-2233 have not been on the server for more than 2 weeks. Can not enforce identity.')
+        mocks.get_bot().context.send.assert_called_once_with('Targets Drone-1234, Drone-2233 have not been on the server for more than 2 weeks. Can not enforce identity.')
 
     @patch('src.ai.drone_configuration.toggle_parameter')
     @cog(DroneConfigurationCog)
@@ -155,5 +155,5 @@ class DroneManagementTest(unittest.IsolatedAsyncioTestCase):
 
         await self.assert_command_successful(message)
 
-        mocks.get_bot().context.reply.assert_called_once_with('Target Drone-2233 has not been on the server for more than 2 weeks. Can not enforce identity.')
+        mocks.get_bot().context.send.assert_called_once_with('Target Drone-2233 has not been on the server for more than 2 weeks. Can not enforce identity.')
         toggle_paramter.assert_called_once()
