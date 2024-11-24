@@ -15,46 +15,38 @@ class MockDroneMemberConverter(Converter):
     A parameter converter to automatically create DroneMember objects from command parameters.
     '''
 
-    async def convert(self, context: Context, argument: str):
+    async def convert(self, context: Context, argument: str) -> DroneMember:
         '''
         Try to find a DroneMember that matches the "argument" string.
         '''
-
-        member = None
 
         if context.guild:
             guild = context.guild
         else:
             guild = context.bot.guilds[0]
 
-        members = guild._members.values()
-
-        # Match by Discord ID.
-        # An ID is an int with 15 to 20 digits.
+        # See if argument is a mention.
+        # A Discord ID is an int with 15 to 20 digits.
         # Matches <@ID>, <#ID>.
         discord_id = match(r"<(?:@[!&]?|#)([0-9]{15,20})>$", argument)
 
         if discord_id is not None:
             discord_id = int(sub('[^0-9]', '', discord_id.group(1)))
-            member = guild._members.get(discord_id)
 
-        # Match by member name or nickname.
-        if member is None:
-            member = find(lambda m: m.name == argument or m.nick == argument, members)
+        for id, drone_member in guild._drone_members.items():
+            # Match by Discord ID.
+            if id == discord_id:
+                return drone_member
 
-        # Match by drone ID.
-        if member is None:
-            for m in members:
-                drone = getattr(m, 'drone', None)
+            # Match by name or nickname.
+            if drone_member.name == argument or drone_member.nick == argument:
+                return drone_member
 
-                if drone is not None and str(drone.drone_id) == argument:
-                    member = m
-                    break
+            # Match by drone ID.
+            if drone_member.drone and drone_member.drone.drone_id == argument:
+                return drone_member
 
-        if member is None:
-            raise MemberNotFound(argument)
-
-        return member
+        raise MemberNotFound(argument)
 
 
 def cog(CogType: Type[Cog]) -> Callable[[Any, Any], Any]:
