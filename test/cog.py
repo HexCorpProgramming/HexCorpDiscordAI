@@ -1,6 +1,5 @@
 from discord import Message
 from discord.ext.commands import Bot, Cog, CommandError, Context, Converter, Greedy, MemberNotFound
-from discord.utils import find
 from functools import wraps
 from inspect import iscoroutinefunction
 from re import match, sub
