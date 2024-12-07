@@ -95,10 +95,13 @@ class TestTemporaryDronification(unittest.IsolatedAsyncioTestCase):
         create_drone.assert_not_called()
 
     @patch('src.ai.temporary_dronification.fetch_all_elapsed_temporary_dronification')
-    async def test_release_temporary_drones(self, fetch_all_elapsed_temporary_dronification) -> None:
-        member = self.mocks.drone_member('5555')
-        fetch_all_elapsed_temporary_dronification.return_value = [member.drone]
+    @patch('src.ai.temporary_dronification.DroneMember')
+    async def test_release_temporary_drones(self, DroneMember: MagicMock, fetch_all_elapsed_temporary_dronification) -> None:
+        member = self.mocks.member('Drone 5555')
+        drone_member = self.mocks.drone_member('5555', member=member)
+        fetch_all_elapsed_temporary_dronification.return_value = [drone_member.drone]
+        DroneMember.create = AsyncMock(return_value=drone_member)
 
         await test_utils.start_and_await_loop(self.mocks.get_cog().release_temporary_drones)
 
-        member.drone.delete.assert_called_once()
+        drone_member.drone.delete.assert_called_once()
