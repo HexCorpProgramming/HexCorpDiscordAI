@@ -13,8 +13,8 @@ class TrustedUserTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self, mocks: Mocks):
         self.mocks = mocks
         self.mocks.get_cog().trusted_user_requests = []
-        self.issuer = mocks.drone_member(1234)
-        self.target = mocks.drone_member(9999)
+        self.issuer = mocks.drone_member('1234')
+        self.target = mocks.drone_member('9999')
 
     @patch('src.ai.trusted_user.DroneMember', new_callable=AsyncMock)
     async def test_successful_request(self, DroneMember: AsyncMock):

@@ -56,7 +56,10 @@ class DroneConfigurationCog(Cog):
         '''
         Allows a drone to choose whether to be stored by anyone, or just its trusted users and the Hive Mxtress. Defaults to trusted users only.
         '''
-        await toggle_free_storage(context.bot.guilds[0].get_member(context.author.id))
+
+        member = context.bot.guilds[0].get_member(context.author.id)
+        drone_member = await DroneMember.create(member=member)
+        await toggle_free_storage(drone_member)
 
     @channels_only(OFFICE)
     @hive_mxtress_only()
@@ -115,7 +118,7 @@ class DroneConfigurationCog(Cog):
             else:
                 text = 'Targets ' + ', '.join([m.display_name for m in forbidden_members]) + ' have'
 
-            await context.reply(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
+            await context.send(text + ' not been on the server for more than 2 weeks. Can not enforce identity.')
 
         if len(permitted_members):
             await toggle_parameter(

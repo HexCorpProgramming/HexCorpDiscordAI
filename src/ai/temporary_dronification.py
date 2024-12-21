@@ -43,10 +43,19 @@ class TemporaryDronificationCog(Cog):
     @tasks.loop(minutes=1)
     @connect()
     async def release_temporary_drones(self):
-        log.info("Looking for temporary drones to release.")
+        '''
+        Release drones that have been dronified for a limited amount of time.
+        '''
+
         guild = self.bot.guilds[0]
+
         for drone in await fetch_all_elapsed_temporary_dronification():
-            await unassign_drone(guild.get_member(drone.discord_id))
+            member = guild.get_member(drone.discord_id)
+
+            if member is not None:
+                log.info(f"Releasing {drone.drone_id} from temporary dronification")
+                drone_member = await DroneMember.create(member)
+                await unassign_drone(drone_member)
 
     @guild_only()
     @command(usage=f'{COMMAND_PREFIX}temporarily_dronify @AssociateName 6')
@@ -79,7 +88,7 @@ class TemporaryDronificationCog(Cog):
     async def temporary_dronification_response(self, message: discord.Message, message_copy=None):
         matching_request = None
         for request in self.dronification_requests:
-            if request.target == message.author:
+            if request.target.id == message.author.id:
                 matching_request = request
                 break
 

@@ -168,6 +168,10 @@ class Mocks():
 
         guild.get_member = lambda discord_id: self.find(guild._members, id=discord_id)
 
+        # Keep a dict of discord ID DroneMember so that MockDroneMemberConverter can return existing records
+        # rather than creating a new one.
+        guild._drone_members = {}
+
         return guild
 
     def record(self, spec=Record, **kwargs) -> Any:
@@ -320,6 +324,7 @@ class Mocks():
         member.edit = AsyncMock()
         member.mention = '<@' + str(member.id) + '>'
         member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
+        member.guild = self._guild
 
         self.set_props(member, kwargs)
 
@@ -436,46 +441,31 @@ class Mocks():
         '''
 
         drone_id = str(drone_id)
-        discord_id = int('111111111111111' + str(drone_id))
         nick = 'Drone-' + drone_id
 
         drone_member = create_autospec(DroneMember)
 
         if kwargs.get('member', None) is not None:
             member = kwargs.get('member')
-
-            drone_member.id = member.id
-            drone_member.bot = member.bot
-            drone_member._avatar = member._avatar
-            drone_member.nick = member.nick
-            drone_member.display_name = member.display_name
-            drone_member.name = member.display_name
-            drone_member.global_name = member.global_name
-            drone_member.nick_name = member.nick
-            drone_member.edit = member.edit
-            drone_member.guild = member.guild
-            drone_member.mention = member.mention
-            drone_member._roles = member._roles
-            drone_member.roles = member.roles
-            drone_member.joined_at = member.joined_at
         else:
-            drone_member.id = discord_id
-            drone_member.bot = False
-            drone_member._avatar = 'Pretty avatar'
-            drone_member.nick = nick
-            drone_member.display_name = nick
-            drone_member.name = nick
-            drone_member.global_name = nick
-            drone_member.nick = nick
-            drone_member.edit = AsyncMock()
-            drone_member.guild = self._guild
-            drone_member.mention = f'<@{discord_id}>'
-            drone_member._roles = []
-            drone_member.roles = []
-            drone_member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
+            member = self.member(nick, id=int('111111111111111' + str(drone_id)))
+
+        drone_member.id = member.id
+        drone_member.bot = member.bot
+        drone_member._avatar = member._avatar
+        drone_member.nick = member.nick
+        drone_member.display_name = member.display_name
+        drone_member.name = member.display_name
+        drone_member.global_name = member.global_name
+        drone_member.edit = member.edit
+        drone_member.guild = member.guild
+        drone_member.mention = member.mention
+        drone_member._roles = member._roles
+        drone_member.roles = member.roles
+        drone_member.joined_at = member.joined_at
 
         if 'drone' not in kwargs:
-            drone_member.drone = self.drone(drone_id)
+            drone_member.drone = self.drone(drone_id, discord_id=member.id)
 
         drone_member.avatar_url.return_value = drone_member._avatar
 
@@ -517,8 +507,7 @@ class Mocks():
         if drone_member.drone is not None:
             drone_member.drone.discord_id = drone_member.id
 
-        # Add the DroneMember to the guild.  This should really be just a Member, not a DroneMember.
-        self._guild._members[drone_member.id] = drone_member
+        self._guild._drone_members[drone_member.id] = drone_member
 
         return drone_member
 

@@ -128,13 +128,14 @@ class TestBattery(unittest.IsolatedAsyncioTestCase):
         by DMing them.
         '''
 
-        drone_member = mocks.drone_member('1234', drone_is_battery_powered=True)
+        member = mocks.member('Drone-1234')
+        drone_member = mocks.drone_member('1234', member=member, drone_is_battery_powered=True)
         drone_member.drone.get_battery_percent_remaining = Mock(return_value=25)
         Drone.all.return_value = [drone_member.drone]
 
         await test_utils.start_and_await_loop(mocks.get_cog().warn_low_battery_drones)
 
-        drone_member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
+        member.send.assert_called_once_with("Attention. Your battery is low (30%). Please connect to main power grid in the Storage Facility immediately.")
         self.assertTrue('1234' in mocks.get_cog().low_battery_drones)
 
     @patch('src.ai.battery.Drone', new_callable=AsyncMock)
