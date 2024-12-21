@@ -20,7 +20,7 @@ MAX_DIACRITICS_PER_MESSAGE = 60
 MAX_DIACRITICS_PER_CHAR = 1
 glitcher = glitch_this.ImageGlitcher()
 
-protected_text_regex = re.compile(r'(<:(.*?):\d{18}>)|(\|\|.*\|\|)|(https?://\S+)')
+protected_text_regex = re.compile(r'(<:(.*?):\d{18,20}>)|(\|\|.*\|\|)|(https?://\S+)')
 
 
 def escape_characters(message: str, characters_regex):
@@ -133,7 +133,7 @@ async def glitch_if_applicable(message: discord.Message, message_copy: MessageCo
     elif member.drone.is_battery_powered and member.drone.get_battery_percent_remaining() < 30:
         glitch_amount = (MAX_GLITCH_AMOUNT - member.drone.get_battery_percent_remaining()) * 2
     else:
-        log.info("Not glitching message (drone is neither glitched nor low battery).")
+        log.debug("Not glitching message (drone is neither glitched nor low battery).")
         return False
 
     log.info(f"Glitching message for {message.author.display_name}, glitch amount: {glitch_amount}")

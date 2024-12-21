@@ -46,7 +46,7 @@ class GlitchMessageTest(unittest.TestCase):
 
     def test_escape_all(self):
         # init
-        message = "beep <:custom_emoji:123456789012345678> boop https://www.hexcorp.net beep ||this should not be glitched|| boop"
+        message = "beep <:custom_emoji:1234567890123456789> boop https://www.hexcorp.net beep ||this should not be glitched|| boop"
 
         # run
         _, modified_message = escape_characters(message, protected_text_regex)
