@@ -157,7 +157,7 @@ hour_tasks = [
     orders_reporting_cog.deactivate_drones_with_completed_orders,
     storage_cog.report_storage,
     trusted_user_cog.clean_trusted_user_requests]
-timing_agnostic_tasks = [status_message_cog.change_status]
+timing_agnostic_tasks = [status_message_cog.change_status, battery_cog.report_battery_status]
 
 # Configure error handling for tasks.
 for task in minute_tasks + hour_tasks + timing_agnostic_tasks:
