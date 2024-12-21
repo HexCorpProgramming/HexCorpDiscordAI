@@ -21,8 +21,8 @@ from traceback import TracebackException
 import src.ai.stoplights as stoplights
 import src.ai.identity_enforcement as identity_enforcement
 import src.ai.third_person_enforcement as third_person_enforcement
+import src.ai.hexdrone_protocol as hexdrone_protocol
 import src.ai.speech_optimization as speech_optimization
-import src.ai.speech_optimization_enforcement as speech_optimization_enforcement
 import src.ai.id_prepending as id_prepending
 import src.ai.join as join
 import src.ai.respond as respond
@@ -116,8 +116,8 @@ message_listeners = [
     mantra.check_for_mantra,
     battery_cog.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
-    speech_optimization_enforcement.enforce_speech_optimization,
-    speech_optimization.optimize_speech,
+    speech_optimization.enforce_speech_optimization,
+    hexdrone_protocol.optimize_speech,
     identity_enforcement.enforce_identity,
     third_person_enforcement.enforce_third_person,
     forbidden_word.deny_thoughts,

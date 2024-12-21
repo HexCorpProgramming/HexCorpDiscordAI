@@ -3,7 +3,7 @@ from typing import Dict
 
 import discord
 
-from src.ai.speech_optimization import status_code_regex
+from src.ai.hexdrone_protocol import status_code_regex
 from src.channels import REPETITIONS
 from src.drone_member import DroneMember
 
