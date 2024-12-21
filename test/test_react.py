@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 from src.roles import DRONE, ASSOCIATE
 
 import src.ai.react as react
-
+from test.mocks import Mocks
 
 GOOD_DRONE_EMOTE = Mock()
 GOOD_DRONE_EMOTE.name = "gooddrone"
@@ -16,6 +16,8 @@ DRONE_ROLE.name = DRONE
 
 ASSOCIATE_ROLE = Mock()
 ASSOCIATE_ROLE.name = ASSOCIATE
+
+mocks = Mocks()
 
 
 class ReactTest(unittest.IsolatedAsyncioTestCase):
@@ -86,19 +88,14 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_check_for_name(self):
         # init
-        message = AsyncMock()
-        message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
-        message.author.display_name = '⬡-Drone #9813'
-        message.author.id = 123456789
+        author = mocks.member('1234')
+        message = mocks.message(author, 'general', '9813 :: Code `109` :: Error :: Keysmash, drone flustered.')
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
-        member = AsyncMock()
-        member.display_name = '⬡-Drone #3287'
-        member.roles = [DRONE_ROLE]
-        member.id = 111111
+        member = mocks.member('5678', roles=[DRONE_ROLE])
 
         # run
         await react.delete_marked_message(reaction, member)
@@ -108,41 +105,30 @@ class ReactTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_delete_marked_message(self):
         # init
-        message = AsyncMock()
-        message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
-        message.author.display_name = '⬡-Drone #9813'
-        message.author.id = 11112222
+        author = mocks.member('1234', roles=[DRONE_ROLE])
+        message = mocks.message(author, 'general', '9813 :: Code `109` :: Error :: Keysmash, drone flustered.')
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
-        member = AsyncMock()
-        member.id = 123456789
-        member.display_name = '⬡-Drone #9813'
-        member.roles = [DRONE_ROLE]
-
         # run
-        await react.delete_marked_message(reaction, member)
+        await react.delete_marked_message(reaction, author)
 
         # assert
         message.delete.assert_called_once()
 
     async def test_delete_marked_message_with_different_configuration(self):
         # init
-        message = AsyncMock()
-        message.content = "9813 :: Code `109` :: Error :: Keysmash, drone flustered."
-        message.author.display_name = '⬡-Drone #9813'
-        message.author.id = 11112222
+        author = mocks.member('1234')
+        message = mocks.message(author, 'general', '9813 :: Code `109` :: Error :: Keysmash, drone flustered.')
 
         reaction = AsyncMock()
         reaction.emoji = '🗑️'
         reaction.message = message
 
-        member = AsyncMock()
-        member.id = 123456789
-        member.display_name = '⬢-Drone #9813'
-        member.roles = [DRONE_ROLE]
+        member = mocks.member('1234', roles=[DRONE_ROLE])
+        member.display_name = '⬢-Drone #1234'
 
         # run
         await react.delete_marked_message(reaction, member)

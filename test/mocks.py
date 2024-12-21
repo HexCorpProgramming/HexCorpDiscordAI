@@ -455,7 +455,7 @@ class Mocks():
         drone_member._avatar = member._avatar
         drone_member.nick = member.nick
         drone_member.display_name = member.display_name
-        drone_member.name = member.display_name
+        drone_member.name = member.name
         drone_member.global_name = member.global_name
         drone_member.edit = member.edit
         drone_member.guild = member.guild
