@@ -1,10 +1,10 @@
-# Core
 import asyncio
 
 from datetime import datetime, timedelta
 
 import discord
 from discord.ext.commands import Bot, Context
+from discord.commands import ApplicationContext
 from discord.ext.commands.errors import CommandError, CommandInvokeError, CommandNotFound
 from src.db.database import connect
 from src.roles import has_role, TEST_BOT
@@ -21,8 +21,8 @@ from traceback import TracebackException
 import src.ai.stoplights as stoplights
 import src.ai.identity_enforcement as identity_enforcement
 import src.ai.third_person_enforcement as third_person_enforcement
+import src.ai.hexdrone_protocol as hexdrone_protocol
 import src.ai.speech_optimization as speech_optimization
-import src.ai.speech_optimization_enforcement as speech_optimization_enforcement
 import src.ai.id_prepending as id_prepending
 import src.ai.join as join
 import src.ai.respond as respond
@@ -116,8 +116,8 @@ message_listeners = [
     mantra.check_for_mantra,
     battery_cog.start_battery_drain,
     id_prepending.check_if_prepending_necessary,
-    speech_optimization_enforcement.enforce_speech_optimization,
-    speech_optimization.optimize_speech,
+    speech_optimization.enforce_speech_optimization,
+    hexdrone_protocol.optimize_speech,
     identity_enforcement.enforce_identity,
     third_person_enforcement.enforce_third_person,
     forbidden_word.deny_thoughts,
@@ -157,7 +157,7 @@ hour_tasks = [
     orders_reporting_cog.deactivate_drones_with_completed_orders,
     storage_cog.report_storage,
     trusted_user_cog.clean_trusted_user_requests]
-timing_agnostic_tasks = [status_message_cog.change_status]
+timing_agnostic_tasks = [status_message_cog.change_status, battery_cog.report_battery_status]
 
 # Configure error handling for tasks.
 for task in minute_tasks + hour_tasks + timing_agnostic_tasks:
@@ -183,11 +183,12 @@ for task in minute_tasks + hour_tasks + timing_agnostic_tasks:
     task.after_loop(make_after_loop(task))
 
 
-@bot.command(usage=f'{bot.command_prefix}help')
-async def help(context):
+@bot.slash_command(description='Show bot commands', contexts=[discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm])
+async def help(context: ApplicationContext):
     '''
     Displays this help.
     '''
+
     commands_card = discord.Embed(color=0xff66ff, title="Common commands", description="Here is a list of common commands server members can utilize.")
     commands_card.set_thumbnail(url=HEXCORP_AVATAR)
 
@@ -230,10 +231,10 @@ async def help(context):
         else:
             commands_card.add_field(name=command_name, value=command_description, inline=False)
 
-    await context.author.send(embed=commands_card)
-    await context.author.send(embed=droneOS_card)
-    await context.author.send(embed=Hive_Mxtress_card)
-    await context.author.send(embed=manual_card)
+    await context.respond(ephemeral=True, embed=commands_card)
+    await context.respond(ephemeral=True, embed=droneOS_card)
+    await context.respond(ephemeral=True, embed=Hive_Mxtress_card)
+    await context.respond(ephemeral=True, embed=manual_card)
 
 
 def ignore_self(func):
@@ -377,7 +378,7 @@ async def on_command_error(context, error):
     if isinstance(error, CommandNotFound):
         await report_error(context, 'Error: ' + str(error))
     else:
-        with LogContext('Error from ' + context.command.cog_name + '.' + context.command.name + '()'):
+        with LogContext('Error from ' + str(context.command.cog_name) + '.' + context.command.name + '()'):
             if isinstance(error, CommandError) and not isinstance(error, CommandInvokeError):
                 # Errors deriving from Command error should be reported to the user, except CommandInvokeError.
                 await report_error(context, str(error) if str(error) else type(error).__name__)
