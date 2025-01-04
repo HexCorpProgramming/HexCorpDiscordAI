@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, patch, MagicMock
 from src.ai.speech_optimization import enforce_speech_optimization
-from src.channels import CASUAL_CHANNEL, REPETITIONS, MODERATION_CHANNEL
+from src.channels import CASUAL_CHANNEL, OFFICE, MODERATION_CHANNEL, MODERATION_LOG, REPETITIONS, STORAGE_FACILITY
 from test.mocks import Mocks
 
 mocks = Mocks()
@@ -77,9 +77,11 @@ class TestSpeechOptimization(unittest.IsolatedAsyncioTestCase):
         Should return false and not delete message if message is in blacklisted channel or category.
         '''
 
-        self.assertFalse(await self.send('1234 :: Drone will not be optimized here.', MODERATION_CHANNEL))
+        channels = [OFFICE, MODERATION_CHANNEL, MODERATION_LOG, REPETITIONS, STORAGE_FACILITY]
 
-        self.message.delete.assert_not_called()
+        for channel in channels:
+            self.assertFalse(await self.send('1234 :: Drone will not be optimized here.', channel))
+            self.message.delete.assert_not_called()
 
     async def test_optimized_drone_plain_status(self) -> None:
         '''
