@@ -8,25 +8,36 @@ from asyncio import gather, sleep
 class TestBotUtils(IsolatedAsyncioTestCase):
 
     def test_get_id(self):
-        # regular usage
-        self.assertEqual(get_id('⬡-Drone #9813'), '9813')
-        self.assertEqual(get_id('⬡-Drone #0006'), '0006')
-        self.assertEqual(get_id('⬡-Drone #0024'), '0024')
-        self.assertEqual(get_id('⬡-Drone #0825'), '0825')
-        self.assertEqual(get_id('⬡-Drone #5890'), '5890')
-        self.assertEqual(get_id('⬡-Drone #5800'), '5800')
-        self.assertEqual(get_id('⬡-Drone #5000'), '5000')
+        # Create a mock Member.
+        member = Mock()
+        member.nick = None
+        member.global_name = None
+        member.name = None
 
-        # ID too long -> gives first valid sequence
-        self.assertEqual(get_id('ID too long 56789'), '5678')
+        # Test case of: nick, global name, name, expected result.
+        tests = [
+            ['⬡-Drone #9813', None, None, '9813'],
+            ['⬡-Drone #0006', None, None, '0006'],
+            ['⬡-Drone #1234', 'No ID', 'No ID', '1234'],
+            ['⬡-Drone #1234', 'No ID', '⬡-Drone #5678', '1234'],
+            ['⬡-Drone #1234', '⬡-Drone #5678', '⬡-Drone #9012', '1234'],
+            ['No ID', '⬡-Drone #5678', '⬡-Drone #9012', '5678'],
+            ['No ID', 'No ID', '⬡-Drone #9012', '9012'],
+            ['No ID', 'No ID', 'No ID', None],
+            [None, None, None, None],
+            ['ID too long 56789', None, None, '5678'],
+            ['ID too short 123', None, None, None],
+        ]
 
-        # not a valid ID
-        self.assertIsNone(get_id('NotADrone'))
-        self.assertIsNone(get_id('ID too short 123'))
+        for test in tests:
+            member.nick = test[0]
+            member.global_name = test[1]
+            member.name = test[2]
+            self.assertEqual(get_id(member), test[3])
 
-        # invalid inputs
-        self.assertRaises(TypeError, get_id, None)
-        self.assertRaises(TypeError, get_id, 9813)
+        # Invalid inputs.
+        self.assertRaises(Exception, get_id, None)
+        self.assertRaises(Exception, get_id, 9813)
 
     async def test_command_race(self):
         '''

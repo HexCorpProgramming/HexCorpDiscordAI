@@ -19,7 +19,7 @@ async def add_new_drone_members(members: List[discord.Member]):
         if has_any_role(member, [DRONE, STORED]):
 
             if await fetchone("SELECT 1 FROM drone WHERE discord_id=:id", {"id": member.id}) is None:
-                drone_id = get_id(member.display_name)
+                drone_id = get_id(member)
 
                 if drone_id:
                     new_drone = Drone(discord_id=member.id, drone_id=drone_id, last_activity=datetime.now(), associate_name=member.display_name)

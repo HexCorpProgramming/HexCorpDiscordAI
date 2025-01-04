@@ -58,7 +58,7 @@ async def create_drone(guild: discord.Guild,
 
     assigned_nick = ''
     used_ids = await get_used_drone_ids() + RESERVED_IDS
-    assigned_id = get_id(target.display_name)  # does user have a drone id in their display name?
+    assigned_id = get_id(target)  # does user have a drone id in their name?
     if assigned_id is not None:
         if assigned_id in used_ids:  # make sure display name number doesnt conflict
             log.info(f'Drone creation failed: ID {assigned_id} is already assigned.')

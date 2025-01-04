@@ -319,6 +319,8 @@ class Mocks():
         member.display_avatar.url = 'Pretty avatar'
         member.nick = nick
         member.display_name = nick
+        member.name = nick
+        member.global_name = nick
         member.edit = AsyncMock()
         member.mention = '<@' + str(member.id) + '>'
         member.joined_at = datetime.now(timezone.utc) - timedelta(weeks=3)
@@ -453,6 +455,8 @@ class Mocks():
         drone_member._avatar = member._avatar
         drone_member.nick = member.nick
         drone_member.display_name = member.display_name
+        drone_member.name = member.name
+        drone_member.global_name = member.global_name
         drone_member.edit = member.edit
         drone_member.guild = member.guild
         drone_member.mention = member.mention
